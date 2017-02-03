@@ -51,22 +51,29 @@
 #'
 #' @examples
 #' \dontrun{
-#' # loading difMedicaltest data set
-#' data(difMedicaltest, package = "difNLR")
-#' data  <- difMedicaltest[, colnames(difMedicaltest) != "gender"]
-#' # loading difMedicalkey
-#' data(difMedicalkey, package = "difNLR")
-#' key  <- difMedicalkey
+#' # loading data
+#' data(dataMedical, dataMedicaltest, dataMedicalkey)
 #'
-#' # distractor analysis plot for item 1, all combinations
-#' plotDistractorAnalysis(data, key, item = 1)
+#' # Difficulty/Discriminaton plot for medical admission test
+#' DDplot(dataMedical)
+#' # item 48 is very hard, thus does not discriminate well
+#' # item 57 discriminates well
+#' # item 32 does not discriminate well
 #'
-#' # distractor analysis plot for item 1, distractors
-#' plotDistractorAnalysis(data, key, item = 1, multiple.answers = F)
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 48, multiple.answers = F)
+#' # correct answer B does not function well
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 57, multiple.answers = F)
+#' # all options function well, thus the whole item discriminates well
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 32, multiple.answers = F)
+#' # functions well, thus the whole item discriminates well
 #'
-#' # distractor analysis plot for item 3, all combinations and 6 groups
-#' plotDistractorAnalysis(data, key, num.group = 6, item = 3)
+#' # distractor analysis plot for item 48, 57 and 32, all combinations
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 48)
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 57)
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, item = 32)
 #'
+#' # distractor analysis plot for item 57, all combinations and 6 groups
+#' plotDistractorAnalysis(dataMedicaltest, dataMedicalkey, num.group = 6, item = 57)
 #' }
 #'
 #'
@@ -75,6 +82,7 @@
 
 plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multiple.answers = TRUE)
 {
+  key <- unlist(key)
   # distractor analysis
   tabDA <- DistractorAnalysis(data = data, key = key, p.table = TRUE, num.groups = num.groups)
   x <- tabDA[[item]]
@@ -92,7 +100,7 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
     # all combinations
     df <- x
 
-    CA <- CAall <- key[item]
+    CA <- CAall <- as.character(key[item])
     col <- rainbow(n = length(levels(df$response)))
     names(col) <- levels(df$response)
   } else {
@@ -104,7 +112,7 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
     # sum over choices
     df <- aggregate(value ~ response + score.level, data = y, sum)
     # adding correct combination
-    CAdf <- x[x$response == key[item], ]
+    CAdf <- x[x$response == as.character(key[item]), ]
     CAdf$response <- paste(key[item], "-correct", sep = "")
     df <- rbind(df, CAdf)
     CA <-  unique(CAdf$response)

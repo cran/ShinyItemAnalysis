@@ -59,7 +59,7 @@ plotDIFLogistic <- function(data, group, type = "both", item, IRT = F, p.adjust.
     match <- "score"
   }
   fit <- difR::difLogistic(Data = data, group = group, focal.name = 1, type = type,
-                     match = match, p.adjust.method = "BH")
+                     match = match, p.adjust.method = p.adjust.method)
 
   LR_plot <- function(x, group, beta0, beta1, beta2, beta3){
     return(1/(1 + exp(-(beta0 + beta1*x + beta2*group + beta3*x*group))))
@@ -146,7 +146,7 @@ plotDIFLogistic <- function(data, group, type = "both", item, IRT = F, p.adjust.
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(0.97, 0.03),
-          legend.margin = unit(0, "lines"),
+          # legend.margin = unit(0, "lines"),
           legend.box = "vertical",
           legend.key.size = unit(0.9, "cm"),
           legend.key.height = unit(0.8, "line"),

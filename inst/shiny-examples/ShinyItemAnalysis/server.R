@@ -2,20 +2,29 @@
 # GLOBAL LIBRARY #####
 ######################
 
-library(CTT)
-library(deltaPlotR)
-library(difNLR)
-library(difR)
-library(foreign)
-library(ggplot2)
-library(gridExtra)
-library(ltm)
-library(moments)
-library(nnet)
-library(psych)
-library(psychometric)
-library(reshape2)
-library(stringr)
+require(corrplot)
+require(CTT)
+require(deltaPlotR)
+require(DT)
+require(difNLR)
+require(difR)
+require(ggplot2)
+require(grid)
+require(gridExtra)
+require(latticeExtra)
+require(ltm)
+require(mirt)
+require(moments)
+require(msm)
+require(nnet)
+require(psych)
+require(psychometric)
+require(reshape2)
+require(rmarkdown)
+require(ShinyItemAnalysis)
+require(shinyjs)
+require(stringr)
+require(WrightMap)
 
 ###########
 # DATA ####
@@ -44,14 +53,26 @@ source("plotDIFLogistic.R")
 # DIF IRT regression plot
 source("plotDIFirt.R")
 
+# WrightMap
+source("wrightMap.R")
+source("itemClassic.R")
+source("personHist.R")
+
 #####################
 # SERVER SCRIPT #####
 #####################
 
 function(input, output, session) {
 
+
+  dataset <- reactiveValues()
+
+  dataset$answers <- NULL
+  dataset$key <- NULL
+  dataset$group <- NULL
+
   ######################
-  ### hits counter #####
+  ### HITS COUNTER #####
   ######################
   output$counter <- renderText({
     if (!file.exists("counter.Rdata"))
@@ -66,72 +87,144 @@ function(input, output, session) {
   # DATA ADJUSTMENT #######
   #########################
 
-  # CHOOSE DATA #####
-
-
-  output$dataSelect <- renderUI({
-    selectInput("dataSelect", "Select dataset",
-                c("GMAT" = "GMAT_difNLR",
-                  "GMAT2" = "GMAT2_difNLR",
-                  "Medical" = "difMedical_difNLR"
-                ),
-                selected="GMAT")
-  })
-
-
   # LOAD ABCD DATA #####
   test_answers <- reactive ({
-    a=input$dataSelect
-    pos=regexpr("_", a)[1]
-    datasetName=str_sub(a, 1,pos-1)
-    packageName=str_sub(a, pos+1)
+    if (is.null(input$data)) {
+      a=input$dataSelect
+      pos=regexpr("_", a)[1]
+      datasetName=str_sub(a, 1,pos-1)
+      packageName=str_sub(a, pos+1)
 
-    do.call(data, args=list(paste0(datasetName,"test"), package=packageName))
-    test=get(paste0(datasetName,"test"))
+      do.call(data, args=list(paste0(datasetName,"test"), package=packageName))
+      test=get(paste0(datasetName,"test"))
 
-    do.call(data, args=list(paste0(datasetName,"key"), package=packageName))
-    key=get(paste0(datasetName,"key"))
+      do.call(data, args=list(paste0(datasetName,"key"), package=packageName))
+      key=get(paste0(datasetName,"key"))
 
-    ifelse (is.null(input$data), answ <- test[ , 1:length(key)],
-            answ <- read.csv(input$data$datapath, header = input$header,
-                             sep = input$sep, quote = input$quote))
-    answ
+      test = test[,1:length(key)]
+      dataset$answers = test
+    } else {
+      test = dataset$answers
+    }
+    test
   })
 
   # LOAD KEY #####
   test_key <- reactive({
-    a=input$dataSelect
-    pos=regexpr("_", a)[1]
-    datasetName=str_sub(a, 1,pos-1)
-    packageName=str_sub(a, pos+1)
+    if ((is.null(input$key)) | (is.null(dataset$key))) {
+      a=input$dataSelect
+      pos=regexpr("_", a)[1]
+      datasetName=str_sub(a, 1,pos-1)
+      packageName=str_sub(a, pos+1)
 
-    do.call(data, args=list(paste0(datasetName,"key"), package=packageName))
-    key=get(paste0(datasetName,"key"))
-
-    ifelse (is.null(input$key), k <- key,
-
-            {k <- read.csv(input$key$datapath, header = FALSE)
-            k <- k[[1]]
-            })
-    k
+      do.call(data, args=list(paste0(datasetName,"key"), package=packageName))
+      key=get(paste0(datasetName,"key"))
+      dataset$key = key
+    } else {
+      if (length(dataset$key) == 1) {
+        if (dataset$key == "missing"){
+          validate(
+            need(dataset$key != "missing", "Key is missing!"),
+            errorClass = "error_key_missing"
+          )
+        }
+      } else {
+        validate(
+          need(ncol(dataset$answers) == length(dataset$key), "Length of key is not the same as
+               number of items in the main data set!"),
+          errorClass = "error_dimension"
+          )
+      }
+      key=dataset$key
+    }
+    key
   })
 
   # LOAD GROUPS #####
   DIF_groups <- reactive({
-    a=input$dataSelect
-    pos=regexpr("_", a)[1]
-    datasetName=str_sub(a, 1,pos-1)
-    packageName=str_sub(a, pos+1)
+    if (is.null(input$data) | (is.null(dataset$group))) {
+      a=input$dataSelect
+      pos=regexpr("_", a)[1]
+      datasetName=str_sub(a, 1,pos-1)
+      packageName=str_sub(a, pos+1)
 
-    do.call(data, args=list(paste0(datasetName,"test"), package=packageName))
-    test=get(paste0(datasetName,"test"))
+      do.call(data, args=list(paste0(datasetName,"test"), package=packageName))
+      test=get(paste0(datasetName,"test"))
 
-    ifelse (is.null(input$key), k <- test[ , ncol(test)],
-
-            {k <- read.csv(input$groups$datapath,header = TRUE)
-            k <- k[[1]]})
-    as.vector(k)
+      if (datasetName == "dataMedical"){
+        group <- NULL
+        dataset$group <- NULL
+        validate(
+          need(!is.null(group),
+               "Sorry, for this dataset group is not available. DIF and DDF analyses are not possible!"),
+          errorClass = "warning_group_missing"
+        )
+      } else {
+        group <- test[, ncol(test)]
+      }
+      dataset$group = group
+    } else {
+      if (length(dataset$group) == 1){
+        if (dataset$group == "missing"){
+          validate(
+            need(dataset$group != "missing",
+                 "Group is missing! DIF and DDF analyses are not available!"),
+            errorClass = "warning_group_missing"
+          )
+        }
+      } else {
+        validate(
+          need(nrow(dataset$answers) == length(dataset$group), "Length of group is not the same as
+             number of observation in the main data set!"),
+          errorClass = "error_dimension"
+        )
+      }
+      group = dataset$group
+    }
+    # group <- as.numeric(paste(as.factor(group)))
+    group
   })
+
+  # SUBMIT BUTTON #####
+
+  observeEvent(
+    eventExpr = input$submitButton,
+    handlerExpr = {
+
+      key=NULL
+      answ=NULL
+      k=NULL
+      group=NULL
+
+      if (is.null(input$data)){
+        key <- test_key()
+        answ <- test[ , 1:length(key)]
+        group <- DIF_groups()
+      } else {
+        answ <- read.csv(input$data$datapath, header = input$header,
+                         sep = input$sep, quote = input$quote)
+        if (is.null(input$key)){
+          key <- "missing"
+        } else {
+          key <- read.csv(input$key$datapath, header = input$header,
+                          sep = input$sep)
+          key <- as.character(unlist(key))
+        }
+        if (is.null(input$groups)){
+          group <- "missing"
+        } else {
+          group <- read.csv(input$groups$datapath, header = input$header,
+                            sep = input$sep)
+          group <- unlist(group)
+        }
+      }
+
+      dataset$answers <- answ
+      dataset$key <- key
+      dataset$group <- group
+
+    }
+  )
 
   # TOTAL SCORE CALCULATION #####
   scored_test <- reactive({
@@ -153,7 +246,7 @@ function(input, output, session) {
   })
 
   # DATA HEAD ######
-  output$headdata <- renderDataTable({
+  output$headdata <- DT::renderDataTable({
 
     test=test_answers()
     name <- c()
@@ -163,10 +256,12 @@ function(input, output, session) {
     colnames(test) <- name
     test
 
-  }, options=list(scrollX=TRUE, pageLength=10))
+  },
+  rownames = F,
+  options=list(scrollX=TRUE, pageLength=10))
 
   # KEY CONTROL #######
-  output$key <- renderDataTable({
+  output$key <- DT::renderDataTable({
 
     key_table=as.data.frame(t(as.data.frame(test_key())))
     name <- c()
@@ -175,11 +270,12 @@ function(input, output, session) {
     }
     colnames(key_table) <- name
     key_table
-
-  }, options=list(scrollX=TRUE))
+  },
+  rownames = F,
+  options=list(scrollX=TRUE))
 
   # SCORE 0-1 #####
-  output$sc01 <- renderDataTable({
+  output$sc01 <- DT::renderDataTable({
     a <- test_answers()
     k <- test_key()
 
@@ -194,107 +290,79 @@ function(input, output, session) {
 
     out <- (cbind(correct,sc))
     out
-  }, options=list(scrollX=TRUE, pageLength=10))
+  },
+  rownames = F,
+  options=list(scrollX=TRUE, pageLength=10))
 
+  # GROUP CONTROL #######
+  output$group <- DT::renderDataTable({
+    group_table <- t(as.data.frame(DIF_groups()))
+    colnames(group_table) <- 1:ncol(group_table)
+
+    group_table
+
+  },
+  rownames = F,
+  options = list(scrollX = TRUE))
 
   ##### ITEM SLIDERS #####
 
-  output$distractorSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("distractorSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
+  observe({
+    sliderList<-c(
+      "distractorSlider",
+      "logregSlider",
+      "zlogregSlider",
+      "zlogreg_irtSlider",
+      "nlsSlider",
+      "multiSlider",
+      "difMHSlider_item",
+      "diflogSlider",
+      "diflog_irtSlider",
+      "difnlrSlider",
+      "difirt_lord_itemSlider",
+      "difirt_raju_itemSlider",
+      "ddfSlider",
+      "reportSlider"
+      )
 
-  output$logregSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("logregSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
+    itemCount = ncol(test_answers())
 
-  output$zlogregSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("zlogregSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
+    updateSliderInput(session = session, inputId = "distractorSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "logregSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "zlogregSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "zlogreg_irtSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "nlsSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "multiSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "difMHSlider_item", max=itemCount)
+    updateSliderInput(session = session, inputId = "diflogSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "diflog_irtSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "difnlrSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "difirt_lord_itemSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "difirt_raju_itemSlider", max=itemCount)
+    updateSliderInput(session = session, inputId = "ddfSlider", max=itemCount)
 
-  output$zlogreg_irtSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("zlogreg_irtSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
+    updateSliderInput(session = session, inputId = "inSlider2", max=itemCount, value = round(median(scored_test())))
+    updateSliderInput(session = session, inputId = "inSlider2group", max=itemCount, value = round(median(scored_test()[DIF_groups() == 1])))
+    updateSliderInput(session = session, inputId = "difMHSlider_score", max=itemCount, value = round(median(scored_test())))
 
-  output$nlsSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("nlsSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
   })
-
-  output$multiSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("multiSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-  output$diflogSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("diflogSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-  output$diflog_irtSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("diflog_irtSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-  output$difnlrSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("difnlrSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-  output$difirt_lord_itemSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("difirt_lord_itemSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-  output$difirt_raju_itemSliderUI <- renderUI({
-    a <- test_answers()
-    sliderInput("difirt_raju_itemSlider", "Item", animate = TRUE, min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
-
-  ########################
-  # SLIDER FOR STUDENTS PAGE ######
-  ########################
-  output$slider2 <- renderUI({
-    sliderInput(
-      "inSlider2", "Cut-Score", min = 0, max = ncol(test_answers()),
-      value = round(median(scored_test())), step = 1
-    )
-  })
-
-  # OTHER SLIDERS ####
-  # * Mantel-Haenszel for score ####
-  output$difMHSlider_score <- renderUI({
-    sliderInput(
-      "difMHSlider_score", "Cut-Score", min = 0, max = ncol(test_answers()),
-      value = round(median(scored_test())), step = 1
-    )
-  })
-  # * Mantel-Haenszel for item ####
-  output$difMHSlider_itemUI <- renderUI({
-    a <- test_answers()
-    sliderInput("difMHSlider_item", "Item", animate = TRUE,
-                min = 1, max = ncol(a), value = 1, step = 1)
-  })
-
 
   ########################
   # SUMMARY  ####
   ########################
   # * TOTAL SCORES #####
   # ** Summary table #####
-  output$results <- renderTable({
-
+  resultsInput <- reactive({
     sc <- scored_test()
 
     tab <- t(data.frame(c(min(sc), max(sc), mean(sc), median(sc), sd(sc),
                           skewness(sc), kurtosis(sc))))
     colnames(tab) <- c("Min", "Max", "Mean", "Median", "SD", "Skewness", "Kurtosis")
     tab
+  })
 
+  output$results <- renderTable({
+    resultsInput()
   },
   digits = 2,
   include.rownames = F,
@@ -375,7 +443,7 @@ function(input, output, session) {
     # percentile
     perc <- cumsum(prop.table(table(sc)))
     # succes rate
-    sura <- (tosc / max(sc)) * 100
+    sura <- (tosc / length(k)) * 100
     # Z score
     zsco <- sort(unique(scale(sc)))
     # T score
@@ -387,6 +455,80 @@ function(input, output, session) {
     tab
   },
   include.rownames = FALSE)
+
+  # * CORRELATION STRUCTURE #####
+
+  corr_structure <- reactive({
+    data <- correct_answ()
+
+    corP <- polychoric(data)
+    corP
+  })
+
+  # ** Correlation plot ######
+  corr_plotInput <- reactive({
+    corP <- corr_structure()
+    corrplot(corP$rho)
+  })
+
+  # ** Output Correlation plot ######
+  output$corr_plot <- renderPlot({
+    corr_plotInput()
+  })
+
+  # ** DB Correlation plot ####
+  output$DP_corr_plot <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+
+      data <- correct_answ()
+      corP <- polychoric(data)
+
+      png(file, height = 800, width = 800, res = 100)
+      corrplot(corP$rho)
+
+      dev.off()
+    }
+  )
+
+  # ** Scree plot ######
+  scree_plotInput <- reactive({
+    corP <- corr_structure()
+    ev <- eigen(corP$rho)$values
+    df <- data.frame(pos = 1:length(ev), ev)
+
+    ggplot(data = df, aes(x = pos, y = ev)) +
+      geom_point() +
+      geom_line() +
+      xlab("Component Number") + ylab("Eigen Value") +
+      scale_x_continuous(breaks = 1:length(ev)) +
+      theme_bw() +
+      theme(legend.title = element_blank(),
+            legend.position = "none",
+            axis.line  = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            text = element_text(size = 14),
+            plot.title = element_text(face = "bold"))
+  })
+
+  # ** Output Scree plot ######
+  output$scree_plot <- renderPlot({
+    scree_plotInput()
+  })
+
+  # ** DB Scree plot ####
+  output$DP_scree_plot <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = scree_plotInput(), device = "png", height = 3, width = 9, dpi = 160)
+    }
+  )
 
   ############################
   # TRADITIONAL ANALYSIS #####
@@ -427,8 +569,7 @@ function(input, output, session) {
   include.colnames = T)
 
   # ** Traditional Item Analysis Table #####
-  output$itemexam <- renderTable({
-
+  itemexamInput<-reactive({
     a <- test_answers()
     k <- test_key()
     correct <- correct_answ()
@@ -441,7 +582,10 @@ function(input, output, session) {
     colnames(tab) <- c("Item", "Difficulty", "SD", "Discrimination ULI",
                        "Discrimination RIT", "Discrimination RIR", "Alpha Drop")
     tab
+  })
 
+  output$itemexam <- renderTable({
+    itemexamInput()
   },
   include.rownames = FALSE)
 
@@ -541,6 +685,24 @@ function(input, output, session) {
     multiple.answers <- c(input$type_combinations_distractor == "Combinations")
     plotDistractorAnalysis(data = a, key = k, num.group = input$gr, item = input$distractorSlider,
                            multiple.answers = multiple.answers)
+  })
+
+  grafReportInput<-reactive({
+    a <- test_answers()
+    k <- test_key()
+
+    multiple.answers <- c(input$type_combinations_distractor == "Combinations")
+
+    graflist<-list()
+
+    for (i in 1:length(k)) {
+      g<-plotDistractorAnalysis(data = a, key = k, num.group = input$gr, item = i,
+                             multiple.answers = multiple.answers)
+      g=g+ggtitle(paste("\nDistractor Plot for Item", i))
+      g=ggplotGrob(g)
+      graflist[[i]]=g
+    }
+    graflist
   })
 
   output$graf <- renderPlot({
@@ -762,6 +924,7 @@ function(input, output, session) {
     scaledsc <- c(scale(scored_test()))
     model <- glm(correct_answ()[, input$zlogreg_irtSlider] ~ scaledsc, family = "binomial")
   })
+
   # ** Plot with estimated logistic curve ####
   zlogreg_irtInput <- reactive({
     scaledsc <- scale(scored_test())
@@ -815,12 +978,12 @@ function(input, output, session) {
 
   # ** Table of parameters ####
   output$zlogregtab_irt <- renderTable({
-
-    tab_coef_old <- coef(z_logistic_irt_reg())
+    fit <- z_logistic_irt_reg()
+    tab_coef_old <- coef(fit)
 
     # delta method
     g <- list( ~ x2,  ~ -x1/x2)
-    cov <- vcov(z_logistic_irt_reg())
+    cov <- vcov(fit)
     cov <- as.matrix(cov)
     syms <- paste("x", 1:2, sep = "")
     for (i in 1:2) assign(syms[i], tab_coef_old[i])
@@ -843,10 +1006,11 @@ function(input, output, session) {
 
   # ** Interpretation ####
   output$zlogisticint_irt <- renderUI({
+    fit <- z_logistic_irt_reg()
 
-    b1 <- summary(z_logistic_irt_reg())$coef[2, 1]
+    b1 <- summary(fit)$coef[2, 1]
     b1 <- round(b1, 2)
-    b0 <- round(summary(z_logistic_irt_reg())$coef[1, 1], 2)
+    b0 <- round(summary(fit)$coef[1, 1], 2)
 
     txt1 <- paste ("<b>", "Interpretation:", "</b>")
     txt2 <-
@@ -908,7 +1072,7 @@ function(input, output, session) {
     estim_klasik1 <-
       nls(
         correct_answ()[, i] ~ regFce_noDIF(scaledsc, a, b, c),
-        algorithm = "port", start = start[input$nlsSlider,],
+        algorithm = "port", start = start[i, ],
         lower = c(-20, -20, 0), upper = c(20, 20, 1)
       )
 
@@ -966,10 +1130,11 @@ function(input, output, session) {
 
   # Table of parameters
   output$nonlinearztab <- renderTable({
+    fit <- nls_model()
 
-    tabulka <- summary(nls_model())$parameters[, 1:2]
-    colnames(tabulka) <- c("Estimate", "SD")
-    tabulka
+    tab <- summary(fit)$parameters[, 1:2]
+    colnames(tab) <- c("Estimate", "SD")
+    tab
   },
   include.rownames = T,
   include.colnames = T
@@ -977,9 +1142,10 @@ function(input, output, session) {
 
   # ** Interpretation ####
   output$nonlinearint <- renderUI({
+    fit <- nls_model()
 
-    a <- round(summary(nls_model())$coef[1, 1], 2)
-    b <- round(summary(nls_model())$coef[2, 1], 2)
+    a <- round(summary(fit)$coef[1, 1], 2)
+    b <- round(summary(fit)$coef[2, 1], 2)
 
     txt1 <- paste ("<b>", "Interpretation:", "</b>")
     txt2 <- paste (
@@ -989,7 +1155,98 @@ function(input, output, session) {
     )
     txt3 <- paste ("<b>", a, "</b>")
     HTML(paste(txt1, txt2, txt3))
+  })
 
+  # * MODEL COMPARISON ######
+  output$regr_comp_table <- DT::renderDataTable({
+    Data <- correct_answ()
+    scaledsc <- c(scale(scored_test()))
+
+    m <- ncol(Data)
+
+    regFce_noDIF <- deriv3(
+      ~ c + (1 - c) / (1 + exp(-a * (x - b))),
+      namevec = c("a", "b", "c"),
+      function.arg = function(x, a, b, c) {}
+    )
+
+    Q3 <- cut(scaledsc, quantile(scaledsc, (0:3) / 3),
+              c("I", "II", "III"),
+              include.lowest = TRUE)
+
+    x <- cbind(mean(scaledsc[Q3 == "I"]),
+               apply(Data[Q3 == "I",], 2, mean))
+    y <- cbind(mean(scaledsc[Q3 == "III"]),
+               apply(Data[Q3 == "III",], 2, mean))
+    u1 <- y[, 1] - x[, 1]
+    u2 <- y[, 2] - x[, 2]
+    ### intercept of line
+    c <- -(-u1 * y[, 2] + u2 * y[, 1]) / u1
+    ### slope of line
+    t <- u2 / u1
+    g <- apply(cbind(0, t * (-4) + c), 1, max)
+
+    b <- ((1 + g) / 2 - c) / t
+
+    alpha <- 4 * t / (1 - g)
+
+    discr <- alpha
+    diffi <- b
+    guess <- g
+
+
+    start <- cbind(discr, diffi, guess)
+    colnames(start) <- c("a", "b", "c")
+
+    # fit2PL <- lapply(1:m, function(i) glm(Data[, i] ~ scaledsc, family = "binomial"))
+
+    fit2PL <- lapply(1:m, function(i) nls(Data[, i] ~  regFce_noDIF(scaledsc, a, b, c = 0),
+                                           algorithm = "port", start = start[i, 1:2],
+                                           lower = c(-Inf, -Inf),
+                                           upper = c(Inf, Inf)))
+
+    fit3PL <- lapply(1:m, function(i) nls(Data[, i] ~  regFce_noDIF(scaledsc, a, b, c),
+                                           algorithm = "port", start = start[i,],
+                                           lower = c(-Inf, -Inf, 0),
+                                           upper = c(Inf, Inf, 1)))
+
+    bestAIC <- ifelse(sapply(fit2PL, AIC) < sapply(fit3PL, AIC), "2PL", "3PL")
+    bestBIC <- ifelse(sapply(fit2PL, BIC) < sapply(fit3PL, BIC), "2PL", "3PL")
+
+    LRstat <- -2 * (sapply(fit2PL, logLik) - sapply(fit3PL, logLik))
+    LRdf <- 1
+    LRpval <- 1 - pchisq(LRstat, LRdf)
+    LRpval <- p.adjust(LRpval, method = input$correction_method_regrmodels)
+    bestLR <- ifelse(LRpval < 0.05, "3PL", "2PL")
+
+
+    tab <- rbind(sprintf("%.2f", round(sapply(fit2PL, AIC), 2)),
+                 sprintf("%.2f", round(sapply(fit3PL, AIC), 2)),
+                 sprintf("%.2f", round(sapply(fit2PL, BIC), 2)),
+                 sprintf("%.2f", round(sapply(fit3PL, BIC), 2)),
+                 sprintf("%.2f", round(LRstat, 3)),
+                 ifelse(round(LRpval, 3) < 0.001, "<0.001", sprintf("%.3f", round(LRpval, 3))),
+                 bestAIC,
+                 bestBIC,
+                 bestLR)
+
+
+
+    tab <- as.data.frame(tab)
+    colnames(tab) <- paste("i", 1:ncol(tab))
+    rownames(tab) <- c("AIC 2PL", "AIC 3PL",
+                       "BIC 2PL", "BIC 3PL",
+                       "Chisq-value", "p-value",
+                       "BEST AIC", "BEST BIC", "BEST LR")
+
+    tab <- DT::datatable(tab, rownames = T,
+                         options = list(autoWidth = T,
+                                        columnDefs = list(list(width = '80px', targets = list(0)),
+                                                          list(width = '60px', targets = list(1:ncol(tab))),
+                                                          list(className = 'dt-center', targets = "_all"),
+                                                          list(dom = 't')),
+                                        scrollX = T))
+    tab
   })
 
   # * MULTINOMIAL ######
@@ -997,32 +1254,41 @@ function(input, output, session) {
   multinomial_model <- reactive({
     stotal <- c(scale(scored_test()))
     k <- t(as.data.frame(test_key()))
+    i <- input$multiSlider
 
-    fitM <- multinom(relevel(as.factor(test_answers()[, input$multiSlider]),
-                             ref = paste(k[input$multiSlider])) ~ stotal)
+    fitM <- multinom(relevel(as.factor(test_answers()[, i]),
+                             ref = paste(k[i])) ~ stotal,
+                     trace = F)
     fitM
   })
+
   # ** Plot with estimated curves of multinomial regression ####
   multiplotInput <- reactive({
+
     k <- t(as.data.frame(test_key()))
-
+    data <- test_answers()
     stotal <- c(scale(scored_test()))
+    i <- input$multiSlider
 
+    data <- sapply(1:ncol(data), function(i) as.factor(data[, i]))
 
-    fitM <- multinom(relevel(as.factor(test_answers()[, input$multiSlider]),
-                             ref = paste(k[input$multiSlider])) ~ stotal)
+    fitM <- multinom(relevel(as.factor(data[, i]),
+                             ref = paste(k[i])) ~ stotal,
+                     trace = F)
 
     pp <- fitted(fitM)
-
-    stotals <- rep(stotal, length(levels(relevel(as.factor(test_answers()[, input$multiSlider]),
-                                                 ref = paste(k[input$multiSlider])))))
+    if(ncol(pp) == 1){
+      pp <- cbind(pp, 1 - pp)
+      colnames(pp) <- c("0", "1")
+    }
+    stotals <- rep(stotal, length(levels(relevel(as.factor(data[, i]),
+                                                 ref = paste(k[i])))))
     df <- cbind(melt(pp), stotals)
-
-
-    df2 <- data.frame(table(test_answers()[, input$multiSlider], stotal),
-                      y = data.frame(prop.table(table(test_answers()[, input$multiSlider], stotal), 2))[, 3])
+    df$Var2 <- relevel(as.factor(df$Var2), ref = paste(k[i]))
+    df2 <- data.frame(table(data[, i], stotal),
+                      y = data.frame(prop.table(table(data[, i], stotal), 2))[, 3])
     df2$stotal <- as.numeric(levels(df2$stotal))[df2$stotal]
-    df2$Var2 <- relevel(df2$Var1, ref = paste(k[input$multiSlider]))
+    df2$Var2 <- relevel(df2$Var1, ref = paste(k[i]))
 
 
     ggplot() +
@@ -1036,9 +1302,9 @@ function(input, output, session) {
                  alpha = 0.5, shape = 21) +
 
       ylim(0, 1) +
-      labs(title = paste("Item", input$multiSlider),
+      labs(title = paste("Item", i),
            x = "Standardized Total Score",
-           y = "Probability of Correct Answer") +
+           y = "Probability of Answer") +
       theme_bw() +
       theme(axis.line  = element_line(colour = "black"),
             text = element_text(size = 14),
@@ -1052,7 +1318,70 @@ function(input, output, session) {
             legend.key = element_rect(colour = "white"),
             plot.title = element_text(face = "bold"),
             legend.key.width = unit(1, "cm"))
+  })
 
+  multiplotReportInput<-reactive({
+    graflist=list()
+    key <- test_key()
+    k <- t(as.data.frame(test_key()))
+    data <- test_answers()
+    data <- sapply(1:ncol(data), function(i) as.factor(data[, i]))
+    stotal <- c(scale(scored_test()))
+
+    for (i in 1:length(key)) {
+
+      fitM <- multinom(relevel(as.factor(data[, i]),
+                               ref = paste(k[i])) ~ stotal,
+                       trace = F)
+
+
+      pp <- fitted(fitM)
+      if(ncol(pp) == 1){
+        pp <- cbind(pp, 1 - pp)
+        colnames(pp) <- c("0", "1")
+      }
+      stotals <- rep(stotal, length(levels(relevel(as.factor(data[, i]),
+                                                   ref = paste(k[i])))))
+      df <- cbind(melt(pp), stotals)
+      df$Var2 <- relevel(as.factor(df$Var2), ref = paste(k[i]))
+      df2 <- data.frame(table(data[, i], stotal),
+                        y = data.frame(prop.table(table(data[, i], stotal), 2))[, 3])
+      df2$stotal <- as.numeric(levels(df2$stotal))[df2$stotal]
+      df2$Var2 <- relevel(df2$Var1, ref = paste(k[i]))
+
+
+      g <- ggplot() +
+        geom_line(data = df,
+                  aes(x = stotals , y = value,
+                      colour = Var2, linetype = Var2), size = 1) +
+        geom_point(data = df2,
+                   aes(x = stotal, y = y,
+                       colour = Var2, fill = Var2,
+                       size = Freq),
+                   alpha = 0.5, shape = 21) +
+
+        ylim(0, 1) +
+        labs(title = paste("Item", i),
+             x = "Standardized Total Score",
+             y = "Probability of Answer") +
+        theme_bw() +
+        theme(axis.line  = element_line(colour = "black"),
+              text = element_text(size = 14),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              legend.title = element_blank(),
+              legend.position = c(0, 1),
+              legend.justification = c(0, 1),
+              legend.background = element_blank(),
+              legend.key = element_rect(colour = "white"),
+              plot.title = element_text(face = "bold"),
+              legend.key.width = unit(1, "cm"))
+      g=g+ggtitle(paste("\nMultinomial Plot for Item", i))
+      g=ggplotGrob(g)
+      graflist[[i]]=g
+    }
+    graflist
   })
 
   output$multiplot <- renderPlot({
@@ -1082,13 +1411,14 @@ function(input, output, session) {
 
   # ** Table of parameters ####
   output$multitab <- renderTable({
+    fit <- multinomial_model()
 
-    koef <- as.vector(coef(multinomial_model()))
-    std  <- as.vector(sqrt(diag(vcov(multinomial_model()))))
+    koef <- as.vector(coef(fit))
+    std  <- as.vector(sqrt(diag(vcov(fit))))
     tab  <- cbind(koef, std)
     colnames(tab) <- c("Estimate", "SD")
-    rownames(tab) <- c(paste("b", rownames(coef(multinomial_model())), "0", sep = ""),
-                       paste("b", rownames(coef(multinomial_model())), "1", sep = ""))
+    rownames(tab) <- c(paste("b", rownames(coef(fit)), "0", sep = ""),
+                       paste("b", rownames(coef(fit)), "1", sep = ""))
     tab
   },
   include.rownames = T)
@@ -1099,18 +1429,32 @@ function(input, output, session) {
     koef <- summary(multinomial_model())$coefficients
     txt  <- c()
 
-    for (i in 1:nrow(koef)){
-      txt[i] <- paste (
-        "A one-unit increase in the z-score (one SD increase in original
+    if(is.null(dim(koef))){
+      m <- length(koef)
+      txt <-  paste (
+        "A one-unit increase in the Z-score (one SD increase in original
         scores)  is associated with the decrease in the log odds of
         answering the item "
-        ,"<b>", row.names(koef)[i], "</b>", "vs.", "<b>",
+        ,"<b> 0 </b>", "vs.", "<b> 1 </b>", " in the amount of ",
+        "<b>", round(koef[2], 2), "</b>", '<br/>')
+    } else {
+      m <- nrow(koef)
+      for (i in 1:m){
+        txt[i] <- paste (
+          "A one-unit increase in the Z-score (one SD increase in original
+        scores)  is associated with the decrease in the log odds of
+        answering the item "
+          ,"<b>", row.names(koef)[i], "</b>", "vs.", "<b>",
 
-        test_key()[input$multiSlider],
+          test_key()[input$multiSlider],
 
-        "</b>","in the amount of ",
-        "<b>", round(koef[i, 2], 2), "</b>", '<br/>')
+          "</b>","in the amount of ",
+          "<b>", round(koef[i, 2], 2), "</b>", '<br/>')
+      }
     }
+
+
+
     HTML(paste(txt))
   })
 
@@ -1124,8 +1468,15 @@ function(input, output, session) {
   })
 
   # *** CC ####
-  output$rasch <- renderPlot({
+  raschInput <- reactive({
     plot(rasch_model())
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$rasch <- renderPlot({
+    raschInput()
   })
 
   output$DP_rasch <- downloadHandler(
@@ -1140,8 +1491,15 @@ function(input, output, session) {
   )
 
   # *** IIC ####
-  output$raschiic <- renderPlot({
+  raschiicInput<-reactive({
     plot(rasch_model(), type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$raschiic <- renderPlot({
+    raschiicInput()
   })
 
   output$DP_raschiic <- downloadHandler(
@@ -1156,8 +1514,15 @@ function(input, output, session) {
   )
 
   # *** TIF ####
+  raschtifInput<-reactive({
+    plot(rasch_model(), items = 0, type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
   output$raschtif <- renderPlot({
-    plot(rasch_model(),items = 0, type = "IIC")
+    raschtifInput()
   })
 
   output$DP_raschtif <- downloadHandler(
@@ -1173,8 +1538,7 @@ function(input, output, session) {
 
 
   # *** Table of parameters ####
-  output$raschcoef <- renderTable({
-
+  raschcoefInput<- reactive({
     tab <- coef(rasch_model())
     tab <- cbind(tab,
                  sqrt(diag(vcov(rasch_model())))[1:nrow(tab)],
@@ -1183,6 +1547,10 @@ function(input, output, session) {
     colnames(tab) <- c("a", "SD(a)", "b", "SD(b)")
     rownames(tab) <- paste("Item", 1:nrow(tab))
     tab
+  })
+
+  output$raschcoef <- renderTable({
+    raschcoefInput()
   },
   include.rownames = T)
 
@@ -1210,7 +1578,7 @@ function(input, output, session) {
       theme(legend.box.just = "left",
             legend.justification = c(1, 0),
             legend.position = c(1, 0),
-            legend.margin = unit(0, "lines"),
+            # legend.margin = unit(0, "lines"),
             legend.box = "vertical",
             legend.key.size = unit(1, "lines"),
             legend.text.align = 0,
@@ -1237,8 +1605,15 @@ function(input, output, session) {
   })
 
   # *** ICC ####
-  output$twoparam <- renderPlot({
+  twoparamInput<-reactive({
     plot(two_param_irt())
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$twoparam <- renderPlot({
+    twoparamInput()
   })
 
   output$DP_twoparam <- downloadHandler(
@@ -1253,8 +1628,15 @@ function(input, output, session) {
   )
 
   # *** IIC ####
-  output$twoparamiic <- renderPlot({
+  twoparamiicInput<-reactive({
     plot(two_param_irt(), type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$twoparamiic <- renderPlot({
+    twoparamiicInput()
   })
 
   output$DP_twoparamiic <- downloadHandler(
@@ -1269,8 +1651,15 @@ function(input, output, session) {
   )
 
   # *** TIF ####
-  output$twoparamtif <- renderPlot({
+  twoparamtifInput<-reactive({
     plot(two_param_irt(), items = 0, type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$twoparamtif <- renderPlot({
+    twoparamtifInput()
   })
 
   output$DP_twoparamtif <- downloadHandler(
@@ -1285,7 +1674,7 @@ function(input, output, session) {
   )
 
   # ** Table of parameters ####
-  output$twoparamcoef <- renderTable({
+  twoparamcoefInput <- reactive({
     fit2pl <- two_param_irt()
     tab <- coef(fit2pl)
     tab <- cbind(tab,
@@ -1295,6 +1684,10 @@ function(input, output, session) {
     colnames(tab) <- c("a", "SD(a)", "b", "SD(b)")
     rownames(tab) <- paste("Item", 1:nrow(tab))
     tab
+  })
+
+  output$twoparamcoef <- renderTable({
+    twoparamcoefInput()
   },
   include.rownames = T)
 
@@ -1321,7 +1714,7 @@ function(input, output, session) {
       theme(legend.box.just = "left",
             legend.justification = c(1, 0),
             legend.position = c(1, 0),
-            legend.margin = unit(0, "lines"),
+            # legend.margin = unit(0, "lines"),
             legend.box = "vertical",
             legend.key.size = unit(1, "lines"),
             legend.text.align = 0,
@@ -1346,8 +1739,15 @@ function(input, output, session) {
     fit3PL <- tpm(correct_answ(), IRT.param = TRUE)
   })
   # ** ICC ####
-  output$threeparam <- renderPlot({
+  threeparamInput<-reactive({
     plot(three_param_irt())
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$threeparam <- renderPlot({
+    threeparamInput()
   })
 
   output$DP_threeparam <- downloadHandler(
@@ -1362,8 +1762,15 @@ function(input, output, session) {
   )
 
   # *** IIC ####
-  output$threeparamiic <- renderPlot({
+  threeparamiicInput<-reactive({
     plot(three_param_irt(), type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$threeparamiic <- renderPlot({
+    threeparamiicInput()
   })
 
   output$DP_threeparamiic <- downloadHandler(
@@ -1378,8 +1785,15 @@ function(input, output, session) {
   )
 
   # *** TIF ####
-  output$threeparamtif <- renderPlot({
+  threeparamtifInput<-reactive({
     plot(three_param_irt(), items = 0, type = "IIC")
+    g<-recordPlot()
+    plot.new()
+    g
+  })
+
+  output$threeparamtif <- renderPlot({
+    threeparamtifInput()
   })
 
   output$DP_threeparamtif <- downloadHandler(
@@ -1394,7 +1808,7 @@ function(input, output, session) {
   )
 
   # *** Table of parameters ####
-  output$threeparamcoef <- renderTable({
+  threeparamcoefInput<-reactive({
     fit3pl <- tpm(correct_answ(), IRT.param = TRUE)
     tab <- coef(fit3pl)
     tab <- cbind(tab,
@@ -1405,6 +1819,10 @@ function(input, output, session) {
     colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)")
     rownames(tab) <- paste("Item", 1:nrow(tab))
     tab
+  })
+
+  output$threeparamcoef <- renderTable({
+    threeparamcoefInput()
   },
   include.rownames = T)
 
@@ -1431,7 +1849,7 @@ function(input, output, session) {
       theme(legend.box.just = "left",
             legend.justification = c(1, 0),
             legend.position = c(1, 0),
-            legend.margin = unit(0, "lines"),
+            # legend.margin = unit(0, "lines"),
             legend.box = "vertical",
             legend.key.size = unit(1, "lines"),
             legend.text.align = 0,
@@ -1451,12 +1869,1003 @@ function(input, output, session) {
     }
   )
 
-  ######################
+  ###############################
+  # * IRT MODELS WITH MIRT ######
+  ###############################
+
+  # ** RASCH ####
+  rasch_model_mirt <- reactive({
+    fitRasch <- mirt(correct_answ(), model = 1, itemtype = "Rasch",
+                     SE = T, verbose = F)
+  })
+
+  # *** CC ####
+  raschInput_mirt <- reactive({
+    g<-plot(rasch_model_mirt(), type = "trace", facet_items = F)
+    g
+    # g <- recordPlot()
+    # plot.new()
+    # g
+  })
+
+  output$rasch_mirt <- renderPlot({
+    raschInput_mirt()
+  })
+
+  output$DP_rasch_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(raschInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** IIC ####
+  raschiicInput_mirt <- reactive({
+    g <- plot(rasch_model_mirt(), type = "infotrace", facet_items = F)
+    g
+  })
+
+  output$raschiic_mirt <- renderPlot({
+    raschiicInput_mirt()
+  })
+
+  output$DP_raschiic_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(raschiicInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** TIF ####
+  raschtifInput_mirt <- reactive({
+    g <- plot(rasch_model_mirt(), type = "infoSE")
+    g
+  })
+
+  output$raschtif_mirt <- renderPlot({
+    raschtifInput_mirt()
+  })
+
+  output$DP_raschtif_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(raschtifInput_mirt())
+      dev.off()
+    }
+  )
+
+
+  # *** Table of parameters ####
+  raschcoefInput_mirt <- reactive({
+    fit <- rasch_model_mirt()
+
+    par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
+    se_list <- coef(fit, printSE = T)
+    se_tab <- sapply(1:length(par_tab), function(i) se_list[[i]]["SE", "d"])
+
+    tab <- cbind(par_tab, se_tab)
+
+    tab <- round(tab, 3)
+
+    itemfittab <- round(itemfit(fit)[, 2:4], 3)
+    tab <- data.frame(tab, itemfittab)
+
+    rownames(tab) <- paste("Item", 1:nrow(tab))
+    colnames(tab) <- c("b", "SD(b)", "SX2-value", "df", "p-value")
+
+    tab
+  })
+
+  output$raschcoef_mirt <- renderTable({
+    raschcoefInput_mirt()
+  },
+  include.rownames = T)
+
+  # *** Factor scores correlation ####
+  raschFactorCorInput_mirt <- reactive({
+    fs <- as.vector(fscores(rasch_model_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    cor <- cor(fs, sts)
+    cor
+  })
+  output$raschFactorCor_mirt <- renderText({
+    paste("The pearson correlation coefficient between standardized total score (Z-score)
+          and factor score estimated by IRT model is", round(raschFactorCorInput_mirt(), 3))
+  })
+
+  # *** Factor scores plot ####
+  raschFactorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(rasch_model_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    df <- data.frame(fs, sts)
+
+    ggplot(df, aes_string("sts", "fs")) +
+      geom_point(size = 3) +
+      labs(x = "Standardized total score", y = "Factor score") +
+      theme_bw() +
+      theme(text = element_text(size = 14),
+            plot.title = element_text(face = "bold", vjust = 1.5),
+            axis.line = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+      theme(legend.box.just = "left",
+            legend.justification = c(1, 0),
+            legend.position = c(1, 0),
+            legend.box = "vertical",
+            legend.key.size = unit(1, "lines"),
+            legend.text.align = 0,
+            legend.title.align = 0)
+  })
+
+  output$raschFactor_mirt <- renderPlot({
+    raschFactorInput_mirt()
+  })
+
+  output$DP_raschFactor_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = raschFactorInput_mirt(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+
+  # *** Wright Map ####
+  raschWrightMapInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(rasch_model_mirt()))
+
+    fit <- rasch_model_mirt()
+    coeftab <- coef(fit)
+    b <- sapply(1:(length(coeftab) - 1), function(i) coeftab[[i]][1, "d"])
+    names(b) <- paste("Item", 1:(length(coeftab) - 1))
+
+    wrightMap(fs, b, item.side = itemClassic)
+
+  })
+
+  output$raschWrightMap_mirt<- renderPlot({
+    raschWrightMapInput_mirt()
+  })
+  output$DP_raschWM_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      fs <- as.vector(fscores(rasch_model_mirt()))
+
+      fit <- rasch_model_mirt()
+      coeftab <- coef(fit)
+      b <- sapply(1:(length(coeftab) - 1), function(i) coeftab[[i]][1, "d"])
+      names(b) <- paste("Item", 1:(length(coeftab) - 1))
+
+      print(class(raschWrightMapInput_mirt()))
+
+      png(file, height = 800, width = 1200, res = 100)
+      wrightMap(fs, b, item.side = itemClassic)
+      dev.off()
+    }
+  )
+
+  # ** 1PL IRT ####
+  one_param_irt_mirt <- reactive({
+    data <- correct_answ()
+    fit1PL <- mirt(data, model = 1, itemtype = "2PL",
+                   constrain = list((1:ncol(data)) + seq(0, (ncol(data) - 1)*3, 3)),
+                   SE = T, verbose = F)
+  })
+
+  # *** CC ####
+  oneparamirtInput_mirt <- reactive({
+    g <- plot(one_param_irt_mirt(), type = "trace", facet_items = F)
+    g
+  })
+
+  output$oneparamirt_mirt <- renderPlot({
+    oneparamirtInput_mirt()
+  })
+
+  output$DP_oneparamirt_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(oneparamirtInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** IIC ####
+  oneparamirtiicInput_mirt <- reactive({
+    plot(one_param_irt_mirt(), type = "infotrace", facet_items = F)
+  })
+
+  output$oneparamirtiic_mirt <- renderPlot({
+    oneparamirtiicInput_mirt()
+  })
+
+  output$DP_oneparamirtiic_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(oneparamirtiicInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** TIF ####
+  oneparamirttifInput_mirt <- reactive({
+    plot(one_param_irt_mirt(), type = "infoSE")
+  })
+
+  output$oneparamirttif_mirt <- renderPlot({
+    oneparamirttifInput_mirt()
+  })
+
+  output$DP_oneparamirttif_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(oneparamirttifInput_mirt())
+      dev.off()
+    }
+  )
+
+
+  # *** Table of parameters ####
+  oneparamirtcoefInput_mirt <- reactive({
+    fit <- one_param_irt_mirt()
+
+    par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b")]
+
+    parvec <- extract.mirt(fit, 'parvec')
+    vcov <- vcov(fit)
+
+    se_tab <- c()
+    for (item in 1:nrow(par_tab)){
+      pick <- c(1, item + 1)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
+
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1), ad, v)
+      names(SEs) <- c('a', 'b')
+      se_tab <- rbind(se_tab, SEs)
+    }
+
+    tab <- cbind(par_tab, se_tab)[, c(1, 3, 2, 4)]
+
+    itemfittab <- itemfit(fit)[, 2:4]
+    tab <- data.frame(tab, itemfittab)
+
+    rownames(tab) <- paste("Item", 1:nrow(tab))
+    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "SX2-value", "df", "p-value")
+
+    tab <- round(tab, 3)
+    tab
+  })
+
+  output$oneparamirtcoef_mirt <- renderTable({
+    oneparamirtcoefInput_mirt()
+  },
+  include.rownames = T)
+
+
+  # *** Factor scores correlation ####
+  oneparamirtFactorCorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(one_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    cor <- cor(fs, sts)
+    cor
+  })
+  output$oneparamirtFactorCor_mirt <- renderText({
+    paste("The pearson correlation coefficient between standardized total score (Z-score)
+          and factor score estimated by IRT model is", round(oneparamirtFactorCorInput_mirt(), 3))
+  })
+  # *** Factor scores plot ####
+  oneparamirtFactorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(one_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    df <- data.frame(fs, sts)
+
+    ggplot(df, aes_string("sts", "fs")) +
+      geom_point(size = 3) +
+      labs(x = "Standardized total score", y = "Factor score") +
+      theme_bw() +
+      theme(text = element_text(size = 14),
+            plot.title = element_text(face = "bold", vjust = 1.5),
+            axis.line = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+      theme(legend.box.just = "left",
+            legend.justification = c(1, 0),
+            legend.position = c(1, 0),
+            legend.box = "vertical",
+            legend.key.size = unit(1, "lines"),
+            legend.text.align = 0,
+            legend.title.align = 0)
+  })
+
+  output$oneparamirtFactor_mirt <- renderPlot({
+    oneparamirtFactorInput_mirt()
+  })
+
+  output$DP_oneparamirtFactor_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = oneparamirtFactorInput_mirt(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+  # *** Wright Map ####
+  oneparamirtWrightMapInput_mirt <- reactive({
+    fit <- one_param_irt_mirt()
+    fs <- as.vector(fscores(fit))
+
+    coeftab <- coef(fit)
+    b <- sapply(1:(length(coeftab) - 1), function(i) coeftab[[i]][1, "d"])
+    names(b) <- paste("Item", 1:(length(coeftab) - 1))
+
+    wrightMap(fs, b, item.side = itemClassic)
+  })
+
+
+  oneparamirtWrightMapReportInput_mirt <- reactive({
+    fit <- one_param_irt_mirt()
+    fs <- as.vector(fscores(fit))
+
+    coeftab <- coef(fit)
+    b <- sapply(1:(length(coeftab) - 1), function(i) coeftab[[i]][1, "d"])
+    names(b) <- paste("Item", 1:(length(coeftab) - 1))
+
+    list<-list()
+    list$fs<-fs
+    list$b<-b
+    list
+  })
+
+  output$oneparamirtWrightMap_mirt<- renderPlot({
+    oneparamirtWrightMapInput_mirt()
+  })
+
+  output$DP_oneparamirtWM_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      fit <- one_param_irt_mirt()
+      fs <- as.vector(fscores(fit))
+
+      coeftab <- coef(fit)
+      b <- sapply(1:(length(coeftab) - 1), function(i) coeftab[[i]][1, "d"])
+      names(b) <- paste("Item", 1:(length(coeftab) - 1))
+
+      png(file, height = 800, width = 1200, res = 100)
+      wrightMap(fs, b, item.side = itemClassic)
+      dev.off()
+    }
+  )
+
+  # ** 2PL IRT ####
+  two_param_irt_mirt <- reactive({
+    data <- correct_answ()
+    fit2PL <- mirt(data, model = 1, itemtype = "2PL",
+                   constrain = NULL,
+                   SE = T, verbose = F)
+  })
+
+  # *** CC ####
+  twoparamirtInput_mirt <- reactive({
+    plot(two_param_irt_mirt(), type = "trace", facet_items = F)
+    # g <- recordPlot()
+    # plot.new()
+    # g
+  })
+
+  output$twoparamirt_mirt <- renderPlot({
+    twoparamirtInput_mirt()
+  })
+
+  output$DP_twoparamirt_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(twoparamirtInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** IIC ####
+  twoparamirtiicInput_mirt <- reactive({
+    plot(two_param_irt_mirt(), type = "infotrace", facet_items = F)
+    # g <- recordPlot()
+    # plot.new()
+    # g
+  })
+
+  output$twoparamirtiic_mirt <- renderPlot({
+    twoparamirtiicInput_mirt()
+  })
+
+  output$DP_twoparamirtiic_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(twoparamirtiicInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** TIF ####
+  twoparamirttifInput_mirt <- reactive({
+    plot(two_param_irt_mirt(), type = "infoSE")
+  })
+
+  output$twoparamirttif_mirt <- renderPlot({
+    twoparamirttifInput_mirt()
+  })
+
+  output$DP_twoparamirttif_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(twoparamirttifInput_mirt())
+      dev.off()
+    }
+  )
+
+
+  # *** Table of parameters ####
+  twoparamirtcoefInput_mirt <- reactive({
+    fit <- two_param_irt_mirt()
+
+    par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b")]
+
+    parvec <- extract.mirt(fit, 'parvec')
+    vcov <- vcov(fit)
+
+    se_tab <- c()
+    for (item in seq(1, 2*nrow(par_tab), 2)){
+      pick <- c(item, item + 1)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
+
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1), ad, v)
+      names(SEs) <- c('a', 'b')
+      se_tab <- rbind(se_tab, SEs)
+    }
+
+    tab <- cbind(par_tab, se_tab)[, c(1, 3, 2, 4)]
+
+    itemfittab <- itemfit(fit)[, 2:4]
+    tab <- data.frame(tab, itemfittab)
+
+    rownames(tab) <- paste("Item", 1:nrow(tab))
+    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "SX2-value", "df", "p-value")
+
+    tab <- round(tab, 3)
+    tab
+  })
+
+  output$twoparamirtcoef_mirt <- renderTable({
+    twoparamirtcoefInput_mirt()
+  },
+  include.rownames = T)
+  # *** Factor scores correlation ####
+  twoparamirtFactorCorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(two_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    cor <- cor(fs, sts)
+    cor
+  })
+
+  output$twoparamirtFactorCor_mirt <- renderText({
+    paste("The pearson correlation coefficient between standardized total score (Z-score)
+          and factor score estimated by IRT model is", round(twoparamirtFactorCorInput_mirt(), 3))
+  })
+  # *** Factor scores plot ####
+  twoparamirtFactorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(two_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    df <- data.frame(fs, sts)
+
+    ggplot(df, aes_string("sts", "fs")) +
+      geom_point(size = 3) +
+      labs(x = "Standardized total score", y = "Factor score") +
+      theme_bw() +
+      theme(text = element_text(size = 14),
+            plot.title = element_text(face = "bold", vjust = 1.5),
+            axis.line = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+      theme(legend.box.just = "left",
+            legend.justification = c(1, 0),
+            legend.position = c(1, 0),
+            legend.box = "vertical",
+            legend.key.size = unit(1, "lines"),
+            legend.text.align = 0,
+            legend.title.align = 0)
+  })
+
+  output$twoparamirtFactor_mirt <- renderPlot({
+    twoparamirtFactorInput_mirt()
+  })
+
+  output$DP_twoparamirtFactor_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = twoparamirtFactorInput_mirt(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+  # ** 3PL IRT ####
+  three_param_irt_mirt <- reactive({
+    data <- correct_answ()
+    fit3PL <- mirt(data, model = 1, itemtype = "3PL",
+                   constrain = NULL,
+                   SE = T, technical = list(NCYCLES = 2000),
+                   verbose = F)
+  })
+
+  # *** CC ####
+  threeparamirtInput_mirt <- reactive({
+    plot(three_param_irt_mirt(), type = "trace", facet_items = F)
+  })
+
+  output$threeparamirt_mirt <- renderPlot({
+    threeparamirtInput_mirt()
+  })
+
+  output$DP_threeparamirt_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(threeparamirtInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** IIC ####
+  threeparamirtiicInput_mirt <- reactive({
+    plot(three_param_irt_mirt(), type = "infotrace", facet_items = F)
+  })
+
+  output$threeparamirtiic_mirt <- renderPlot({
+    threeparamirtiicInput_mirt()
+  })
+
+  output$DP_threeparamirtiic_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(threeparamirtiicInput_mirt())
+      dev.off()
+    }
+  )
+
+  # *** TIF ####
+  threeparamirttifInput_mirt <- reactive({
+    plot(three_param_irt_mirt(), type = "infoSE")
+  })
+
+  output$threeparamirttif_mirt <- renderPlot({
+    threeparamirttifInput_mirt()
+  })
+
+  output$DP_threeparamirttif_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(threeparamirttifInput_mirt())
+      dev.off()
+    }
+  )
+
+
+  # *** Table of parameters ####
+  threeparamirtcoefInput_mirt <- reactive({
+    fit <- three_param_irt_mirt()
+
+    par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b", "g")]
+
+    parvec <- extract.mirt(fit, 'parvec')
+    vcov <- vcov(fit)
+
+    se_tab <- c()
+    for (item in seq(1, 3*nrow(par_tab), 3)){
+      pick <- c(item, item + 1, item + 2)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
+
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3), ad, v)
+      names(SEs) <- c('a', 'b', 'c')
+      se_tab <- rbind(se_tab, SEs)
+    }
+
+    tab <- cbind(par_tab, se_tab)[, c(1, 4, 2, 5, 3, 6)]
+
+    itemfittab <- itemfit(fit)[, 2:4]
+    tab <- data.frame(tab, itemfittab)
+
+    rownames(tab) <- paste("Item", 1:nrow(tab))
+    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "SX2-value", "df", "p-value")
+
+    tab <- round(tab, 3)
+    tab
+  })
+
+  output$threeparamirtcoef_mirt <- renderTable({
+    threeparamirtcoefInput_mirt()
+  },
+  include.rownames = T)
+
+
+
+  # *** Factor scores plot ####
+  threeparamirtFactorCorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(three_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    cor <- cor(fs, sts)
+    cor
+  })
+  output$threeparamirtFactorCor_mirt <- renderText({
+    paste("The pearson correlation coefficient between standardized total score (Z-score)
+          and factor score estimated by IRT model is", round(threeparamirtFactorCorInput_mirt(), 3))
+  })
+  # *** Factor scores plot ####
+  threeparamirtFactorInput_mirt <- reactive({
+
+    fs <- as.vector(fscores(three_param_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    df <- data.frame(fs, sts)
+
+    ggplot(df, aes_string("sts", "fs")) +
+      geom_point(size = 3) +
+      labs(x = "Standardized total score", y = "Factor score") +
+      theme_bw() +
+      theme(text = element_text(size = 14),
+            plot.title = element_text(face = "bold", vjust = 1.5),
+            axis.line = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+      theme(legend.box.just = "left",
+            legend.justification = c(1, 0),
+            legend.position = c(1, 0),
+            legend.box = "vertical",
+            legend.key.size = unit(1, "lines"),
+            legend.text.align = 0,
+            legend.title.align = 0)
+  })
+
+  output$threeparamirtFactor_mirt <- renderPlot({
+    threeparamirtFactorInput_mirt()
+  })
+
+  output$DP_threeparamirtFactor_mirt <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = threeparamirtFactorInput_mirt(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+  # ** IRT COMPARISON ####
+  irtcomparisonInput <- reactive({
+    fit1PL <- one_param_irt_mirt()
+    fit2PL <- two_param_irt_mirt()
+    fit3PL <- three_param_irt_mirt()
+
+    models <- list(fit1PL = fit1PL,
+                   fit2PL = fit2PL,
+                   fit3PL = fit3PL)
+
+    df <- data.frame(anova(models[[1]], models[[2]], verbose = F))
+    df <- rbind(df,
+                data.frame(anova(models[[2]], models[[3]], verbose = F)))
+    df <- round(df[c(1, 2, 4), ], 3)
+    nam <- c("1PL", "2PL", "3PL")
+
+    if (all(df[, 8] > 0.05)){
+      hv <- "1PL"
+    } else {
+      p <- which(df[, 8] < 0.05)
+      hv <- nam[p[length(p)]]
+    }
+
+    df <- rbind(df,
+                c(nam[sapply(1:4, function(i) which(df[, i] == min(df[, i])))],
+                  rep("", 3),
+                  hv))
+
+
+    rownames(df) <- c(nam, "BEST")
+    df
+  })
+
+  output$irtcomparison <- renderTable({
+    irtcomparisonInput()
+  },
+  include.rownames = T)
+
+
+
+  # ** BOCKS NOMINAL MODEL ####
+  adj_data_bock <- reactive({
+    a <- test_answers()
+    k <- as.factor(test_key())
+
+    m <- ncol(a)
+    lev <- unlist(lapply(1:m, function(i) levels(a[, i])))
+    lev <- c(lev, levels(k))
+    lev <- unique(lev)
+    lev_num <- as.numeric(as.factor(lev))
+
+
+    lev_k_num <- sapply(1:length(levels(k)),
+                    function(i) lev_num[levels(k)[i] == lev])
+
+    lev_a_num <- lapply(1:m, function(i)
+                                sapply(1:length(levels(a[, i])),
+                                       function(j) lev_num[levels(a[, i])[j] == lev]))
+
+    levels(k) <- lev_k_num
+    k <- as.numeric(paste(k))
+
+
+    for (i in 1:m){
+      levels(a[, i]) <- lev_a_num[[i]]
+      a[, i] <- as.numeric(paste(a[, i]))
+    }
+
+    list(data = a, key = k)
+  })
+
+
+  bock_irt_mirt <- reactive({
+    data <- adj_data_bock()$data
+    key <- adj_data_bock()$key
+
+
+    sv <- mirt(data, 1, 'nominal', pars = 'values', verbose = F, SE = T)
+
+    # set all values to 0 and estimated
+    sv$value[grepl('ak', sv$name)] <- 0
+    sv$est[grepl('ak', sv$name)] <- TRUE
+
+    nms <- colnames(data)
+    for(i in 1:length(nms)){
+
+      #set highest category based on key fixed to 3
+      pick <- paste0('ak', key[i] - 1)
+      index <- sv$item == nms[i] & pick == sv$name
+      sv[index, 'value'] <- 3
+      sv[index, 'est'] <- FALSE
+
+      # set arbitrary lowest category fixed at 0
+      if(pick == 'ak0') pick2 <- 'ak3'
+      else pick2 <- paste0('ak', key[i] - 2)
+      index2 <- sv$item == nms[i] & pick2 == sv$name
+      sv[index2, 'est'] <- FALSE
+    }
+
+    fit <- mirt(data, 1, 'nominal', pars = sv, SE = T, verbose = F)
+    fit
+  })
+
+  # *** CC ####
+  bock_CC_Input <- reactive({
+    plot(bock_irt_mirt(), type = "trace", facet_items = F)
+  })
+  output$bock_CC <- renderPlot({
+    bock_CC_Input()
+  })
+  output$DP_bock_CC <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(bock_CC_Input())
+      dev.off()
+    }
+  )
+
+  # *** IIC ####
+  bock_IIC_Input <- reactive({
+    plot(bock_irt_mirt(), type = "infotrace", facet_items = F)
+  })
+  output$bock_IIC <- renderPlot({
+    bock_IIC_Input()
+  })
+  output$DP_bock_IIC <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(bock_IIC_Input())
+      dev.off()
+    }
+  )
+
+  # *** TIF ####
+  bock_TIF_Input <- reactive({
+    plot(bock_irt_mirt(), type = "infoSE")
+  })
+  output$bock_TIF <- renderPlot({
+    bock_TIF_Input()
+  })
+  output$DP_bock_TIF <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      png(file, height = 800, width = 1200, res = 100)
+      print(bock_TIF_Input())
+      dev.off()
+    }
+  )
+
+
+  # *** Table of parameters ####
+  output$bock_coef_warning <- renderText({
+    fit <- bock_irt_mirt()
+
+    coeftab <- coef(fit, printSE = T)
+    m <- length(coeftab) - 1
+
+    dims <- sapply(coeftab, dim)[, -(m+1)]
+    print(length(unique(dims[2, ])))
+    if (length(unique(dims[2, ])) == 1){
+      hide("bock_coef_warning")
+    } else {
+      show("bock_coef_warning")
+    }
+    paste("Sorry, for this dataset table is not available!")
+
+  })
+
+  bock_coef_Input <- reactive({
+    fit <- bock_irt_mirt()
+
+    coeftab <- coef(fit, printSE = T)
+    m <- length(coeftab) - 1
+
+    print(coeftab)
+    dims <- sapply(coeftab, dim)[, -(m+1)]
+    if (length(unique(dims[2, ])) == 1){
+      partab <- t(sapply(1:m, function(i) coeftab[[i]][1, ]))
+      if (unique(dims[1, ]) == 1){
+        setab <- matrix(NA, nrow = m, ncol = ncol(partab))
+      } else {
+        setab <- t(sapply(1:m, function(i) coeftab[[i]][2, ]))
+      }
+
+      n <- ncol(partab)
+      tab <- c()
+      for (i in 1:n){
+        tab <- cbind(tab, partab[, i], setab[, i])
+      }
+      namPAR <- colnames(partab)
+      namSE <- paste("SE(", colnames(partab), ")", sep = "")
+
+      colnames(tab) <- c(sapply(1:n, function(i) c(namPAR[i], namSE[i])))
+      rownames(tab) <- paste("Item", 1:m)
+    } else {
+      tab <- NULL
+    }
+
+    tab
+  })
+
+  output$bock_coef <- renderTable({
+    bock_coef_Input()
+  },
+  include.rownames = T,
+  include.colnames = T)
+
+  # *** Factor scores plot ####
+  bock_factor_Input <- reactive({
+
+    fs <- as.vector(fscores(bock_irt_mirt()))
+    sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+
+    df <- data.frame(fs, sts)
+
+    ggplot(df, aes_string("sts", "fs")) +
+      geom_point(size = 3) +
+      labs(x = "Standardized total score", y = "Factor score") +
+      theme_bw() +
+      theme(text = element_text(size = 14),
+            plot.title = element_text(face = "bold", vjust = 1.5),
+            axis.line = element_line(colour = "black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+      theme(legend.box.just = "left",
+            legend.justification = c(1, 0),
+            legend.position = c(1, 0),
+            legend.box = "vertical",
+            legend.key.size = unit(1, "lines"),
+            legend.text.align = 0,
+            legend.title.align = 0)
+  })
+  output$bock_factor <- renderPlot({
+    bock_factor_Input()
+  })
+  output$DP_bock_factor <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = bock_factor_Input(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+
+
+  ###################
   # DIF/FAIRNESS ####
-  ######################
+  ###################
   # * TOTAL SCORES ####
   # ** Summary of Total Scores for Groups ####
-  output$resultsgroup <- renderTable({
+  resultsgroupInput<-reactive({
     sc_one  <- scored_test()[DIF_groups() == 1]
     sc_zero <- scored_test()[DIF_groups() == 0]
     tab <- t(data.frame(round(c(min(sc_zero), max(sc_zero), mean(sc_zero), median(sc_zero),
@@ -1466,18 +2875,14 @@ function(input, output, session) {
     colnames(tab) <- c("Min", "Max", "Mean", "Median", "SD", "Skewness", "Kurtosis")
     rownames(tab) <- c("Reference group (0)", "Focal group (1)")
     tab
+  })
+
+  output$resultsgroup <- renderTable({
+    resultsgroupInput()
   },
   digits = 2,
   include.rownames = T,
   include.colnames = T)
-
-  # ** Cut score ####
-  output$slider2group <- renderUI({
-    sliderInput(
-      "inSlider2group", "Cut-Score", min = 0, max = ncol(test_answers()),
-      value = round(median(scored_test()[DIF_groups() == 1])), step = 1
-    )
-  })
 
   # ** Histogram of total score for group = 1 (focal) ####
   histbyscoregroup1Input <- reactive({
@@ -1504,24 +2909,25 @@ function(input, output, session) {
       }
     }
 
-    ggplot(df, aes(x = sc)) +
-      geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
-      scale_fill_manual("", breaks = df$gr, values = col) +
-      labs(x = "Total Score",
-           y = "Number of Students") +
-      scale_y_continuous(expand = c(0, 0),
-                         limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
-      scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-      theme_bw() +
-      theme(legend.title = element_blank(),
-            legend.position = "none",
-            axis.line  = element_line(colour = "black"),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            text = element_text(size = 14),
-            plot.title = element_text(face = "bold")) +
-      ggtitle("Histogram of Total Scores for Focal Group")
+    g<-ggplot(df, aes(x = sc)) +
+        geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
+        scale_fill_manual("", breaks = df$gr, values = col) +
+        labs(x = "Total Score",
+             y = "Number of Students") +
+        scale_y_continuous(expand = c(0, 0),
+                           limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
+        scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
+        theme_bw() +
+        theme(legend.title = element_blank(),
+              legend.position = "none",
+              axis.line  = element_line(colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              text = element_text(size = 14),
+              plot.title = element_text(face = "bold")) +
+        ggtitle("Histogram of Total Scores for Focal Group")
+    g
   })
 
   output$histbyscoregroup1 <- renderPlot ({
@@ -1561,24 +2967,25 @@ function(input, output, session) {
         col <- c("red", "grey", "blue")
       }
     }
-    ggplot(df, aes(x = sc)) +
-      geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
-      scale_fill_manual("", breaks = df$gr, values = col) +
-      labs(x = "Total Score",
-           y = "Number of Students") +
-      scale_y_continuous(expand = c(0, 0),
-                         limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
-      scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-      theme_bw() +
-      theme(legend.title = element_blank(),
-            legend.position = "none",
-            axis.line  = element_line(colour = "black"),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            text = element_text(size = 14),
-            plot.title = element_text(face = "bold")) +
-      ggtitle("Histogram of Total Scores for Reference Group")
+    g<-ggplot(df, aes(x = sc)) +
+        geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
+        scale_fill_manual("", breaks = df$gr, values = col) +
+        labs(x = "Total Score",
+             y = "Number of Students") +
+        scale_y_continuous(expand = c(0, 0),
+                           limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
+        scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
+        theme_bw() +
+        theme(legend.title = element_blank(),
+              legend.position = "none",
+              axis.line  = element_line(colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              text = element_text(size = 14),
+              plot.title = element_text(face = "bold")) +
+        ggtitle("Histogram of Total Scores for Reference Group")
+    g
   })
 
   output$histbyscoregroup0 <- renderPlot ({
@@ -1642,6 +3049,7 @@ function(input, output, session) {
                               y = deltaGpurn()$Deltas[deltaGpurn()$DIFitems, 2]),
                           size = 6, color = "black", shape = 1)
     }
+    p=p+ggtitle("Delta Plot")
     p
   })
 
@@ -1768,7 +3176,8 @@ function(input, output, session) {
     data <- correct_answ()
 
     mod <- difLogistic(Data = data, group = group, focal.name = 1,
-                       type = input$type_plot_DIF_logistic, p.adjust.method = input$correction_method_logItems)
+                       type = input$type_plot_DIF_logistic,
+                       p.adjust.method = input$correction_method_logItems)
     mod
   })
 
@@ -1778,7 +3187,8 @@ function(input, output, session) {
     data <- correct_answ()
 
     mod <- difLogistic(Data = data, group = group, focal.name = 1,
-                       type = input$type_print_DIF_logistic, p.adjust.method = input$correction_method_logSummary)
+                       type = input$type_print_DIF_logistic,
+                       p.adjust.method = input$correction_method_logSummary)
     mod
   })
 
@@ -1832,6 +3242,31 @@ function(input, output, session) {
   include.rownames = T,
   include.colnames = T)
 
+  DIF_logistic_plotReport<-reactive({
+    group <- DIF_groups()
+    data <- correct_answ()
+
+    mod <- difLogistic(Data = data, group = group, focal.name = 1,
+                       type = input$type_print_DIF_logistic, p.adjust.method = input$correction_method_logItems)
+    mod$DIFitems
+    graflist = list()
+    if (mod$DIFitems[1]!="No DIF item detected") {
+      for (i in 1:length(mod$DIFitems)) {
+        g<-plotDIFLogistic(data, group,
+                            type = input$type_plot_DIF_logistic,
+                            item =  mod$DIFitems[i],
+                            IRT = F,
+                            p.adjust.method = input$correction_method_logItems
+            )
+        g=g+ggtitle(paste0("DIF Logistic Plot for Item ", mod$DIFitems[i]))
+        #g=ggplotGrob(g)
+        graflist[[i]]<-g
+      }
+    } else {
+      graflist=0
+    }
+    graflist
+  })
 
   # * LOGISTIC IRT Z ####
   # ** Model for plot ####
@@ -1936,66 +3371,86 @@ function(input, output, session) {
 
 
   # * NLR DIF ####
-  # ** Model for plot ####
-  model_DIF_NLR_plot <- reactive({
-    group <- DIF_groups()
-    data <- correct_answ()
-
-    mod <- difNLR(data = data, group = group, type = input$type_plot_DIF_NLR,
-                  p.adjust.method = input$correction_method_nlrItems)
-    mod
-  })
-
   # ** Model for print ####
   model_DIF_NLR_print <- reactive({
     group <- DIF_groups()
     data <- correct_answ()
 
-    mod <- difNLR(data = data, group = group, type = input$type_print_DIF_NLR,
-                  p.adjust.method = input$correction_method_nlrSummary)
+    type <- input$type_print_DIF_NLR
+    adj.method <- input$correction_method_nlrSummary
+    model <- "3PLcg"
+
+    mod <- difNLR(Data = data, group = group, focal.name = 1,
+                  model = model, type = type,
+                  p.adjust.method = adj.method)
     mod
   })
 
   # ** Output print ####
-   output$print_DIF_NLR <- renderPrint({
-     print(model_DIF_NLR_print())
-   })
+  output$print_DIF_NLR <- renderPrint({
+    print(model_DIF_NLR_print())
+  })
+
+  # ** Model for plot ####
+  model_DIF_NLR_plot <- reactive({
+    group <- DIF_groups()
+    data <- correct_answ()
+
+    type <- input$type_plot_DIF_NLR
+    adj.method <- input$correction_method_nlrItems
+    model <- "3PLcg"
+
+    mod <- difNLR(Data = data, group = group, focal.name = 1,
+                  model = model, type = type,
+                  p.adjust.method = adj.method)
+    mod
+  })
 
   # ** Plot ####
   plot_DIF_NLRInput <- reactive({
-    plot(model_DIF_NLR_plot(), item = input$difnlrSlider)[[1]] +
+    fit <- model_DIF_NLR_plot()
+    item <- input$difnlrSlider
+
+    plot(fit, item = item)[[1]] +
       theme(text = element_text(size = 14),
-            plot.title = element_text(size = 14, face = "bold", vjust = 1.5))
+            plot.title = element_text(size = 14, face = "bold",
+                                      vjust = 1.5))
   })
 
+  # ** Output plot ####
   output$plot_DIF_NLR <- renderPlot({
     plot_DIF_NLRInput()
   })
 
+  # ** Plot download ####
   output$DP_plot_DIF_NLR <- downloadHandler(
     filename =  function() {
       paste("plot", input$name, ".png", sep = "")
     },
     content = function(file) {
-      ggsave(file, plot = plot_DIF_NLRInput(), device = "png", height=3, width=9, dpi=160)
+      ggsave(file, plot = plot_DIF_NLRInput(), device = "png",
+             height = 3, width = 9, dpi = 160)
     }
   )
 
+ # ** Table of coefficients ####
   output$tab_coef_DIF_NLR <- renderTable({
+    item <- input$difnlrSlider
+    fit <- model_DIF_NLR_plot()
+    DIFitems <- fit$DIFitems
+
+    if (DIFitems == "No DIF item detected"){
+      tab_coef <- unlist(c(fit$nlrPAR[item, c("a", "b")], 0, 0, fit$nlrPAR[item, "c"]))
+      tab_sd <- unlist(c(fit$nlrSE[item, c("a", "b")], 0, 0, fit$nlrSE[item, "c"]))
+    } else {
+      tab_coef <- fit$nlrPAR[item, c("a", "b", "aDif", "bDif", "c")]
+      tab_sd <- fit$nlrSE[item, c("a", "b", "aDif", "bDif", "c")]
+    }
 
 
-    tab_coef <- t(as.table(model_DIF_NLR_plot()$coef[input$difnlrSlider, ]))
+    tab <- t(rbind(tab_coef, tab_sd))
 
-    tab_sd <- lapply(lapply(model_DIF_NLR_plot()$vcov, diag), `length<-`,
-                     max(lengths(lapply(model_DIF_NLR_plot()$vcov, diag))))
-    tab_sd <- t(matrix(unlist(tab_sd), nrow = 5))
-    tab_sd[is.na(tab_sd)] <- 0
-
-
-    tab <- data.frame(tab_coef, tab_sd[input$difnlrSlider, ])
-
-    tab <- data.frame(tab[, 3:4])
-    rownames(tab) <- c('a', 'b', 'c', 'aDIF', 'bDIF')
+    rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF', 'c')
     colnames(tab) <- c("Estimate", "SD")
 
     tab
@@ -2015,13 +3470,13 @@ function(input, output, session) {
     mod <- switch(input$type_plot_DIF_IRT_lord,
                   "1PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "1PL",
-                                  p.adjust.method = input$correction_method_IRT_LordItems),
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordItems),
                   "2PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "2PL",
-                                  p.adjust.method = input$correction_method_IRT_LordItems),
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordItems),
                   "3PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "3PL", c = guess,
-                                  p.adjust.method = input$correction_method_IRT_LordItems))
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordItems))
     mod
   })
 
@@ -2037,13 +3492,13 @@ function(input, output, session) {
     mod <- switch(input$type_print_DIF_IRT_lord,
                   "1PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "1PL",
-                                  p.adjust.method = input$correction_method_IRT_LordSummary),
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordSummary),
                   "2PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "2PL",
-                                  p.adjust.method = input$correction_method_IRT_LordSummary),
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordSummary),
                   "3PL" = difLord(Data = data, group = group, focal.name = 1,
                                   model = "3PL", c = guess,
-                                  p.adjust.method = input$correction_method_IRT_LordSummary))
+                                  p.adjust.method = input$correction_method_DIF_IRT_lordSummary))
     mod
   })
 
@@ -2055,7 +3510,9 @@ function(input, output, session) {
 
   # ** Plot ####
   plot_DIF_IRT_LordInput <- reactive({
-    plotDIFirt(parameters = tab_coef_DIF_IRT_Lord(), item=input$difirt_lord_itemSlider)
+    fitLord <- model_DIF_IRT_Lord_plot()
+    plotDIFirt(parameters = fitLord$itemParInit,
+               item = input$difirt_lord_itemSlider)
   })
 
   output$plot_DIF_IRT_Lord <- renderPlot({
@@ -2074,7 +3531,15 @@ function(input, output, session) {
   # ** Table with coefficients ####
   tab_coef_DIF_IRT_Lord <- reactive({
 
-    m <- nrow(model_DIF_IRT_Lord_plot()$itemParInit)/2
+    fitLord <- model_DIF_IRT_Lord_plot()
+    m <- nrow(fitLord$itemParInit)/2
+
+    mR <- fitLord$itemParInit[1:m, ]
+    mF <- fitLord$itemParInit[(m+1):(2*m), ]
+    mF <- itemRescale(mR, mF)
+
+    par <- rbind(mR, mF)
+
     wh_coef <- switch(input$type_plot_DIF_IRT_lord,
                       "1PL" = 1,
                       "2PL" = 1:2,
@@ -2084,12 +3549,9 @@ function(input, output, session) {
                     "2PL" = 3:4,
                     "3PL" = 3:4)
 
-    tab_coef <- c(model_DIF_IRT_Lord_plot()$itemParInit[c(input$difirt_lord_itemSlider,
-                                                          m + input$difirt_lord_itemSlider),
-                                                        wh_coef])
-    tab_sd <- c(model_DIF_IRT_Lord_plot()$itemParInit[c(input$difirt_lord_itemSlider,
-                                                        m + input$difirt_lord_itemSlider),
-                                                      wh_sd])
+    item <- input$difirt_lord_itemSlider
+    tab_coef <- c(par[c(item, m + item), wh_coef])
+    tab_sd <- c(par[c(item, m + item), wh_sd])
 
     if (input$type_plot_DIF_IRT_lord == "3PL")
       tab_coef <- tab_coef[-6]
@@ -2181,13 +3643,13 @@ function(input, output, session) {
     mod <- switch(input$type_plot_DIF_IRT_raju,
                   "1PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "1PL",
-                                  p.adjust.method = input$correction_method_IRT_RajuItems),
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuItems),
                   "2PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "2PL",
-                                  p.adjust.method = input$correction_method_IRT_RajuItems),
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuItems),
                   "3PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "3PL", c = guess,
-                                  p.adjust.method = input$correction_method_IRT_RajuItems))
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuItems))
     mod
   })
 
@@ -2203,13 +3665,13 @@ function(input, output, session) {
     mod <- switch(input$type_print_DIF_IRT_raju,
                   "1PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "1PL",
-                                  p.adjust.method = input$correction_method_IRT_RajuSummary),
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuSummary),
                   "2PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "2PL",
-                                  p.adjust.method = input$correction_method_IRT_RajuSummary),
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuSummary),
                   "3PL" = difRaju(Data = data, group = group, focal.name = 1,
                                   model = "3PL", c = guess,
-                                  p.adjust.method = input$correction_method_IRT_RajuSummary))
+                                  p.adjust.method = input$correction_method_DIF_IRT_rajuSummary))
     mod
   })
 
@@ -2222,7 +3684,9 @@ function(input, output, session) {
 
   # ** Plot ####
   plot_DIF_IRT_RajuInput <- reactive({
-    plotDIFirt(parameters = tab_coef_DIF_IRT_Raju(), test = "Raju", item=input$difirt_raju_itemSlider)
+    fitRaju <- model_DIF_IRT_Raju_plot()
+    plotDIFirt(parameters = fitRaju$itemParInit, test = "Raju",
+               item = input$difirt_raju_itemSlider)
   })
 
   output$plot_DIF_IRT_Raju <- renderPlot({
@@ -2295,7 +3759,16 @@ function(input, output, session) {
   # ** Table with coefficients ####
   tab_coef_DIF_IRT_Raju <- reactive({
 
-    m <- nrow(model_DIF_IRT_Raju_plot()$itemParInit)/2
+
+    fitRaju <- model_DIF_IRT_Raju_plot()
+    m <- nrow(fitRaju$itemParInit)/2
+
+    mR <- fitRaju$itemParInit[1:m, ]
+    mF <- fitRaju$itemParInit[(m+1):(2*m), ]
+    mF <- itemRescale(mR, mF)
+
+    par <- rbind(mR, mF)
+
     wh_coef <- switch(input$type_plot_DIF_IRT_raju,
                       "1PL" = 1,
                       "2PL" = 1:2,
@@ -2304,9 +3777,10 @@ function(input, output, session) {
                     "1PL" = 2,
                     "2PL" = 3:4,
                     "3PL" = 3:4)
+    item <- input$difirt_raju_itemSlider
 
-    tab_coef <- c(model_DIF_IRT_Raju_plot()$itemParInit[c(input$difirt_raju_itemSlider, m + input$difirt_raju_itemSlider), wh_coef])
-    tab_sd <- c(model_DIF_IRT_Raju_plot()$itemParInit[c(input$difirt_raju_itemSlider, m + input$difirt_raju_itemSlider), wh_sd])
+    tab_coef <- c(par[c(item, m + item), wh_coef])
+    tab_sd <- c(par[c(item, m + item), wh_sd])
 
     if (input$type_plot_DIF_IRT_raju == "3PL")
       tab_coef <- tab_coef[-6]
@@ -2332,7 +3806,267 @@ function(input, output, session) {
   include.rownames = T,
   include.colnames = T)
 
+  # * DDF ####
+  # ** Model for print ####
+  model_DDF_print <- reactive({
+    group <- DIF_groups()
+    a <- test_answers()
+    k <- test_key()
 
+    adj.method <- input$correction_method_print_DDF
+    type <- input$type_print_DDF
+
+    mod <- ddfMLR(Data = a, group = group, focal.name = 1,
+                  key = k, p.adjust.method = adj.method,
+                  type = type)
+
+    mod
+  })
+
+  # ** Output print ####
+  output$print_DDF <- renderPrint({
+    print(model_DDF_print())
+  })
+
+  # ** Model for plot ####
+  model_DDF_plot <- reactive({
+    group <- DIF_groups()
+    a <- test_answers()
+    k <- test_key()
+
+    adj.method <- input$correction_method_plot_DDF
+    type <- input$type_plot_DDF
+
+    mod <- ddfMLR(Data = a, group = group, focal.name = 1,
+                  key = k, p.adjust.method = adj.method,
+                  type = type)
+
+    mod
+  })
+
+  # ** Plot ####
+  plot_DDFInput <- reactive({
+    fit <- model_DDF_plot()
+    item <- input$ddfSlider
+
+    plot(fit, item = item)
+  })
+
+  plot_DDFReportInput<-reactive({
+    group <- DIF_groups()
+    a <- test_answers()
+    k <- test_key()
+
+    adj.method <- input$correction_method_plot_DDF
+    type <- input$type_plot_DDF
+
+    mod <- ddfMLR(Data = a, group = group, focal.name = 1,
+                  key = k, p.adjust.method = adj.method,
+                  type = type)
+
+    graflist = list()
+   # if (mod$DIFitems[[1]]!="No DDF item detected"){
+      for (i in 1:length(mod$DDFitems)) {
+        g<-plot(mod, item = mod$DDFitems[[i]], title = paste("\nDDF Multinomial Plot for Item", i))
+        #g=ggplotGrob(g)
+        graflist[[i]]<-g
+      }
+    #} else {
+     # graflist=0
+    #}
+    graflist
+  })
+
+
+  # ** Output Plot ####
+  output$plot_DDF <- renderPlot({
+    plot_DDFInput()
+  })
+
+  # ** Plot download ####
+  output$DP_plot_DDF <- downloadHandler(
+    filename =  function() {
+      paste("plot", input$name, ".png", sep = "")
+    },
+    content = function(file) {
+      ggsave(file, plot = plot_DDFInput(), device = "png",
+             height = 3, width = 9, dpi = 160)
+    }
+  )
+
+  # ** Table of coefficients ####
+  output$tab_coef_DDF <- renderTable({
+    item <- input$ddfSlider
+    fit <- model_DDF_plot()
+
+    tab_coef <- fit$mlrPAR[[item]]
+    tab_se <- fit$mlrSE[[item]]
+    tab_se <- matrix(tab_se, ncol = ncol(tab_coef), byrow = T)
+
+    if (ncol(tab_coef) == 2){
+      tab_coef <- data.frame(tab_coef, 0, 0)
+      tab_se <- data.frame(tab_se, 0, 0)
+    } else {
+      if (ncol(tab_coef) == 3){
+        tab_coef <- data.frame(tab_coef, 0)
+        tab_se <- data.frame(tab_se, 0)
+      }
+    }
+
+
+    colnames(tab_se) <- colnames(tab_coef) <- c("b0", "b1", "b2", "b3")
+    rownames(tab_se) <- rownames(tab_coef)
+
+    tab_coef <- data.frame(tab_coef, answ = rownames(tab_coef))
+    tab_se <- data.frame(tab_se, answ = rownames(tab_se))
+
+    df1 <- melt(tab_coef, id = "answ")
+    df2 <- melt(tab_se, id = "answ")
+    tab <- data.frame(df1$value,
+                      df2$value)
+
+    rownames(tab) <- paste(substr(df1$variable, 1, 1),
+                           df1$answ,
+                           substr(df1$variable, 2, 2), sep = "")
+    colnames(tab) <- c("Estimate", "SD")
+    tab
+  },
+  include.rownames = T)
+
+  # ** Equation ####
+  output$DDFeq <- renderUI ({
+    item <- input$ddfSlider
+    key <- test_key()
+
+    cor_option <- key[item]
+    withMathJax(
+      sprintf(
+        '$$\\text{For item } %s \\text{ are corresponding equations of multinomial model given by: } \\\\
+           \\mathrm{P}(Y_{i} = %s|Z_i, G_i, b_{l0}, b_{l1}, b_{l2}, b_{l3}, l = 1,\\dots,K-1) =
+           \\frac{1}{1 + \\sum_l e^{\\left( b_{l0} + b_{l1} Z_i + b_{l2} G_i + b_{l3} Z_i:G_i\\right)}}, \\\\
+\\mathrm{P}(Y_{i} = k|Z_i, G_i, b_{l0}, b_{l1}, b_{l2}, b_{l3}, l = 1,\\dots,K-1) =
+           \\frac{e^{\\left( b_{k0} + b_{k1} Z_i + b_{k2} G_i + b_{k3} Z_i:G_i\\right)}}
+                 {1 + \\sum_l e^{\\left( b_{l0} + b_{l1} Z_i + b_{l2} G_i + b_{l3} Z_i:G_i\\right)}}, \\\\
+        \\text{where } %s \\text{ is the correct answer and } k \\text{ is one of the wrong options.}$$',
+        item, cor_option, cor_option, cor_option, cor_option
+      )
+    )
+  })
+
+
+  # DOWNLOADN REPORT #####
+  formatInput<-reactive({
+    format<-input$report_format
+    format
+  })
+
+  irt_typeInput<-reactive({
+    type=input$irt_type_report
+    type
+  })
+
+  irtInput<-reactive({
+    type = input$irt_type_report
+    if (type=="rasch"){out=raschInput_mirt()}
+    if (type=="1pl") {out=oneparamirtInput_mirt()}
+    if (type=="2pl") {out=twoparamirtInput_mirt()}
+    if (type=="3pl") {out=threeparamirtInput_mirt()}
+    out
+  })
+
+  irtiicInput<-reactive({
+    type = input$irt_type_report
+    if (type=="rasch"){out=raschiicInput_mirt()}
+    if (type=="1pl") {out=oneparamirtiicInput_mirt()}
+    if (type=="2pl") {out=twoparamirtiicInput_mirt()}
+    if (type=="3pl") {out=threeparamirtiicInput_mirt()}
+    out
+  })
+
+  irttifInput<-reactive({
+    type = input$irt_type_report
+    if (type=="rasch"){out=raschtifInput_mirt()}
+    if (type=="1pl") {out=oneparamirttifInput_mirt()}
+    if (type=="2pl") {out=twoparamirttifInput_mirt()}
+    if (type=="3pl") {out=threeparamirttifInput_mirt()}
+    out
+  })
+
+  irtcoefInput<-reactive({
+    type = input$irt_type_report
+    if (type=="rasch"){out=raschcoefInput_mirt()}
+    if (type=="1pl") {out=oneparamirtcoefInput_mirt()}
+    if (type=="2pl") {out=twoparamirtcoefInput_mirt()}
+    if (type=="3pl") {out=threeparamirtcoefInput_mirt()}
+    out
+  })
+
+  irtfactorInput<-reactive({
+    type = input$irt_type_report
+    if (type=="rasch"){out=raschFactorInput_mirt()}
+    if (type=="1pl") {out=oneparamirtFactorInput_mirt()}
+    if (type=="2pl") {out=twoparamirtFactorInput_mirt()}
+    if (type=="3pl") {out=threeparamirtFactorInput_mirt()}
+    out
+  })
+
+  groupPresent<-reactive({
+    if (length(dataset$group)>1) {
+      groupLogical=TRUE
+    } else {
+      groupLogical=FALSE
+    }
+    groupLogical
+  })
+
+  output$report<-downloadHandler(
+    filename=reactive({paste0("report.", input$report_format)}),
+    content=function(file) {
+
+      reportPath <- file.path(getwd(), paste0("report", formatInput(),".Rmd"))
+      #file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      parameters<-list(a = test_answers(),
+                       k = test_key(),
+                       results = t(resultsInput()),
+                       histogram_totalscores = histogram_totalscoresInput(),
+                       corr_plot = corr_plotInput(),
+                       scree_plot = scree_plotInput(),
+                       difPlot = difplotInput(),
+                       itemexam = itemexamInput(),
+                       hist_distractor_by_group = hist_distractor_by_groupInput(),
+                       graf = grafReportInput(),
+                       logreg = logregInput(),
+                       zlogreg = zlogregInput(),
+                       zlogreg_irt = zlogreg_irtInput(),
+                       nlsplot = nlsplotInput(),
+                       multiplot = multiplotReportInput(),
+                       wrightMap = oneparamirtWrightMapReportInput_mirt(),
+                       irt_type = irt_typeInput(),
+                       irt = irtInput(),
+                       irtiic = irtiicInput(),
+                       irttif = irttifInput(),
+                       irtcoef = irtcoefInput(),
+                       irtfactor = irtfactorInput(),
+                       isGroupPresent = groupPresent(),
+                       resultsgroup = {if (groupPresent()) {resultsgroupInput()}},
+                       histbyscoregroup0 = {if (groupPresent()) {histbyscoregroup0Input()}},
+                       histbyscoregroup1 = {if (groupPresent()) {histbyscoregroup1Input()}},
+                       deltaplot = {if (groupPresent()) {deltaplotInput()}},
+                       DP_text_normal = {if (groupPresent()) {deltaGpurn()}},
+                       DIF_logistic_plot = {if (groupPresent()) {DIF_logistic_plotReport()}},
+                       DIF_logistic_print = {if (groupPresent()) {model_DIF_logistic_print()}},
+                       plot_DIF_logistic = {if (groupPresent()) {plot_DIF_logisticInput()}},
+                       plot_DIF_logistic_IRT_Z = {if (groupPresent()) {plot_DIF_logistic_IRT_ZInput()}},
+                       #plot_DIF_NLR = {if (groupPresent()) {plot_DIF_NLRInput()}},
+                       plot_DIF_IRT_Lord = {if (groupPresent()) {plot_DIF_IRT_LordInput()}},
+                       plot_DIF_IRT_Raju = {if (groupPresent()) {plot_DIF_IRT_RajuInput()}},
+                       model_DDF_print = {if (groupPresent()) {model_DDF_print()}},
+                       plot_DDFReportInput = {if (groupPresent()) {plot_DDFReportInput()}}
+                       )
+      rmarkdown::render(reportPath, output_file=file,
+                        params = parameters, envir = new.env(parent = globalenv()))
+    }
+  )
 
 
 }
