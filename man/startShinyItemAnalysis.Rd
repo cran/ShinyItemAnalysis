@@ -7,7 +7,7 @@
 startShinyItemAnalysis()
 }
 \description{
-An interactive Shiny application for running Item Analysis.
+An interactive shiny application for running test and item analysis.
 }
 \examples{
 \dontrun{
@@ -35,4 +35,3 @@ Institute of Computer Science, The Czech Academy of Sciences \cr
 The Faculty of Informatics and Statistics, University of Economics, Prague \cr
 houdek.james@gmail.com \cr
 }
-

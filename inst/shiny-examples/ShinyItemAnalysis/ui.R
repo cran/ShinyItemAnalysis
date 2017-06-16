@@ -1,80 +1,86 @@
-######################
+#%%%%%%%%%%%%%%%%%%%%%
 # GLOBAL LIBRARY #####
-######################
+#%%%%%%%%%%%%%%%%%%%%%
 
 require(DT)
 require(shinyjs)
 
-######################
+#%%%%%%%%%%%%%%%%%%%%%
 # UI #################
-######################
+#%%%%%%%%%%%%%%%%%%%%%
 
-ui=tagList(
-  useShinyjs(),
-  # !! ONLINE VERSION ####
-  # tags$head(includeScript("google-analytics.js")),
-  navbarPage(title="ShinyItemAnalysis - TEST AND ITEM ANALYSIS",
-             collapsible=TRUE,
-             footer=list(
-               ############################################
-               # !! ONLINE VERSION ####
-               # div(class="panel-footer",
-               #     p(strong("ShinyItemAnalysis Version 1.1.0")),
-               #     p("Download ShinyItemAnalysis R package from ",
-               #       a(strong("CRAN"), href = "https://cran.rstudio.com/web/packages/ShinyItemAnalysis/",
-               #         target = "_blank"), "to run analysis faster!"),
-               #     p("Project was supported by grant funded by Czech Science Foundation under number ",
-               #       a("GJ15-15856Y",
-               #         href = "http://www.cs.cas.cz/martinkova/psychometrics.html",
-               #         target = "_blank")),
-               #     p("Copyright 2017  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek"),
-               #     div(
-               #       HTML('<p style="font-size: 9pt">
-               #            See older versions:
-               #            <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/"> 0.1.0</a>,
-               #            <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV02/"> 0.2.0</a>,
-               #            <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV100/"> 1.0.0</a>
-               #            </p>')
-               #       ),
-               #     p(textOutput('counter'))
-               #       )
-               ############################################
-               # !! PACKAGE VERSION ####
-               div(class="panel-footer",
-                   p(strong("ShinyItemAnalysis Version 1.1.0")),
-                   p("You can also try ", code('ShinyItemAnalysis'),
-                     a('online!', href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/",
-                       target = "_blank")),
-                   p("Project was supported by grant funded by Czech Science Foundation under number ",
-                     a("GJ15-15856Y",
-                       href = "http://www.cs.cas.cz/martinkova/psychometrics.html",
-                       target = "_blank")),
-                   p("Copyright 2017  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek"),
-                   div(
-                     HTML('<p style="font-size: 9pt">
-                          See older versions:
-                          <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/"> 0.1.0</a>,
-                          <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV02/"> 0.2.0</a>,
-                          <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV100/"> 1.0.0</a>
-                          </p>')
-                     )
-                     )
-               ############################################
+ui = tagList(
+  tags$head(tags$link(rel = "stylesheet",
+                      type = "text/css",
+                      href = "style.css"),
+            tags$script(type = "text/javascript",
+                        src = "busy.js"),
+            tags$script(type = "text/javascript",
+                        src = "report_generating_message.js"),
+            tags$script(type = "text/javascript",
+                        src = "report_downloading_message.js"),
+            tags$link(rel = "stylesheet",
+                      type = "text/css",
+                      href = "flag-icon.css"),
+            tags$link(rel = "stylesheet",
+                      type = "text/css",
+                      href = "margins_and_paddings.css"),
+            tags$link(rel = "shortcut icon", href = "Rlogo.png"),
+            tags$style(type = "text/css",
+                       ".panel-footer {position: fixed; right: 0; bottom: 0; left: 0;}")
+            ),
+
+  div(class = "busy",
+      p("Loading"),
+      img(src = "busy_indicator.gif", height = 100, width = 100)
+  ),
+
+  shinyjs::useShinyjs(),
+
+  tags$head(includeScript("google-analytics.js")),
+
+  navbarPage(title = div(HTML('<font size = "5"> ShinyItemAnalysis </font>
+                               <font size = "2"> Test and item analysis </font> </p>')),
+             windowTitle = 'ShinyItemAnalysis',
+             position = 'fixed-top',
+             selected = 'About',
+             collapsible = TRUE,
+             footer = list(
+               div(class = "clear"),
+               div(class = "panel-footer",
+                   HTML('<p> <font size = "4"> ShinyItemAnalysis </font>
+                             <font size = "2"> Test and item analysis | Version 1.2.0 </font>
+                             <span style = "float:right">
+                                <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/" id = "tooltipweb" target="_blank"> <img src = "web_icon.png", style = "width: 25px;"> </a>
+                                <a href = "https://github.com/patriciamar/ShinyItemAnalysis/" id = "tooltipgithub" target="_blank"> <img src = "github_icon.png", style = "width: 25px;"> </a>
+                                <a href = "https://CRAN.R-project.org/package=ShinyItemAnalysis/" id = "tooltipcran" target="_blank"> <img src = "cran_icon.png", style = "width: 25px;"> </a>
+                             </span> </p>
+                         <script>
+                           $("#tooltipweb").attr("title", "Web");
+                           $("#tooltipgithub").attr("title", "GitHub");
+                           $("#tooltipcran").attr("title", "CRAN");
+                         </script>'),
+                   p(HTML('&copy; 2017  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek'
                    ),
-             theme="bootstrap.css",
-             ######################
+                    HTML('<span style = "float:right">'),
+                        textOutput('counter', inline = T),
+                    HTML('</span>')))),
+             theme = "bootstrap.css",
+             #%%%%%%%%%%%%%%%%%%%%%
              # MAIN PANEL #########
-             ######################
-             ######################
+             #%%%%%%%%%%%%%%%%%%%%%
+
+             #%%%%%%%%%%%%%%%%%%%%%
              # ABOUT ##############
-             ######################
+             #%%%%%%%%%%%%%%%%%%%%%
              tabPanel("About",
                       h3('Description'),
                       p(code('ShinyItemAnalysis'), ' provides analysis of educational tests (such as admission tests)
                         and their items including:' ),
                       tags$ul(
                         tags$li("Exploration of total and standard scores on ", strong('Summary'), "page. "),
-                        tags$li("Item and distractor analysis on ", strong('Traditional Analysis'), "page. "),
+                        tags$li("Correlation structure and predictive validity analysis on ", strong('Validity'), "page. "),
+                        tags$li("Item and distractor analysis on ", strong('Item analysis'), "page. "),
                         tags$li('Item analysis by logistic models on ', strong('Regression'), "page. "),
                         tags$li('Item analysis by item response theory models on ', strong('IRT models'), "page. "),
                         tags$li('Differential item functioning (DIF) and differential distractor functioning (DDF)
@@ -83,21 +89,12 @@ ui=tagList(
                       p('This application is based on the free statistical software',
                         a('R', href = 'https://cran.r-project.org/', target = "_blank"),
                         ' and its ',
-                        a('Shiny', href = 'http://www.rstudio.com/shiny/', target = "_blank"),
+                        a('shiny', href = 'http://www.rstudio.com/shiny/', target = "_blank"),
                         'package. '),
                       p('For all graphical outputs a download button is provided. Moreover, on ', strong('Reports'),
                         'page HTML or PDF report can be created. Additionaly, all application outputs are
                         complemented by selected R code hence the similar analysis can be run and modified in R.'),
-                      ############################################
-                      # # !! ONLINE VERSION ####
-                      # p('You can also download ', code('ShinyItemAnalysis'), ' package from ',
-                      #   a('CRAN', href = 'https://CRAN.R-project.org/package=ShinyItemAnalysis', target = "_blank"),
-                      #   'to use it offline or run it faster. '),
-                      ############################################
-                      # !! PACKAGE VERSION ####
-                      p('You can also try ', code('ShinyItemAnalysis'), ' application ',
-                        a('online!', href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/', target = "_blank")),
-                      ############################################
+
                       h4('Data'),
                       p('For demonstration purposes, by default, 20-item dataset', code('GMAT'),'
                         from R ', code('difNLR'),' package is used. Other three datasets are available: ',
@@ -105,16 +102,93 @@ ui=tagList(
                         code('Medical 100'), 'from', code('ShinyItemAnalysis'), 'package.
                         You can change the dataset (and try your own one) on page', strong('Data.')),
 
-                      h4('Version'),
-                      p('Current version of ', code('ShinyItemAnalysis'), ' is 1.1.0'),
-                      div(
-                        HTML('<p>
-                             See also older versions:
-                             <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/"> 0.1.0</a>,
-                             <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV02/"> 0.2.0</a>,
-                             <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV100/"> 1.0.0</a>
-                             </p>')
+                      h4('Availability'),
+                      p('Application can be downloaded as R package from ',
+                        a('CRAN. ',
+                          href = 'https://CRAN.R-project.org/package=ShinyItemAnalysis',
+                          target = '_blank'),
+                        'It is also available online at ',
+                        a('Czech Academy of Sciences ',
+                          href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/',
+                          target = "_blank"),
+                        HTML(
+                          paste(
+                            "<a href='https://shiny.cs.cas.cz/ShinyItemAnalysis/' target='_blank'>",
+                            "<img src='Flag_of_the_Czech_Republic.png' height='16' border='0' align='middle'>",
+                            "</a>.",
+                            sep = ""
+                          )
                         ),
+                        'In case of busy server you can try other mirrors: ',
+                        # a('University of Washington',
+                        #   href = 'https://rstudio.stat.washington.edu/shiny/ShinyItemAnalysis/',
+                        #   target = "_blank"),
+                        # HTML(
+                        #   paste(
+                        #     "<a href='https://rstudio.stat.washington.edu/shiny/ShinyItemAnalysis/' target='_blank'>",
+                        #     "<img src='Flag_of_the_United_States.png' height='16' border='0' align='middle'>",
+                        #     "</a>,",
+                        #     sep = ""
+                        #   )
+                        # ),
+                        a('Charles University',
+                          href = 'http://shiny.statest.cz:3838/ShinyItemAnalysis/',
+                          target = "_blank"),
+                        HTML(
+                          paste(
+                            "<a href='http://shiny.statest.cz:3838/ShinyItemAnalysis/' target='_blank'>",
+                            "<img src='Flag_of_the_Czech_Republic.png' height='16' border='0' align='middle'>",
+                            "</a>",
+                            sep = ""
+                          )
+                        ),
+                        'or',
+                        a('shinyapps.io',
+                          href = 'https://patriciamar.shinyapps.io/ShinyItemAnalysis/',
+                          target = "_blank"),
+                        HTML(
+                          paste(
+                            "<a href='https://patriciamar.shinyapps.io/ShinyItemAnalysis/' target='_blank'>",
+                            "<img src='Flag_of_the_United_States.png' height='16' border='0' align='middle'>",
+                            "</a>.",
+                            sep = ""
+                          )
+                        )
+                      ),
+
+                      h4('Version'),
+                      p('Current version of ', code('ShinyItemAnalysis'), ' available on ',
+                        a('CRAN', href = 'https://CRAN.R-project.org/package=ShinyItemAnalysis', target = "_blank"), 'is 1.2.0.
+                        Version available',
+                        a('online', href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/', target = "_blank"), 'is 1.2.0.
+                        The newest development version available on ',
+                        a('GitHub', href = 'https://github.com/patriciamar/ShinyItemAnalysis', target = "_blank"), 'is 1.2.0.'),
+                      p('See also older versions: ',
+                         a('0.1.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/", target = "_blank"),
+                         a('0.2.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV02/", target = "_blank"),
+                         a('1.0.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV100/", target = "_blank"),
+                         a('1.1.0. ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV110/", target = "_blank")),
+
+                      h4('Authors and contributors'),
+
+                      fluidRow(
+                        column(1, align = "center",
+                               img(src = 'patricia_new.png', width = 75),
+                               HTML("<figcaption><a href='http://www.cs.cas.cz/martinkova/' target='_blank'>Patricia<br>Martinkova</a></figcaption>")),
+                        column(1, align = "center",
+                               img(src = 'adela_new.png', width = 75),
+                               HTML("<figcaption>Adela<br>Drabinova</figcaption>")),
+                        column(1, align = "center",
+                               img(src = 'leder.png', width = 75),
+                               HTML("<figcaption><a href='https://www.linkedin.com/in/ond%C5%99ej-leder-3864b1119' target='_blank'>Ondrej<br>Leder</a></figcaption>")),
+                        column(1, align = "center",
+                               img(src = 'jakub_new.png', width = 75),
+                               HTML("<figcaption>Jakub<br>Houdek</figcaption>")),
+                        column(1, align = "center",
+                               img(src = 'Lubos.jpg', width = 75),
+                               HTML("<figcaption>Lubomir<br>Stepanek</figcaption>"))
+                      ),
+
 
                       h4('List of packages used'),
                       code('library(corrplot)'), br(),
@@ -126,6 +200,7 @@ ui=tagList(
                       code('library(ggplot2)'), br(),
                       code('library(grid)'), br(),
                       code('library(gridExtra)'), br(),
+                      code('library(knitr)'), br(),
                       code('library(latticeExtra)'), br(),
                       code('library(ltm)'), br(),
                       code('library(mirt)'), br(),
@@ -140,43 +215,36 @@ ui=tagList(
                       code('library(shinyjs)'), br(),
                       code('library(stringr)'), br(),
                       code('library(WrightMap)'), br(),
+                      code('library(xtable)'), br(),
 
-                      h4('Authors'),
-                      img(src = 'patricia.jpg', width = 70),
-                      p(a("Patricia Martinkova, Institute of Computer Science, Czech Academy of Sciences",
-                          href = "http://www.cs.cas.cz/martinkova/", target = "_blank")),
-                      img(src = 'adela.jpg', width = 70),
-                      p("Adela Drabinova"),
-                      img(src = 'leder.png', width = 70),
-                      p(a("Ondrej Leder", href = "https://www.linkedin.com/in/ond%C5%99ej-leder-3864b1119",
-                          target = "_blank")),
-                      img(src = 'jakub.jpg', width = 70),
-                      p("Jakub Houdek"),
 
                       h4('Bug reports'),
                       p("If you discover a problem with this application please contact the project maintainer
-                        at martinkova(at)cs.cas.cz or use ", a("GitHub.", href = "https://github.com/patriciamar/ShinyItemAnalysis/issues",
+                        at martinkova(at)cs.cas.cz or use ", a("GitHub.",
+                                                               href = "https://github.com/patriciamar/ShinyItemAnalysis/issues",
                                                                target = "_blank")),
 
                       h4('Acknowledgments'),
                       p(" Project was supported by grant funded by Czech Science foundation under number ",
-                        a("GJ15-15856Y.", href = "http://www.cs.cas.cz/martinkova/psychometrics.html",
+                        a("GJ15-15856Y.",
+                          href = "http://www.cs.cas.cz/martinkova/psychometrics.html",
                           target = "_blank")),
 
                       h4('License'),
-                      p("Copyright 2016  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek"),
-                      p("This program is free software you can redistribute it and or modify it under the terms of the GNU
-                        General Public License as published by the Free Software Foundation either version 3 of the License or
-                        at your option any later version."),
-                      p("This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-                        even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-                        Public License for more details." ),
+                      p("This program is free software and you can redistribute it and or modify it under the terms
+                         of the",
+                        a("GNU GPL 3",
+                          href = "https://www.gnu.org/licenses/gpl-3.0.en.html",
+                          target = "_blank"),
+                        "as published by the Free Software Foundation. This program is distributed in the hope that
+                         it will be useful, but without any warranty; without even the implied warranty of
+                         merchantability of fitness for a particular purpose." ),
                       br(),
                       br()
                       ),
-             ###################
-             # DATA ############
-             ###################
+             #%%%%%%%%%%%%%%%%%%%%%
+             # DATA ###############
+             #%%%%%%%%%%%%%%%%%%%%%
              tabPanel("Data",
                       h3("Data"),
                       p('For demonstration purposes, 20-item dataset ' , code("GMAT"),'
@@ -185,25 +253,32 @@ ui=tagList(
                         ' and ', code('ShinyItemAnalysis'), 'packages or you may upload your own dataset
                          (see below). To return to demonstration dataset,
                          refresh this page in your browser' , strong("(F5)"), '.'),
-                      p('Used dataset ', code("GMAT"), ' is generated based on parameters of real Graduate Management
+                      p('Used dataset ', code("GMAT"), a(' (Martinkova, et al., 2017) ',
+                                 href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
+                        target = "_blank"),
+                        ' is generated based on parameters of real Graduate Management
                         Admission Test (GMAT) data set (Kingston et al., 1985). However, first two items were
                         generated to function differently in uniform and non-uniform way respectively.
                         The data set represents responses of 2,000 subjects (1,000 males, 1,000 females) to
-                        multiple-choice test of 20 items. The distribution of total scores is the same for both groups. '),
-                      p('Dataset ', code("GMAT2"), ' is also generated based on parameters of GMAT (Kingston et
+                        multiple-choice test of 20 items. The distribution of total scores is the same for both groups.
+                        See ', a('Martinkova, et al. (2017) ',
+                                 href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
+                                 target = "_blank"),
+                        'for further discussion. '),
+                      p('Dataset ', code("GMAT2"), ' (Drabinova & Martinkova, 2016) is also generated based on parameters of GMAT (Kingston et
                          al., 1985) from R ', code('difNLR'),' package . Again, first two items were generated
                          to function differently in uniform and non-uniform way respectively. The data set
                          represents responses of 1,000 subjects (500 males, 500 females) to multiple-choice test
                          of 20 items. '),
-                      p('Dataset ', code("Medical 20 DIF"), ' is a subset of real admission test to medical
+                      p('Dataset ', code("Medical 20 DIF"), ' (Drabinova & Martinkova, 2016) is a subset of real admission test to medical
                          school from R ', code('difNLR'),' package. First item was previously detected as
                          functioning differently. The data set represents responses of 1,407 subjects (484 males,
                          923 females) to multiple-choice test of 20 items. For more details of item selection
                          see Drabinova & Martinkova (2016).'),
                       p('Dataset ', code("Medical 100"), ' is a real data set of admission test to medical school
-                         from R ', code('ShinyItemAnalysis'),' package . The data set represents responses of
-                         3,204 subjects to multiple-choice test of 100 items. There is no group membership
-                         variable in the data set hence it is not possible to run DIF or DDF detection procedures. '),
+                         from R ', code('ShinyItemAnalysis'),' package. The data set represents responses of
+                         2,392 subjects (750 males, 1,633 females and 9 subjects without gender specification)
+                         to multiple-choice test of 100 items. '),
                       br(),
                       selectInput("dataSelect", "Select dataset",
                                   c("GMAT" = "GMAT_difNLR",
@@ -213,13 +288,24 @@ ui=tagList(
                                   ),
                                   selected="GMAT_difNLR"),
                       h4("Upload your own datasets"),
-                      p('Main dataset should contain responses of individual students (rows) to given items
+                      p('Main ', strong('data'), ' file should contain responses of individual students (rows) to given items
                         (columns). Header may contain item names, no row names should be included. If responses
-                        are in unscored ABCD format, the key provides correct response for each item. If responses are
-                        scored 0-1, key is vector of 1s. Group is 0-1 vector, where 0 represents reference group
+                        are in unscored ABCD format, the ', strong('key'), ' provides correct response for each item. If responses are
+                        scored 0-1, key is vector of 1s.'),
+                      p(strong('Group'), ' is 0-1 vector, where 0 represents reference group
                         and 1 represents focal group. Its length need to be the same as number of individual
                         students in main dataset. If the group is not provided then it wont be possible to run DIF and DDF
-                        detection procedures. In all data sets header should be either included or excluded. '),
+                        detection procedures on ', strong('DIF/Fairness'), ' page. '),
+                      p(strong('Criterion variable'), ' is either
+                        discrete or continuous vector (e.g. future study success or future GPA in case of admission tests) which
+                        should be predicted by the measurement. Again, its length needs to be the same as number of individual
+                        students in the main dataset. If the criterion variable is not provided then it wont be possible to run
+                        validity analysis in ', strong('Predictive validity'), ' section on ', strong('Validity'), ' page.'),
+                      p('In all data sets header should be either included or excluded. '),
+                      p('Columns of dataset are by default renamed to Item and number of particular column. If you
+                        want to keep your own names, check box below. '),
+                      p('Missing values in scored dataset are by default evaluated as 0. If you want to keep them as missing,
+                        check box below.'),
                       fluidRow(
                         column(3, offset = 0, fileInput(
                           'data', 'Choose data (csv file)',
@@ -254,12 +340,27 @@ ui=tagList(
                           )
                         )
                         ),
-                        column(3, offset = 1, actionButton(inputId = "submitButton", label = "Submit Data"))
+                        column(3, fileInput(
+                          'criterion_variable', 'Choose criterion variable (optional)',
+                          accept = c('text/csv',
+                                     'text/comma-separated-values',
+                                     'text/tab-separated-values',
+                                     'text/plain',
+                                     '.csv',
+                                     '.tsv'
+                          )
+                        )
+                        )),
+                      fluidRow(
+                        column(2, offset = 0, actionButton(inputId = "submitButton", label = "Submit Data"))
                       ),
                       tags$hr(),
                       h4("Data specification"),
                       fluidRow(
-                        column(1, offset = 0, checkboxInput('header', 'Header', TRUE)),
+                        column(3, offset = 0,
+                               checkboxInput('header', 'Header', TRUE),
+                               checkboxInput('itemnam', 'Keep items names', FALSE),
+                               checkboxInput('missval', 'Keep missing values', FALSE)),
                         column(3, offset = 1, radioButtons('sep', 'Separator',
                                                            c(Comma = ',',
                                                              Semicolon = ';',
@@ -285,25 +386,30 @@ ui=tagList(
                       h4("Scored test"),
                       DT::dataTableOutput('sc01'),
                       h4("Group vector"),
-                      DT::dataTableOutput('group')
+                      DT::dataTableOutput('group'),
+                      h4("Criterion variable vector"),
+                      DT::dataTableOutput('critvar'),
+                      br(),
+                      br(),
+                      br()
                       ),
-             ########################
-             # SUMMARY ##############
-             ########################
+             #%%%%%%%%%%%%%%%%%%%%%
+             # SUMMARY ############
+             #%%%%%%%%%%%%%%%%%%%%%
              navbarMenu("Summary",
                         # * TOTAL SCORES ####
                         tabPanel("Total scores",
                                  h3("Analysis of total scores"),
                                  h4("Summary table"),
-                                 tableOutput('results'),
+                                 tableOutput('totalscores_table'),
                                  h4("Histogram of total score"),
-                                 sliderInput("inSlider2", "Cut-Score", min = 0, max = 10,
+                                 sliderInput("inSlider2", "Cut-score", min = 0, max = 10,
                                              value = 1, step = 1),
                                  p('For selected cut-score, blue part of histogram shows students with total score
-                                   above the cut-score, grey column shows students with Total Score equal
-                                   to cut-score and red part of histogram shows students below the cut-score.'),
-                                 plotOutput('histogram_totalscores'),
-                                 downloadButton("DP_histogram_totalscores", label = "Download figure"),
+                                   above the cut-score, grey column shows students with total score equal
+                                   to the cut-score and red part of histogram shows students below the cut-score.'),
+                                 plotOutput('totalscores_histogram'),
+                                 downloadButton("DB_totalscores_histogram", label = "Download figure"),
                                  br(),
                                  br(),
                                  h4("Selected R code"),
@@ -311,7 +417,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('score <- apply(data, 1, sum) # Total score'),
@@ -343,14 +449,14 @@ ui=tagList(
                                    strong('T-score'), 'is transformed Z-score with a mean of 50 and standard deviation
                                    of 10. If Z is Z-score then T-score = (Z * 10) + 50. '),
                                  h4("Table by score"),
-                                 tableOutput('percentile'),
+                                 tableOutput('scores_tables'),
                                  br(),
                                  h4("Selected R code"),
                                  div(code('library(difNLR)'),
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('score <- apply(data, 1, sum) # Total score'),
@@ -367,66 +473,179 @@ ui=tagList(
                                  br()
                         )
                         ),
-             ############################
-             # CORRELATION STRUCTURE ####
-             ############################
-             tabPanel("Correlation structure",
-                      h3("Correlation structure"),
-                      h4("Polychoric correlation heat map"),
-                      p('Polychoric correlation heat map is a correlation plot which displays a polychoric
-                                     correlations of items. The size and shade of circles indicate how much the
-                                     items are correlated (larger and darker
-                                     circle means larger correlation). The color of circles indicates in which way the
-                                     items are correlated - blue color shows possitive correlation and red color shows
-                                     negative correlation.'),
-                      plotOutput('corr_plot'),
-                      downloadButton("DP_corr_plot", label = "Download figure"),
-                      br(),
-                      h4("Scree plot"),
-                      p('A scree plot displays the eigenvalues associated with an component or a factor in descending order
-                                    versus the number of the component or factor. '),
-                                 plotOutput('scree_plot'),
-                      downloadButton("DP_scree_plot", label = "Download figure"),
-                      h4("Selected R code"),
-                      div(code('library(corrplot)'),
-                          br(),
-                          code('library(difNLR)'),
-                          br(),
-                          code('library(psych)'),
-                          br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
-                                     br(),
-                                     br(),
-                                     code('# Correlation plot'),
-                                     br(),
-                                     code('corP <- polychoric(data)'),
-                                     br(),
-                                     code('corrplot(corP$rho)'),
-                                     br(),
-                                     code('corP$rho # Correlation matrix'),
-                                     br(),
-                                     br(),
-                                     code('# Scree plot'),
-                                     br(),
-                                     code('plot(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values,
-                                          ylab = "Eigen value", xlab = "Component Number")'),
-                                     br(),
-                                     code('lines(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values)'),
-                                     br(),
-                                     code('eigen(corP$rho) # Eigen values and vectors')),
-                                 br()
-                        ),
-             ###########################
-             # TRADITIONAL ANALYSIS ####
-             ###########################
-             navbarMenu('Traditional analysis',
-                        # * ITEM ANALYSIS ####
-                        tabPanel("Item analysis",
+             #%%%%%%%%%%%%%%%%%%%%%
+             # VALIDITY ###########
+             #%%%%%%%%%%%%%%%%%%%%%
+             navbarMenu("Validity",
+                        # * CORRELATION STRUCTURE ####
+                         tabPanel("Correlation structure",
+                                  h3("Correlation structure"),
+                                  h4("Polychoric correlation heat map"),
+                                  p('Polychoric correlation heat map is a correlation plot which displays a polychoric
+                                                 correlations of items. The size and shade of circles indicate how much the
+                                                 items are correlated (larger and darker
+                                                 circle means larger correlation). The color of circles indicates in which way the
+                                                 items are correlated - blue color shows possitive correlation and red color shows
+                                                 negative correlation.'),
+                                  plotOutput('corr_plot'),
+                                  downloadButton("DB_corr_plot", label = "Download figure"),
+                                  br(),
+                                  h4("Scree plot"),
+                                  p('A scree plot displays the eigenvalues associated with an component or a factor in descending order
+                                     versus the number of the component or factor. '),
+                                  plotOutput('scree_plot'),
+                                  downloadButton("DB_scree_plot", label = "Download figure"),
+                                  h4("Selected R code"),
+                                  div(code('library(corrplot)'),
+                                      br(),
+                                      code('library(difNLR)'),
+                                      br(),
+                                      code('library(psych)'),
+                                      br(),
+                                      code('data(GMAT)'),
+                                      br(),
+                                      code('data  <- GMAT[, 1:20]'),
+                                      br(),
+                                      br(),
+                                      code('# Correlation plot'),
+                                      br(),
+                                      code('corP <- polychoric(data)'),
+                                      br(),
+                                      code('corrplot(corP$rho)'),
+                                      br(),
+                                      code('corP$rho # Correlation matrix'),
+                                      br(),
+                                      br(),
+                                      code('# Scree plot'),
+                                      br(),
+                                      code('plot(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values,
+                                            ylab = "Eigen value", xlab = "Component Number")'),
+                                      br(),
+                                      code('lines(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values)'),
+                                      br(),
+                                      code('eigen(corP$rho) # Eigen values and vectors')),
+                                  br()
+                                    ),
+                        # * PREDICTIVE VALIDITY ####
+                        tabPanel('Predictive validity',
+                                 tabsetPanel(
+                                   # ** Summary ####
+                                   tabPanel('Summary',
+                                            h3('Predictive validity'),
+                                            p('This section requires criterion variable (e.g. future study success or future GPA in case
+                                              of admission tests) which should be predicted by the measurement. This outcome variable
+                                              can be uploaded in ', strong('Data'), 'section. Then you can explore how data predict this
+                                              variable. '),
+                                            h4('Descriptive plots of criterion variable on total score'),
+                                            p('Total scores are plotted according to criterion variable. Boxplot or scatterplot is displayed
+                                              depending on outcome variable - whether it is discrete or continuous. Scatterplot is
+                                              provided with red linear regression line. '),
+                                            plotOutput('validity_plot'),
+                                            downloadButton("DB_validity_plot", label = "Download figure"),
+                                            h4('Correlation of criterion variable and total score'),
+                                            p('Test for association between total score and criterion variable is based on Spearman`s \\(\\rho\\).
+                                              This rank-based measure have been recommended if data does not necessarily come from bivariate normal
+                                              distribution. The null hypothesis is that correlation is 0. '),
+                                            tableOutput('validity_table'),
+                                            htmlOutput('validity_table_interpretation'),
+                                            h4("Selected R code"),
+                                            div(code('library(ShinyItemAnalysis)'),
+                                                br(),
+                                                code('library(difNLR)'),
+                                                br(),
+                                                code('data(GMAT)'),
+                                                br(),
+                                                code('data01  <- GMAT[, 1:20]'),
+                                                br(),
+                                                code('score  <- apply(data01, 1, sum)'),
+                                                br(),
+                                                code('criterion  <- GMAT[, "criterion"]'),
+                                                br(),
+                                                br(),
+                                                code('# Descriptive plots'),
+                                                br(),
+                                                code('### boxplot'),
+                                                br(),
+                                                code('boxplot(criterion ~ score)'),
+                                                br(),
+                                                code('### scatterplot'),
+                                                br(),
+                                                code('plot(criterion ~ score)'),
+                                                br(),
+                                                code('abline(lm(criterion ~ score), col = "red") '),
+                                                br(),
+                                                br(),
+                                                code('# Correlation'),
+                                                br(),
+                                                code('cor.test(criterion, score, method = "spearman", exact = F)')),
+                                            br()
+                                            ),
+                                   # ** Items ####
+                                   tabPanel('Items',
+                                            h3('Predictive validity'),
+                                            p('This section requires criterion variable (e.g. future study success or future GPA in case
+                                              of admission tests) which should be predicted by the measurement. This outcome variable
+                                              can be uploaded in ', strong('Data'), 'section. Here you can explore how data predict this
+                                              variable item by item. '),
+                                            p('In distractor analysis based on criterion variable, we are interested in how test takers
+                                              select the correct answer and how the distractors (wrong answers) with respect to group based
+                                              on criterion variable.'),
+                                            sliderInput('validity_group', 'Number of groups:',
+                                                        min   = 1,
+                                                        max   = 5,
+                                                        value = 3),
+                                            htmlOutput("validity_distractor_text"),
+                                            h4('Distractor plot'),
+                                            radioButtons('type_validity_combinations_distractor', 'Type',
+                                                         list("Combinations", "Distractors")),
+                                            sliderInput("validitydistractorSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
+                                            plotOutput('validity_distractor_plot'),
+                                            downloadButton("DB_validity_distractor_plot", label = "Download figure"),
+                                            h4('Correlation of criterion variable and scored item'),
+                                            p('Test for association between scored item and criterion variable is based on Spearman`s \\(\\rho\\).
+                                              This rank-based measure have been recommended if data does not necessarily come from bivariate normal
+                                              distribution. The null hypothesis is that correlation is 0. '),
+                                            tableOutput('validity_table_item'),
+                                            htmlOutput('validity_table_item_interpretation'),
+                                            h4("Selected R code"),
+                                            div(code('library(ShinyItemAnalysis)'),
+                                                br(),
+                                                code('library(difNLR)'),
+                                                br(),
+                                                code('data("GMAT", "GMATtest", "GMATkey")'),
+                                                br(),
+                                                code('data  <- GMATtest[, 1:20]'),
+                                                br(),
+                                                code('data01  <- GMAT[, 1:20]'),
+                                                br(),
+                                                code('key  <- GMATkey'),
+                                                br(),
+                                                code('criterion  <- GMAT[, "criterion"]'),
+                                                br(),
+                                                br(),
+                                                code('# Distractor plot for item 1 and 3 groups'),
+                                                br(),
+                                                code('plotDistractorAnalysis(data, key, num.groups = 3, item = 1, matching = criterion)'),
+                                                br(),
+                                                br(),
+                                                code('# Correlation for item 1'),
+                                                br(),
+                                                code('cor.test(criterion, data01[, 1], method = "spearman", exact = F)')),
+                                            br()
+                                   )
+                                            ))),
+
+             #%%%%%%%%%%%%%%%%%%%%%
+             # ITEM ANALYSIS ######
+             #%%%%%%%%%%%%%%%%%%%%%
+             navbarMenu('Item analysis',
+                        # * TRADITIONAL ITEM ANALYSIS ####
+                        tabPanel("Traditional item analysis",
                                  h3("Traditional item analysis"),
                                  p('Traditional item analysis uses proportions of correct answers or correlations to estimate item properties.'),
-                                 h4("Item difficulty/discrimination graph"),
+                                 h4("Item difficulty/discrimination plot"),
                                  p("Displayed is difficulty (red) and discrimination (blue)
                                    for all items. Items are ordered by difficulty. ", br(),
                                    strong("Difficulty"),' of items is estimated as percent of students who
@@ -435,20 +654,20 @@ ui=tagList(
                                    in upper and lower third of students (Upper-Lower Index, ULI). By rule of
                                    thumb it should not be lower than 0.2 (borderline in the plot), except for
                                    very easy or very difficult items.'),
-                                 plotOutput('difplot'),
-                                 downloadButton("DP_difplot", label = "Download figure"),
+                                 plotOutput('DDplot'),
+                                 downloadButton("DB_DDplot", label = "Download figure"),
                                  h4("Cronbach's alpha"),
                                  p("Chronbach's alpha is an estimate of the reliability of a psychometric test. It is a function
                                    of the number of items in a test, the average covariance between item-pairs, and the variance
                                    of the total score (Cronbach, 1951)."),
-                                 tableOutput('cronbachalpha'),
+                                 tableOutput('cronbachalpha_table'),
                                  h4("Traditional item analysis table"),
                                  p(strong('Explanation: Difficulty'), ' - Difficulty of item is estimated as percent
                                    of students who answered correctly to that item. ', strong('SD'),' - standard deviation, ',
                                    strong('RIT'), ' - Pearson correlation between item and Total score, ', strong('RIR'),'
                                    - Pearson correlation between item and rest of items, ', strong('ULI'),'
                                    - Upper-Lower Index, ', strong('Alpha Drop'),' - Cronbach\'s alpha of test without given item.'),
-                                 tableOutput('itemexam'),
+                                 tableOutput('itemanalysis_table'),
                                  br(),
                                  h4("Selected R code"),
                                  div(code('library(difNLR)'),
@@ -461,7 +680,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Difficulty and discrimination plot'),
@@ -495,27 +714,42 @@ ui=tagList(
                                              max   = 5,
                                              value = 3
                                  ),
-                                 htmlOutput("text_distractor"),
+                                 htmlOutput("distractor_text"),
                                  h4("Distractors plot"),
                                  radioButtons('type_combinations_distractor', 'Type',
                                               list("Combinations", "Distractors")
                                  ),
-                                 sliderInput("distractorSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
-                                 plotOutput('graf'),
-                                 downloadButton("DP_graf", label = "Download figure"),
+                                 sliderInput("distractorSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
+                                 plotOutput('distractor_plot'),
+                                 downloadButton("DB_distractor_plot", label = "Download figure"),
                                  br(),
                                  h4("Table with counts"),
-                                 fluidRow(column(12, align = "center", tableOutput('tab_counts_distractor'))),
+                                 fluidRow(column(12, align = "center", tableOutput('distractor_table_counts'))),
+                                 plotOutput("item_response_patterns_distribution_plot"),
+                                 downloadButton(
+                                   "item_response_patterns_distribution_plot_download",
+                                   label = "Download figure"
+                                 ),
                                  h4("Table with proportions"),
-                                 fluidRow(column(12, align = "center", tableOutput('tab_props_distractor'))),
+                                 fluidRow(column(12, align = "center", tableOutput('distractor_table_proportions'))),
                                  br(),
                                  h4('Histogram of total scores'),
-                                 plotOutput('hist_distractor_by_group'),
-                                 downloadButton("DP_hist_distractor_by_group", label = "Download figure"),
+                                 plotOutput('distractor_histogram'),
+                                 downloadButton("DB_distractor_histogram", label = "Download figure"),
                                  br(),
                                  h4('Table of total scores by groups'),
-                                 fluidRow(column(12, align = "center", tableOutput('tab_distractor_by_group'))),
+                                 fluidRow(column(12, align = "center", tableOutput('distractor_table_group'))),
+                                 br(),
+                                 h4("Diagram of custom discrimination"),
+                                 uiOutput("distractor_double_slider"),
+                                 htmlOutput("custom_DD_plot_text"),
+                                 plotOutput("custom_DD_plot"),
+                                 downloadButton(
+                                   "custom_DD_plot_download",
+                                   label = "Download figure"
+                                 ),
                                  br(),
                                  h4("Selected R code"),
                                  div(code('library(difNLR)'),
@@ -556,9 +790,9 @@ ui=tagList(
                                  )
                         ),
 
-             #####################
-             # REGRESSION ########
-             #####################
+             #%%%%%%%%%%%%%%%%%%%%%
+             # REGRESSION #########
+             #%%%%%%%%%%%%%%%%%%%%%
              navbarMenu("Regression",
                         # * LOGISTIC ####
                         tabPanel("Logistic",
@@ -572,10 +806,11 @@ ui=tagList(
                                  h4("Plot with estimated logistic curve"),
                                  p('Points represent proportion of correct answer with respect to total score.
                                    Their size is determined by count of respondents who answered item correctly.'),
-                                 sliderInput("logregSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("logregSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  plotOutput('logreg'),
-                                 downloadButton("DP_logref", label = "Download figure"),
+                                 downloadButton("DP_logreg", label = "Download figure"),
                                  h4("Equation"),
                                  withMathJax(),
                                  ('$$\\mathrm{P}(Y = 1|X, b_0, b_1) = \\mathrm{E}(Y|X, b_0, b_1) = \\frac{e^{\\left( b_{0} + b_1 X\\right)}}{1+e^{\\left( b_{0} + b_1 X\\right) }} $$'),
@@ -589,7 +824,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      code('score  <- apply(data, 1, sum)'),
                                      br(),
@@ -627,8 +862,9 @@ ui=tagList(
                                  h4("Plot with estimated logistic curve"),
                                  p('Points represent proportion of correct answer with respect to standardized
                                    total score. Their size is determined by count of respondents who answered item correctly.'),
-                                 sliderInput("zlogregSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("zlogregSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  plotOutput('zlogreg'),
                                  downloadButton("DP_zlogreg", label = "Download figure"),
                                  h4("Equation"),
@@ -642,7 +878,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      code('stand.score  <- scale(apply(data, 1, sum))'),
                                      br(),
@@ -681,8 +917,9 @@ ui=tagList(
                                  h4("Plot with estimated logistic curve"),
                                  p('Points represent proportion of correct answer with respect to standardized
                                    total score. Their size is determined by count of respondents who answered item correctly.'),
-                                 sliderInput("zlogreg_irtSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("zlogreg_irtSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  plotOutput('zlogreg_irt'),
                                  downloadButton("DP_zlogreg_irt", label = "Download figure"),
                                  h4("Equation"),
@@ -696,7 +933,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data  <- GMAT[, 1:20]'),
                                      br(),
                                      code('stand.score  <- scale(apply(data, 1, sum))'),
                                      br(),
@@ -726,20 +963,21 @@ ui=tagList(
 
                         # * NONLINEAR Z ####
                         tabPanel("Nonlinear IRT Z",
-                                 h3("Nonlinear regression on standardized total scores"),
+                                 h3("Nonlinear regression on standardized total scores with IRT parameterization"),
                                  p('Various regression models may be fitted to describe
                                    item properties in more detail.',
                                    strong('Nonlinear regression'), 'can model dependency of probability of correct answer on
                                    standardized total score (Z-score) by s-shaped logistic curve. The IRT parametrization used here corresponds
                                    to the parametrization used in IRT models. Parameter ', strong( 'b'),' describes horizontal position of the fitted curve (difficulty),
-                                   parameter ',strong( 'a'), ' describes its slope at inflection point (discrimination). This model allows for nonzero lower left asymptote ',strong( 'c'),'
-                                   (pseudo-guessing). '),
+                                   parameter ',strong( 'a'), ' describes its slope at inflection point (discrimination). This model allows for nonzero lower left
+                                   asymptote ', strong( 'c'), ' (pseudo-guessing). '),
                                  br(),
                                  h4("Plot with estimated nonlinear curve"),
                                  p('Points represent proportion of correct answer with respect to standardized
                                    total score. Their size is determined by count of respondents who answered item correctly.'),
-                                 sliderInput("nlsSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("nlsSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  plotOutput('nlsplot'),
                                  downloadButton("DP_nlsplot", label = "Download figure"),
                                  h4("Equation"),
@@ -753,7 +991,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('Data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('Data  <- GMAT[, 1:20]'),
                                      br(),
                                      code('stand.score  <- scale(apply(Data, 1, sum))'),
                                      br(),
@@ -809,7 +1047,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('Data  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('Data  <- GMAT[, 1:20]'),
                                      br(),
                                      code('stand.score  <- scale(apply(Data, 1, sum))'),
                                      br(),
@@ -857,8 +1095,9 @@ ui=tagList(
                                  h4("Plot with estimated curves of multinomial regression"),
                                  p('Points represent proportion of selected option with respect to standardized
                                    total score. Their size is determined by count of respondents who selected given option.'),
-                                 sliderInput("multiSlider", "Item Slider", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("multiSlider", "Item",
+                                             min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  plotOutput('multiplot'),
                                  downloadButton("DP_multiplot", label = "Download figure"),
                                  h4("Equation"),
@@ -875,7 +1114,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data.scored  <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data.scored  <- GMAT[, 1:20]'),
                                      br(),
                                      code('stand.score  <- scale(apply(data, 1, sum))'),
                                      br(),
@@ -899,248 +1138,11 @@ ui=tagList(
                                  br()
                                  )
                         ),
-             ###################
-             # IRT MODELS ######
-             ###################
+             #%%%%%%%%%%%%%%%%%%%%%
+             # IRT MODELS #########
+             #%%%%%%%%%%%%%%%%%%%%%
              navbarMenu("IRT models",
-                        # * 1PL (RASCH) ####
-                        tabPanel("1PL (Rasch)",
-                                 h3("One parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p('In',
-                                   strong('1PL IRT model,'), 'all items are assumed to have the same slope in inflection point – the
-                                   same discrimination', strong('a.'), 'Items can differ in location of their inflection point – in item difficulty',
-                                   strong('b.'), 'More restricted version of this model, the
-                                   ',strong('Rasch model,'),'assumes discrimination', strong('a'), 'is equal to 1.'),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a, b_{j} \\right) =  \\frac{e^{a\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('rasch'),
-                                 downloadButton("DP_rasch", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('raschiic'),
-                                 downloadButton("DP_raschiic", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('raschtif'),
-                                 downloadButton("DP_raschtif", label = "Download figure"),
-                                 h4("Table of parameters"),
-                                 tableOutput('raschcoef'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 plotOutput('raschFactor'),
-                                 downloadButton("DP_raschFactor", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- rasch(data)'),
-                                     br(),
-                                     code('# for Rasch model use'),
-                                     br(),
-                                     code('# fit <- rasch(data, constraint = cbind(ncol(data) + 1, 1))'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')),
-                                 br()
-                                 ),
-                        # * 2PL ####
-                        tabPanel("2PL ",
-                                 h3("Two parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('2PL IRT model,'), 'allows for different slopes in inflection point – different
-                                   discriminations', strong('a.'), 'Items can also differ in location of their inflection point – in item difficulty',
-                                   strong('b.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a_{j}, b_{j}\\right) =  \\frac{e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-
-                                 h4("Item characteristic curves"),
-                                 plotOutput('twoparam'),
-                                 downloadButton("DP_twoparam", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput("twoparamiic"),
-                                 downloadButton("DP_twoparamiic", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput("twoparamtif"),
-                                 downloadButton("DP_twoparamtif", label = "Download figure"),
-                                 h4("Table of parameters"),
-                                 tableOutput('twoparamcoef'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 plotOutput('twoFactor'),
-                                 downloadButton("DP_twoFactor", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- ltm(data ~ z1, IRT.param = TRUE)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')),
-                                 br()
-                                 ),
-                        # * 3PL ####
-                        tabPanel("3PL ",
-                                 h3("Three parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('3PL IRT model,'), 'allows for different discriminations of items', strong('a,'),
-                                   'different item difficulties',
-                                   strong('b,'), 'and allows also for nonzero left asymptote – pseudo-guessing', strong('c.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a_{j}, b_{j}, c_{j} \\right) = c_{j} + \\left(1 - c_{j}\\right) \\cdot \\frac{e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-
-                                 h4("Item characterisic curves"),
-                                 plotOutput('threeparam'),
-                                 downloadButton("DP_threeparam", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput("threeparamiic"),
-                                 downloadButton("DP_threeparamiic", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput("threeparamtif"),
-                                 downloadButton("DP_threeparamtif", label = "Download figure"),
-                                 h4("Table of parameters"),
-                                 tableOutput("threeparamcoef"),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 plotOutput('threeFactor'),
-                                 downloadButton("DP_threeFactor", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- tpm(data, IRT.param = TRUE)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')),
-                                 br()
-                                 )
-                                 ),
-             #############################
-             # IRT MODELS WITH MIRT ######
-             #############################
-             navbarMenu("IRT models with mirt",
+                        "Used methods",
                         # * RASCH ####
                         tabPanel("Rasch",
                                  h3("Rasch Item Response Theory model"),
@@ -1148,7 +1150,7 @@ ui=tagList(
                                    student ability (theta) is assumed to be a random effect and is estimated together with item
                                    paramters. Ability (theta) is often assumed to follow normal distibution.'),
                                  p('In',
-                                   strong('Rasch IRT model,'), '(Rasch, 1960) all items are assumed to have the same slope in inflection point – the
+                                   strong('Rasch IRT model'), '(Rasch, 1960), all items are assumed to have the same slope in inflection point – the
                                    same discrimination', strong('a'), 'which is fixed to value of 1. Items can differ in location of their inflection point – in item difficulty',
                                    strong('b.')),
                                  h4("Equation"),
@@ -1163,7 +1165,8 @@ ui=tagList(
                                  plotOutput('raschtif_mirt'),
                                  downloadButton("DP_raschtif_mirt", label = "Download figure"),
                                  h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015)'),
+                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
+                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
                                  tableOutput('raschcoef_mirt'),
                                  h4('Scatter plot of factor scores and standardized total scores'),
                                  textOutput('raschFactorCor_mirt'),
@@ -1186,7 +1189,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Model'),
@@ -1238,7 +1241,7 @@ ui=tagList(
                                    student ability (theta) is assumed to be a random effect and is estimated together with item
                                    paramters. Ability (theta) is often assumed to follow normal distibution.'),
                                  p('In',
-                                   strong('1PL IRT model,'), 'all items are assumed to have the same slope in inflection point – the
+                                   strong('1PL IRT model'), ', all items are assumed to have the same slope in inflection point – the
                                    same discrimination', strong('a'), '. Items can differ in location of their inflection point – in item difficulty',
                                    strong('b.')),
                                  h4("Equation"),
@@ -1254,7 +1257,8 @@ ui=tagList(
                                  downloadButton("DP_oneparamirttif_mirt", label = "Download figure"),
                                  h4("Table of parameters with item fit statistics"),
                                  p('Estimates of parameters are completed by SX2 item fit statistics
-                                   (Ames & Penfield, 2015)'),
+                                   (Ames & Penfield, 2015). SX2 is computed only when no missing data are present.
+                                   In such a case consider using imputed dataset!'),
                                  tableOutput('oneparamirtcoef_mirt'),
                                  h4('Scatter plot of factor scores and standardized total scores'),
                                  textOutput('oneparamirtFactorCor_mirt'),
@@ -1277,7 +1281,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Model'),
@@ -1319,7 +1323,63 @@ ui=tagList(
                                      br(),
                                      code('b <- sapply(1:ncol(data), function(i) coef(fit)[[i]][, "d"])'),
                                      br(),
-                                     code('wrightMap(fs, b, item.side = itemClassic)')),
+                                     code('wrightMap(fs, b, item.side = itemClassic)'),
+                                     br(),
+                                     br(),
+                                     br(),
+                                     code('# You can also use ltm library for IRT models'),
+                                     br(),
+                                     code('library(difNLR)'),
+                                     br(),
+                                     code('library(ltm)'),
+                                     br(),
+                                     code('data(GMAT)'),
+                                     br(),
+                                     code('data <- GMAT[, 1:20]'),
+                                     br(),
+                                     br(),
+                                     code('# Model'),
+                                     br(),
+                                     code('fit <- rasch(data)'),
+                                     br(),
+                                     code('# for Rasch model use'),
+                                     br(),
+                                     code('# fit <- rasch(data, constraint = cbind(ncol(data) + 1, 1))'),
+                                     br(),
+                                     code('# Item Characteristic Curves'),
+                                     br(),
+                                     code('plot(fit)'),
+                                     br(),
+                                     code('# Item Information Curves'),
+                                     br(),
+                                     code('plot(fit, type = "IIC")'),
+                                     br(),
+                                     code('# Test Information Function'),
+                                     br(),
+                                     code('plot(fit, items = 0, type = "IIC")'),
+                                     br(),
+                                     code('# Coefficients'),
+                                     br(),
+                                     code('coef(fit)'),
+                                     br(),
+                                     code('# Factor scores vs Standardized total scores'),
+                                     br(),
+                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
+                                     br(),
+                                     code('FS   <- as.vector(df1[, "z1"])'),
+                                     br(),
+                                     code('df2  <- df1'),
+                                     br(),
+                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
+                                     br(),
+                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
+                                     br(),
+                                     code('df  <- data.frame(FS, STS)'),
+                                     br(),
+                                     code('plot(FS ~ STS, data = df,
+                                          xlab = "Standardized total score",
+                                          ylab = "Factor score")')
+                                    ),
                                  br()
                                  ),
                         # * 2PL ####
@@ -1328,7 +1388,7 @@ ui=tagList(
                                  p('Item Response Theory (IRT) models are mixed-effect regression models in which
                                    student ability (theta) is assumed to be a random effect and is estimated together with item
                                    paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('2PL IRT model,'), 'allows for different slopes in inflection point – different
+                                 p(strong('2PL IRT model'), ' allows for different slopes in inflection point – different
                                    discriminations', strong('a.'), 'Items can also differ in location of their inflection point – in item difficulty',
                                    strong('b.')),
                                  h4("Equation"),
@@ -1343,7 +1403,8 @@ ui=tagList(
                                  plotOutput('twoparamirttif_mirt'),
                                  downloadButton("DP_twoparamirttif_mirt", label = "Download figure"),
                                  h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015)'),
+                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
+                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
                                  tableOutput('twoparamirtcoef_mirt'),
                                  h4('Scatter plot of factor scores and standardized total scores'),
                                  textOutput('twoparamirtFactorCor_mirt'),
@@ -1357,7 +1418,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Model'),
@@ -1392,7 +1453,58 @@ ui=tagList(
                                      br(),
                                      code('sts <- as.vector(scale(apply(data, 1, sum)))'),
                                      br(),
-                                     code('plot(fs ~ sts)')),
+                                     code('plot(fs ~ sts)'),
+                                     br(),
+                                     br(),
+                                     br(),
+                                     code('# You can also use ltm library for IRT models'),
+                                     br(),
+                                     code('library(difNLR)'),
+                                     br(),
+                                     code('library(ltm)'),
+                                     br(),
+                                     code('data(GMAT)'),
+                                     br(),
+                                     code('data <- GMAT[, 1:20]'),
+                                     br(),
+                                     br(),
+                                     code('# Model'),
+                                     br(),
+                                     code('fit <- ltm(data ~ z1, IRT.param = TRUE)'),
+                                     br(),
+                                     code('# Item Characteristic Curves'),
+                                     br(),
+                                     code('plot(fit)'),
+                                     br(),
+                                     code('# Item Information Curves'),
+                                     br(),
+                                     code('plot(fit, type = "IIC")'),
+                                     br(),
+                                     code('# Test Information Function'),
+                                     br(),
+                                     code('plot(fit, items = 0, type = "IIC")'),
+                                     br(),
+                                     code('# Coefficients'),
+                                     br(),
+                                     code('coef(fit)'),
+                                     br(),
+                                     code('# Factor scores vs Standardized total scores'),
+                                     br(),
+                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
+                                     br(),
+                                     code('FS   <- as.vector(df1[, "z1"])'),
+                                     br(),
+                                     code('df2  <- df1'),
+                                     br(),
+                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
+                                     br(),
+                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
+                                     br(),
+                                     code('df  <- data.frame(FS, STS)'),
+                                     br(),
+                                     code('plot(FS ~ STS, data = df,
+                                          xlab = "Standardized total score",
+                                          ylab = "Factor score")')),
                                  br()
                                  ),
                         # * 3PL ####
@@ -1401,7 +1513,7 @@ ui=tagList(
                                  p('Item Response Theory (IRT) models are mixed-effect regression models in which
                                    student ability (theta) is assumed to be a random effect and is estimated together with item
                                    paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('3PL IRT model,'), 'allows for different discriminations of items', strong('a,'),
+                                 p(strong('3PL IRT model'), ' allows for different discriminations of items', strong('a,'),
                                    'different item difficulties',
                                    strong('b,'), 'and allows also for nonzero left asymptote – pseudo-guessing', strong('c.')),
                                  h4("Equation"),
@@ -1416,7 +1528,8 @@ ui=tagList(
                                  plotOutput('threeparamirttif_mirt'),
                                  downloadButton("DP_threeparamirttif_mirt", label = "Download figure"),
                                  h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015)'),
+                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
+                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
                                  tableOutput('threeparamirtcoef_mirt'),
                                  h4('Scatter plot of factor scores and standardized total scores'),
                                  textOutput('threeparamirtFactorCor_mirt'),
@@ -1430,7 +1543,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Model'),
@@ -1465,7 +1578,58 @@ ui=tagList(
                                      br(),
                                      code('sts <- as.vector(scale(apply(data, 1, sum)))'),
                                      br(),
-                                     code('plot(fs ~ sts)')),
+                                     code('plot(fs ~ sts)'),
+                                     br(),
+                                     code('# You can also use ltm library for IRT models'),
+                                     br(),
+                                     br(),
+                                     br(),
+                                     code('library(difNLR)'),
+                                     br(),
+                                     code('library(ltm)'),
+                                     br(),
+                                     code('data(GMAT)'),
+                                     br(),
+                                     code('data <- GMAT[, 1:20]'),
+                                     br(),
+                                     br(),
+                                     code('# Model'),
+                                     br(),
+                                     code('fit <- tpm(data, IRT.param = TRUE)'),
+                                     br(),
+                                     code('# Item Characteristic Curves'),
+                                     br(),
+                                     code('plot(fit)'),
+                                     br(),
+                                     code('# Item Information Curves'),
+                                     br(),
+                                     code('plot(fit, type = "IIC")'),
+                                     br(),
+                                     code('# Test Information Function'),
+                                     br(),
+                                     code('plot(fit, items = 0, type = "IIC")'),
+                                     br(),
+                                     code('# Coefficients'),
+                                     br(),
+                                     code('coef(fit)'),
+                                     br(),
+                                     code('# Factor scores vs Standardized total scores'),
+                                     br(),
+                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
+                                     br(),
+                                     code('FS   <- as.vector(df1[, "z1"])'),
+                                     br(),
+                                     code('df2  <- df1'),
+                                     br(),
+                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
+                                     br(),
+                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
+                                     br(),
+                                     code('df  <- data.frame(FS, STS)'),
+                                     br(),
+                                     code('plot(FS ~ STS, data = df,
+                                          xlab = "Standardized total score",
+                                          ylab = "Factor score")')),
                                  br()
                                  ),
                         "----",
@@ -1497,7 +1661,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# 1PL IRT model'),
@@ -1548,6 +1712,7 @@ ui=tagList(
                                  textOutput("bock_coef_warning"),
                                  tableOutput('bock_coef'),
                                  h4('Scatter plot of factor scores and standardized total scores'),
+                                 textOutput('bockFactorCorInput_mirt'),
                                  plotOutput('bock_factor'),
                                  downloadButton("DP_bock_factor", label = "Download figure"),
                                  br(),
@@ -1558,7 +1723,7 @@ ui=tagList(
                                      br(),
                                      code('data(GMAT)'),
                                      br(),
-                                     code('data <- GMAT[, colnames(GMAT) != "group"]'),
+                                     code('data <- GMAT[, 1:20]'),
                                      br(),
                                      br(),
                                      code('# Model'),
@@ -1591,11 +1756,42 @@ ui=tagList(
                                      br(),
                                      code('plot(fs ~ sts)')),
                                  br()
+                                 ),
+                        "----",
+                        "Training",
+                        # * ITEM PLOTS ####
+                        tabPanel("Characteristic and information curves",
+                                 h3("Characteristic and information curves"),
+                                 p('Here you can explore behaviour of item characteristic curve \\(\\mathrm{P}\\left(\\theta\\right)\\) and item
+                                   information function \\(\\mathrm{I}\\left(\\theta\\right)\\) in 4PL IRT model. '),
+                                 h4("Equations"),
+                                 ('$$\\mathrm{P}\\left(\\theta \\vert a, b, c, d \\right) = c + \\left(d - c\\right) \\cdot \\frac{e^{a\\left(\\theta-b\\right) }}{1+e^{a\\left(\\theta-b\\right) }} $$'),
+                                 ('$$\\mathrm{I}\\left(\\theta \\vert a, b, c, d \\right) = a^2 \\cdot \\left(d - c\\right) \\cdot \\frac{e^{a\\left(\\theta-b\\right) }}{\\left[1+e^{a\\left(\\theta-b\\right)}\\right]^2} $$'),
+                                 h4("Parameters"),
+                                 p('Select parameters ', strong('a'), '(discrimination), ', strong('b'), '(difficulty), ',
+                                   strong('c'), '(guessing) and ', strong('d'), '(inattention). By constraining a = 1, c = 0, d = 1 you get
+                                   Rasch model. With option c = 0 and d = 1 you get 2PL model and with option d = 1 3PL model.'),
+                                 fluidRow(
+                                   column(2, offset = 0,
+                                          sliderInput("ccIRTSlider_a", "a - discrimination", min = -4, max = 4,
+                                                      value = 1),
+                                          sliderInput("ccIRTSlider_b", "b - difficulty", min = -4, max = 4,
+                                                      value = 0)),
+                                   column(2, offset = 1,
+                                          sliderInput("ccIRTSlider_c", "c - guessing", min = 0, max = 1,
+                                                      value = 0),
+                                          sliderInput("ccIRTSlider_d", "d - inattention", min = 0, max = 1,
+                                                      value = 1))),
+
+                                 plotOutput('ccIRT_plot'),
+                                 downloadButton("DB_ccIRT", label = "Download figure"),
+                                 plotOutput('iccIRT_plot'),
+                                 downloadButton("DB_iccIRT", label = "Download figure")
                                  )
                                  ),
-             ###################
-             # DIF/FAIRNESS ####
-             ###################
+             #%%%%%%%%%%%%%%%%%%%%%
+             # DIF/FAIRNESS #######
+             #%%%%%%%%%%%%%%%%%%%%%
              navbarMenu("DIF/Fairness",
                         "Used methods",
                         # * TOTAL SCORES ####
@@ -1607,8 +1803,8 @@ ui=tagList(
                                  h4("Summary of total scores for groups"),
                                  tableOutput('resultsgroup'),
                                  h4("Histograms of total scores for groups"),
-                                 sliderInput("inSlider2group", "Cut-Score", min=1, value=1, max=10,
-                                             step=1, animate=TRUE),
+                                 sliderInput("inSlider2group", "Cut-score", min = 1, value = 1, max = 10,
+                                             step = 1, animate = TRUE),
                                  p('For selected cut-score, blue part of histogram shows students with total score
                                    above the cut-score, grey column shows students with Total Score equal
                                    to cut-score and red part of histogram shows students below the cut-score.'),
@@ -1652,7 +1848,15 @@ ui=tagList(
                                  radioButtons('type_threshold', 'Threshold',
                                               list("Fixed", "Normal")
                                  ),
-
+                                 checkboxInput('puri_DP', 'Item purification', FALSE),
+                                 conditionalPanel(
+                                   condition = "input.puri_DP",
+                                   selectInput("puri_DP_type", "Purification method",
+                                             c("IPP1" = "IPP1",
+                                               "IPP2" = "IPP2",
+                                               "IPP3" = "IPP3"
+                                               ),
+                                             selected = "IPP1")),
                                  plotOutput('deltaplot'),
                                  downloadButton("DP_deltaplot", label = "Download figure"),
                                  br(),
@@ -1686,7 +1890,7 @@ ui=tagList(
                                      code('# Delta scores with normal threshold'),
                                      br(),
                                      code('deltascores <- deltaPlot(data.frame(data, group), group = "group",
-                                          focal.name = 1, thr = "norm")'),
+                                          focal.name = 1, thr = "norm", purify = F)'),
                                      br(),
                                      code('deltascores'),
                                      br(),
@@ -1713,7 +1917,8 @@ ui=tagList(
                                                           "FDR" = "fdr",
                                                           "none" = "none"
                                                         ),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            checkboxInput('puri_MH', 'Item purification', FALSE),
                                             verbatimTextOutput("print_DIF_MH"),
                                             br(),
                                             h4("Selected R code"),
@@ -1731,7 +1936,7 @@ ui=tagList(
                                                 code('# Mantel-Haenszel test'),
                                                 br(),
                                                 code('fit <- difMH(Data = data, group = group, focal.name = 1,
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit')),
                                             br()
@@ -1744,7 +1949,7 @@ ui=tagList(
                                             h4('Contingency tables and odds ratio calculation'),
                                             sliderInput("difMHSlider_item", "Item", animate = TRUE,
                                                         min = 1, max = 10, value = 1, step = 1),
-                                            sliderInput("difMHSlider_score", "Cut-Score", min = 0, max = 10,
+                                            sliderInput("difMHSlider_score", "Cut-score", min = 0, max = 10,
                                                         value = 1, step = 1),
                                             fluidRow(column(12, align = "center", tableOutput('table_DIF_MH'))),
                                             uiOutput('ORcalculation'),
@@ -1789,7 +1994,7 @@ ui=tagList(
                                                 code('# Mantel-Haenszel estimate of OR'),
                                                 br(),
                                                 code('fit <- difMH(Data = data, group = group, focal.name = 1,
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit$alphaMH')),
                                             br()
@@ -1823,7 +2028,8 @@ ui=tagList(
                                                           "FDR" = "fdr",
                                                           "none" = "none"
                                                         ),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            checkboxInput('puri_LR', 'Item purification', FALSE),
                                             verbatimTextOutput('print_DIF_logistic'),
                                             br(),
                                             h4("Selected R code"),
@@ -1843,7 +2049,8 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difLogistic(Data = data, group = group, focal.name = 1,
                                                      type = "both",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none",
+                                                     purify = F)'),
                                                 br(),
                                                 code('fit')),
                                             br()
@@ -1873,9 +2080,11 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
-                                            sliderInput("diflogSlider", "Item Slider", min=1, value=1, max=10,
-                                                        step=1, animate=TRUE),
+                                                        selected = "none"),
+                                            checkboxInput('puri_LR_plot', 'Item purification', FALSE),
+                                            sliderInput("diflogSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
                                             plotOutput('plot_DIF_logistic'),
                                             downloadButton("DP_plot_DIF_logistic", label = "Download figure"),
                                             h4("Equation"),
@@ -1900,7 +2109,7 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difLogistic(Data = data, group = group, focal.name = 1,
                                                      type = "both",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit'),
                                                 br(),
@@ -1911,7 +2120,8 @@ ui=tagList(
                                                      type = "both",
                                                      item =  1,
                                                      IRT = F,
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none",
+                                                     purify = F)'),
                                                 br(),
                                                 code('# Coefficients'),
                                                 br(),
@@ -1950,7 +2160,8 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            #checkboxInput('puri_LR_IRT', 'Item purification', FALSE),
                                             verbatimTextOutput('print_DIF_logistic_IRT_Z'),
                                             br(),
                                             h4("Selected R code"),
@@ -1972,7 +2183,8 @@ ui=tagList(
                                                 code('fit <- difLogistic(Data = data, group = group, focal.name = 1,
                                                      type = "both",
                                                      match = scaled.score,
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none",
+                                                     purify = F)'),
                                                 br(),
                                                 code('fit')),
                                             br()
@@ -2002,9 +2214,11 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
-                                            sliderInput("diflog_irtSlider", "Item Slider", min=1, value=1, max=10,
-                                                        step=1, animate=TRUE),
+                                                        selected = "none"),
+                                            # checkboxInput('puri_LR_IRT_plot', 'Item purification', FALSE),
+                                            sliderInput("diflog_irtSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
                                             plotOutput('plot_DIF_logistic_IRT_Z'),
                                             downloadButton("DP_plot_DIF_logistic_IRT_Z", label = "Download figure"),
                                             h4("Equation"),
@@ -2033,7 +2247,8 @@ ui=tagList(
                                                 code('fit <- difLogistic(Data = data, group = group, focal.name = 1,
                                                      type = "both",
                                                      match = scaled.score,
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none",
+                                                     purify = F)'),
                                                 br(),
                                                 code('fit'),
                                                 br(),
@@ -2067,11 +2282,11 @@ ui=tagList(
                                             )
                                    ),
                         # * NONLINEAR Z ####
-                        tabPanel("Nonlinear Z",
+                        tabPanel("Nonlinear IRT Z",
                                  tabsetPanel(
                                    # ** Summary ####
                                    tabPanel('Summary',
-                                            h3('Nonlinear regression on standardized total scores'),
+                                            h3('Nonlinear regression on standardized total scores with IRT parameterization'),
                                             p('Nonlinear regression model allows for nonzero lower asymptote - pseudoguessing',
                                               strong('c.'), 'Similarly to logistic regression, also nonlinear regression allows for
                                               detection of uniform and non-uniform DIF by adding a group specific intercept',
@@ -2096,7 +2311,8 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            # checkboxInput('puri_NLR', 'Item purification', FALSE),
                                             verbatimTextOutput('print_DIF_NLR'),
                                             br(),
                                             h4("Selected R code"),
@@ -2112,14 +2328,14 @@ ui=tagList(
                                                 code('# Nonlinear regression DIF method'),
                                                 br(),
                                                 code('fit <- difNLR(Data = Data, group = group, focal.name = 1,
-                                                     model = "3PLcg", type = "both", p.adjust.method = "BH")'),
+                                                     model = "3PLcg", type = "both", p.adjust.method = "none")'),
                                                 br(),
                                                 code('fit')),
                                             br()
                                             ),
                                    # ** Items ####
                                    tabPanel('Items',
-                                            h3('Nonlinear regression on standardized total scores'),
+                                            h3('Nonlinear regression on standardized total scores with IRT parameterization'),
                                             p('Nonlinear regression model allows for nonzero lower asymptote - pseudoguessing',
                                               strong('c.'), 'Similarly to logistic regression, also nonlinear regression allows
                                               for detection of uniform and non-uniform DIF (Drabinova & Martinkova, 2016) by
@@ -2144,9 +2360,11 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
-                                            sliderInput("difnlrSlider", "Item Slider", min=1, value=1, max=10,
-                                                        step=1, animate=TRUE),
+                                                        selected = "none"),
+                                            #checkboxInput('puri_NLR_plot', 'Item purification', FALSE),
+                                            sliderInput("difnlrSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
                                             plotOutput('plot_DIF_NLR'),
                                             downloadButton("DP_plot_DIF_NLR", label = "Download figure"),
                                             h4("Equation"),
@@ -2169,7 +2387,7 @@ ui=tagList(
                                                 code('# Nonlinear regression DIF method'),
                                                 br(),
                                                 code('fit <- difNLR(Data = Data, group = group, focal.name = 1,
-                                                     model = "3PLcg", type = "both", p.adjust.method = "BH")'),
+                                                     model = "3PLcg", type = "both", p.adjust.method = "none")'),
                                                 br(),
                                                 code('# Plot of characteristic curve of item 1'),
                                                 br(),
@@ -2216,7 +2434,8 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            checkboxInput('puri_Lord', 'Item purification', FALSE),
                                             verbatimTextOutput('print_DIF_IRT_Lord'),
                                             br(),
                                             h4("Selected R code"),
@@ -2235,7 +2454,7 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difLord(Data = data, group = group, focal.name = 1,
                                                      model = "2PL",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit')),
                                             br()
@@ -2266,9 +2485,11 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
-                                            sliderInput("difirt_lord_itemSlider", "Item Slider", min=1, value=1, max=10,
-                                                        step=1, animate=TRUE),
+                                                        selected = "none"),
+                                            checkboxInput('puri_Lord_plot', 'Item purification', FALSE),
+                                            sliderInput("difirt_lord_itemSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
                                             plotOutput('plot_DIF_IRT_Lord'),
                                             downloadButton("DP_plot_DIF_IRT_Lord", label = "Download figure"),
                                             h4("Equation"),
@@ -2293,7 +2514,7 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difLord(Data = data, group = group, focal.name = 1,
                                                      model = "2PL",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit'),
                                                 br(),
@@ -2341,7 +2562,8 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
+                                                        selected = "none"),
+                                            checkboxInput('puri_Raju', 'Item purification', FALSE),
                                             verbatimTextOutput('print_DIF_IRT_Raju'),
                                             br(),
                                             h4("Selected R code"),
@@ -2360,7 +2582,7 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difRaju(Data = data, group = group, focal.name = 1,
                                                      model = "2PL",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit')),
                                             br()),
@@ -2389,9 +2611,11 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected="BH"),
-                                            sliderInput("difirt_raju_itemSlider", "Item Slider", min=1, value=1, max=10,
-                                                        step=1, animate=TRUE),
+                                                        selected = "none"),
+                                            checkboxInput('puri_Raju_plot', 'Item purification', FALSE),
+                                            sliderInput("difirt_raju_itemSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
+                                                        step = 1, animate = TRUE),
                                             plotOutput('plot_DIF_IRT_Raju'),
                                             downloadButton("DP_plot_DIF_IRT_Raju", label = "Download figure"),
                                             h4("Equation"),
@@ -2416,7 +2640,7 @@ ui=tagList(
                                                 br(),
                                                 code('fit <- difRaju(Data = data, group = group, focal.name = 1,
                                                      model = "2PL",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none", purify = F)'),
                                                 br(),
                                                 code('fit'),
                                                 br(),
@@ -2435,7 +2659,7 @@ ui=tagList(
                                  tabsetPanel(
                                    # ** Summary ####
                                    tabPanel('Summary',
-                                            h3('Differential Distractor Functioning with multinomial log-linear regression Model'),
+                                            h3('Differential Distractor Functioning with multinomial log-linear regression model'),
                                             p('Differential Distractor Functioning (DDF) occurs when people from different
                                               groups but with the same knowledge have different probability of selecting
                                               at least one distractor choice. DDF is here examined by Multinomial Log-linear
@@ -2466,7 +2690,7 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected = "BH"),
+                                                        selected = "none"),
                                             verbatimTextOutput('print_DDF'),
                                             br(),
                                             h4("Selected R code"),
@@ -2484,7 +2708,7 @@ ui=tagList(
                                                 code('# DDF with difNLR package'),
                                                 br(),
                                                 code('fit <- ddfMLR(Data, group, focal.name = 1, key, type = "both",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none")'),
                                                 br(),
                                                 code('fit')),
                                             br()
@@ -2515,8 +2739,9 @@ ui=tagList(
                                                           "BY" = "BY",
                                                           "FDR" = "fdr",
                                                           "none" = "none"),
-                                                        selected = "BH"),
-                                            sliderInput("ddfSlider", "Item Slider", min = 1, value = 1, max = 10,
+                                                        selected = "none"),
+                                            sliderInput("ddfSlider", "Item",
+                                                        min = 1, value = 1, max = 10,
                                                         step = 1, animate = TRUE),
                                             plotOutput('plot_DDF'),
                                             downloadButton("DP_plot_DDF", label = "Download figure"),
@@ -2540,7 +2765,7 @@ ui=tagList(
                                                 code('# DDF with difNLR package'),
                                                 br(),
                                                 code('fit <- ddfMLR(Data, group, focal.name = 1, key, type = "both",
-                                                     p.adjust.method = "BH")'),
+                                                     p.adjust.method = "none")'),
                                                 br(),
                                                 code('# Estimated coefficients of item 1'),
                                                 br(),
@@ -2575,31 +2800,151 @@ ui=tagList(
                                  br()
                         )
                         ),
-                ########################
-                # REPORTS ##############
-                ########################
+                #%%%%%%%%%%%%%%%%%%%%%
+                # REPORTS ############
+                #%%%%%%%%%%%%%%%%%%%%%
                 tabPanel("Reports",
                          h3("Download report"),
-                         p("This shiny app also offers an option to download a report in HTML or PDF format."),
-                         p("PDF report creation requires latest version of",
-                           a("MiKTeX", href = "https://miktex.org/howto/install-miktex", target = "_blank"),
+                         h4("Settings of report"),
+                         p(code("ShinyItemAnalysis"), " offers an option to download a report in HTML or PDF format. PDF report
+                           creation requires latest version of", a("MiKTeX", href = "https://miktex.org/howto/install-miktex",
+                                                                   target = "_blank"),
                            "(or other TeX distribution). If you don't have the latest installation, please, use the HTML report."),
-                         radioButtons("report_format", "Format of Report",
-                                     c("HTML" = "html",
-                                       "PDF" = "pdf")),
-                         radioButtons("irt_type_report", "IRT Model selection",
-                                      c("Rasch" = "rasch",
-                                        "1PL" = "1pl",
-                                        "2PL" = "2pl",
-                                        "3PL" = "3pl"),
-                                      selected = "1pl"),
-                         downloadButton("report", "Generate Report"),
-                         p(strong("Warning"), ": download of Reports takes some time. Please, be patient.")
+                         p("There is an option whether to use customize settings. By checking the", strong("Customize settings"),
+                           "local settings will be offered and use for each selected section of report. Otherwise the settings
+                           will be taken from pages of application."),
+                         fluidRow(
+                           column(2,
+                                  radioButtons("report_format", "Format of report",
+                                               c("HTML" = "html",
+                                                 "PDF" = "pdf"))
+                           ),
+                           column(2,
+                                  checkboxInput("customizeCheck", "Customize settings", FALSE)
+                           )
+                         ),
+                         h4("Content of report"),
+                         p("Reports by default contain summary of total scores, item analysis,
+                           distractors plots for each item and multinomial regression plots for each item. "),
+                         fluidRow(
+                           column(4,
+                                  radioButtons("corr_report", "Correlation structure",
+                                               c("None" = "none",
+                                                 "Corrplot + Screeplot" = "corrplotscreeplot"),
+                                               selected = "none")
+                           )
+                         ),
+                         fluidRow(
+                           conditionalPanel(condition = "input.customizeCheck",
+                                            column(1, p(strong("Distractors plot")),
+                                                   radioButtons('type_combinations_distractor_report', 'Type',
+                                                                list("Combinations", "Distractors")
+                                                   )
+                                            )
+                           )
+                         ),
+                         fluidRow(
+                           column(4,
+                                  radioButtons("irt_type_report", "IRT model selection",
+                                               c("None" = "none",
+                                                 "Rasch" = "rasch",
+                                                 "1PL" = "1pl",
+                                                 "2PL" = "2pl",
+                                                 "3PL" = "3pl"),
+                                               selected = "1pl")
+                           )
                          ),
 
-             ########################
-             # REFERENCES ###########
-             ########################
+                           fluidRow(
+                             column(3,
+                                    p(strong("DIF method selection")),
+                                    checkboxInput("histCheck", "None - histograms by group only", FALSE),
+                                    checkboxInput("deltaplotCheck", "Delta plot", FALSE),
+                                    checkboxInput("logregCheck", "Logistic regression", FALSE),
+                                    checkboxInput("multiCheck", "Multinomial regression", FALSE)
+                             ),
+                             conditionalPanel(condition = "input.customizeCheck",
+                             conditionalPanel(condition = "input.deltaplotCheck",
+                               column(2, p(strong("Delta plot settings")),
+                                      radioButtons('type_threshold_report', 'Threshold',
+                                                   list("Fixed", "Normal")
+                                      ),
+                                      checkboxInput('puri_DP_report', 'Item purification', FALSE),
+                                      conditionalPanel(
+                                        condition = "input.puri_DP_report",
+                                        selectInput("puri_DP_type_report", "Purification method",
+                                                    c("IPP1" = "IPP1",
+                                                      "IPP2" = "IPP2",
+                                                      "IPP3" = "IPP3"
+                                                    ),
+                                                    selected = "IPP1")
+                                      )
+                               )
+                             ),
+                             conditionalPanel(condition = "input.logregCheck",
+                               column(2, p(strong("Logistic regression settings")),
+                                      radioButtons('type_print_DIF_logistic_report', 'Type',
+                                                   c("H0: Any DIF vs. H1: No DIF" = 'both',
+                                                     "H0: Uniform DIF vs. H1: No DIF" = 'udif',
+                                                     "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'
+                                                   ),
+                                                   'both'
+                                      ),
+                                      selectInput("correction_method_log_report", "Correction method",
+                                                  c("BH" = "BH",
+                                                    "Holm" = "holm",
+                                                    "Hochberg" = "hochberg",
+                                                    "Hommel" = "hommel",
+                                                    "BY" = "BY",
+                                                    "FDR" = "fdr",
+                                                    "none" = "none"
+                                                  ),
+                                                  selected = "none"),
+                                      checkboxInput('puri_LR_report', 'Item purification', FALSE)
+                               )
+                             ),
+                             conditionalPanel(condition = "input.multiCheck",
+                               column(2, p(strong("Multinomial regression settings")),
+                                      radioButtons('type_DDF_report', 'Type',
+                                                   c("H0: Any DIF vs. H1: No DIF" = 'both',
+                                                     "H0: Uniform DIF vs. H1: No DIF" = 'udif',
+                                                     "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'
+                                                   ),
+                                                   'both'
+                                      ),
+                                      selectInput("correction_method_DDF_report", "Correction method",
+                                                  c("BH" = "BH",
+                                                    "Holm" = "holm",
+                                                    "Hochberg" = "hochberg",
+                                                    "Hommel" = "hommel",
+                                                    "BY" = "BY",
+                                                    "FDR" = "fdr",
+                                                    "none" = "none"),
+                                                  selected = "none")
+                               )
+                            )
+                           )
+                         ),
+                         p(strong("Recommendation: "), "Report generation can be faster and more reliable when you first check
+                           sections of intended contents. For example, if you wish to include a ", strong("3PL IRT"),
+                           " model, you can first visit ", strong("IRT models"), "section and ", strong("3PL"), " subsection."),
+                         #p(strong("Warning: "), "Download of reports takes some time. Please, be patient."),
+                         fluidRow(
+                           column(width = 4,
+                             splitLayout(
+                               actionButton("generate", "Generate report"),
+                               uiOutput("download_report_button")
+                             )
+                           )
+                         ),
+                         br(),
+                         br(),
+                         br()
+                         ),
+
+             #%%%%%%%%%%%%%%%%%%%%%
+             # REFERENCES #########
+             #%%%%%%%%%%%%%%%%%%%%%
              tabPanel("References",
                       h3('References'),
                       p('Akaike, H. (1974). A New Look at the Statistical Model Identification. IEEE Transactions
@@ -2612,31 +2957,55 @@ ui=tagList(
                                                     href = "http://onlinelibrary.wiley.com/doi/10.1111/emip.12067/full",
                                                     target = "_blank")),
                       p('Angoff, W. H., & Ford, S. F. (1973). Item-Race Interaction on a Test of
-                        Scholastic Aptitude. Journal of Educational Measurement, 10(2), 95-105.'),
+                        Scholastic Aptitude. Journal of Educational Measurement, 10(2), 95-105.',
+                        a("See online.",
+                          href = "https://www.jstor.org/stable/1433905?seq=1#page_scan_tab_contents",
+                          target = "_blank")),
                       p('Bock, R. D. (1972). Estimating Item Parameters and Latent Ability when
                         Responses Are Scored in Two or More Nominal Categories. Psychometrika,
                         37(1), 29-51.', a("See online.",
                                           href = "http://link.springer.com/article/10.1007/BF02291411",
                                           target = "_blank")),
-                      p('Cronbach, L. J. (1951). Coefficient alpha and the internal structure
-                        of tests. psychometrika, 16(3), 297-334.'),
+                      p('Cronbach, L. J. (1951). Coefficient Alpha and the Internal Structure
+                        of Tests. Psychometrika, 16(3), 297-334.', a("See online.",
+                                                                     href = "https://link.springer.com/article/10.1007/BF02310555",
+                                                                     target = "_blank")),
                       p("Drabinova, A., & Martinkova, P. (2016). Detection of Differential Item
                         Functioning Based on Non-Linear Regression. Technical Report",
                         a("V-1229", href = "https://goo.gl/R3dpJ5", target = "_blank"), "."),
                       p("Lord, F. M. (1980). Applications of Item Response Theory to Practical Testing Problems.
                         Routledge."),
-                      p("Magis, D., & Facon, B. (2012). Angoff's delta method revisited:
-                        Improving DIF detection under small samples. British Journal of
-                        Mathematical and Statistical Psychology, 65(2), 302-321."),
+                      p("Magis, D., & Facon, B. (2012). Angoff's Delta Method Revisited:
+                        Improving DIF Detection under Small Samples. British Journal of
+                        Mathematical and Statistical Psychology, 65(2), 302-321.", a("See online.",
+                                                                                     href = "https://www.ncbi.nlm.nih.gov/pubmed/22500570",
+                                                                                     target = "_blank")),
                       p("Mantel, N., & Haenszel, W. (1959). Statistical Aspects of the Analysis of Data from
-                        Retrospective Studies. Journal of the National Cancer Institute, 22 (4), 719-748."),
+                        Retrospective Studies. Journal of the National Cancer Institute, 22 (4), 719-748.", a("See online.",
+                                                                                                              href = "http://www.medicine.mcgill.ca/epidemiology/hanley/c634/stratified/Mantel_Haenszel_1.pdf",
+                                                                                                              target = "_blank")),
+                      p("Martinkova, P., Drabinova, A., Liaw, Y. L., Sanders, E. A., McFarland, J. L., & Price, R. M.
+                        (2017). Checking Equity: Why Differential Item Functioning Analysis Should Be a Routine Part
+                        of Developing Conceptual Assessments. CBE-Life Sciences Education, 16(2). ",
+                        a('See online.',
+                          href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
+                          target = "_blank")),
                       p("Swaminathan, H., & Rogers, H. J. (1990). Detecting Differential Item
                         Functioning Using Logistic Regression Procedures. Journal of Educational
-                        Measurement, 27(4), 361-370."),
+                        Measurement, 27(4), 361-370.",
+                        a('See online.',
+                          href = "https://www.jstor.org/stable/1434855?seq=1#page_scan_tab_contents",
+                          target = "_blank")),
                       p("Raju, N. S. (1988). The Area between Two Item Characteristic Curves. Psychometrika,
-                        53 (4), 495-502."),
+                        53 (4), 495-502.",
+                        a('See online.',
+                          href = "https://link.springer.com/article/10.1007/BF02294403",
+                          target = "_blank")),
                       p("Raju, N. S. (1990). Determining the Significance of Estimated Signed and Unsigned Areas
-                        between Two Item Response Functions. Applied Psychological Measurement, 14 (2), 197-207."),
+                        between Two Item Response Functions. Applied Psychological Measurement, 14 (2), 197-207.",
+                        a('See online.',
+                          href = "http://journals.sagepub.com/doi/abs/10.1177/014662169001400208",
+                          target = "_blank")),
                       p('Rasch, G. (1960) Probabilistic Models for Some Intelligence and Attainment Tests.
                         Copenhagen: Paedagogiske Institute.'),
                       p('Schwarz, G. (1978). Estimating the Dimension of a Model. The Annals of Statistics,
@@ -2645,8 +3014,8 @@ ui=tagList(
                                            target = "_blank")),
                       p("Wilson, M. (2005). Constructing Measures: An Item Response Modeling Approach."),
                       p("Wright, B. D., & Stone, M. H. (1979). Best Test Design. Chicago: Mesa Press."),
-                      br(),
                       br()
                       )
                       )
                       )
+

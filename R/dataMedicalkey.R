@@ -1,6 +1,7 @@
 #' Key of Correct Answers for \code{dataMedicaltest} Data Set
 #'
 #' @docType data
+#' @name dataMedicalkey
 #' @description The \code{dataMedicalkey} is a vector of factors representing correct answers of
 #' \code{dataMedicaltest} data set.
 #'
@@ -20,10 +21,16 @@
 #' Jakub Houdek \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' The Faculty of Informatics and Statistics, University of Economics, Prague \cr
-#' houdek.james@gmail.com \cr#'
+#' houdek.james@gmail.com \cr
+#'
+#' Adela Drabinova \cr
+#' Institute of Computer Science, The Czech Academy of Sciences \cr
+#' Faculty of Mathematics and Physics, Charles University \cr
+#' adela.drabinova@gmail.com \cr
 #'
 #' @references
-#' Stuka, C. Vejrazka, M., Martinkova, P. Komenda, M. and Stepanek, L. (2016). The Use of  Test and Item Analisis for Improvement of Tests. Workshop held at conference MEFANET, 2016, Brno, Czech Republic.
+#' Stuka, C. Vejrazka, M., Martinkova, P. Komenda, M. & Stepanek, L. (2016). The Use of  Test and Item Analisis for
+#' Improvement of Tests. Workshop held at conference MEFANET, 2016, Brno, Czech Republic.
 #'
 #' @keywords datasets
 #'

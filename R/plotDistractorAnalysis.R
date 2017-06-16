@@ -1,12 +1,3 @@
-# data The unscored item response from a multiple-choice test
-# key The answer key for the items
-# num.groups The number of groups for distractor analysis
-# item item indicator
-# multiple.answers AB BC etc combinations
-
-
-
-
 #' Function for graphical representation of item distractor analysis
 #'
 #' @aliases plotDistractorAnalysis
@@ -18,10 +9,14 @@
 #' @param key character: answer key for the items.
 #' @param num.groups numeric: number of groups to that should be respondents splitted.
 #' @param item numeric: the number of item to be plotted.
+#' @param item.name character: the name of item.
 #' @param multiple.answers logical: should be all combinations plotted (default) or should be
 #' answers splitted into distractors. See \strong{Details}.
+#' @param matching numeric: numeric vector. If not provided, total score is calculated and
+#' distractor analysis is performed based on it.
 #'
-#' @usage plotDistractorAnalysis(data, key, num.groups = 3, item = 1, multiple.answers = TRUE)
+#' @usage plotDistractorAnalysis(data, key, num.groups = 3, item = 1, item.name,
+#' multiple.answers = TRUE, matching = NULL)
 #'
 #' @details
 #' This function is graphical representation of \code{DistractorAnalysis} function.
@@ -80,11 +75,11 @@
 #' @export
 
 
-plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multiple.answers = TRUE)
+plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, item.name, multiple.answers = TRUE, matching = NULL)
 {
   key <- unlist(key)
   # distractor analysis
-  tabDA <- DistractorAnalysis(data = data, key = key, p.table = TRUE, num.groups = num.groups)
+  tabDA <- DistractorAnalysis(data = data, key = key, p.table = TRUE, num.groups = num.groups, matching = matching)
   x <- tabDA[[item]]
   # only rows where is possitive proportion of correct answers
   if (dim(x)[2] != 1){
@@ -92,6 +87,7 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
   }
 
   x <- melt(x, id = "response")
+  x <- x[complete.cases(x), ]
   x$response <- as.factor(x$response)
   levels(x$response)[which(levels(x$response) == "")] <- "NaN"
   x$response <- relevel(x$response, as.character(key[item]))
@@ -128,12 +124,17 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
     CAall <- c(CA, unlist(strsplit(as.character(key[item]), "")))
   }
 
+  if (missing(item.name)){
+    item.name <- paste("Item", item)
+  }
+
   # plot settings
   linetype <- rep(2, length(levels(df$response)))
   shape <- rep(1, length(levels(df$response)))
   names(linetype) <- names(shape) <- levels(df$response)
   linetype[CAall] <- 1
   shape[CAall] <- 19
+  xlab <- ifelse(is.null(matching), "Group by total score", "Group by criterion variable")
 
   # plot
   ggplot(df, aes_string(x = "score.level",
@@ -145,8 +146,8 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
          size = 1) +
     geom_line() +
     geom_point(size = 3) +
-    xlab("Group by Total Score") +
-    ylab("Option Selection Percentage") +
+    xlab(xlab) +
+    ylab("Option selection percentage") +
     scale_y_continuous(limits = c(0, 1)) +
     scale_x_discrete(labels = 1:num.groups, expand = c(0, 0.2)) +
     scale_linetype_manual(values = linetype) +
@@ -165,6 +166,6 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, multip
           legend.key = element_rect(colour = "white"),
           legend.key.width = unit(1, "cm"),
           plot.title = element_text(face = "bold")) +
-    ggtitle(paste("Item", item))
+    ggtitle(item.name)
 
 }
