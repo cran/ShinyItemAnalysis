@@ -1,17 +1,17 @@
 Package: ShinyItemAnalysis
 Type: Package
 Title: Test and Item Analysis via Shiny
-Version: 1.2.0
-Date: 2017-06-15
+Version: 1.2.3
+Date: 2017-08-22
 Author: Patricia Martinkova [aut, cre], Adela Drabinova [aut], Ondrej Leder [aut], Jakub Houdek [aut], Lubomir Stepanek [ctb]
 Authors@R: c(person("Patricia", "Martinkova", role = c("aut", "cre"), email = "martinkova@cs.cas.cz"), person("Adela", "Drabinova", role = c("aut")), person("Ondrej", "Leder", role = "aut"), person("Jakub", "Houdek", role = "aut"), person("Lubomir", "Stepanek", role = "ctb"))
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Depends: R (>= 3.3.2)
-Imports: corrplot, CTT, deltaPlotR, DT, difNLR (>= 1.0.3), difR (>=
-        4.7), ggplot2 (>= 2.2.1), grid, gridExtra, knitr, latticeExtra,
-        ltm, mirt (>= 1.24), moments, msm, nnet, psych, psychometric,
-        reshape2, rmarkdown, shiny (>= 1.0.3), shinyjs (>= 0.9),
-        stringr, WrightMap, xtable
+Imports: corrplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.1.0),
+        difR (>= 4.7), ggplot2 (>= 2.2.1), grid, gridExtra, knitr,
+        latticeExtra, ltm, mirt (>= 1.24), moments, msm, nnet, plotly,
+        psych, psychometric, reshape2, rmarkdown, shiny (>= 1.0.3),
+        shinyjs (>= 0.9), stringr, WrightMap, xtable
 Description: Interactive shiny application for analysis of educational tests and
     their items.
 License: GPL-3
@@ -19,6 +19,6 @@ LazyData: TRUE
 RoxygenNote: 6.0.1
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 NeedsCompilation: no
-Packaged: 2017-06-16 06:04:30 UTC; Adisa
+Packaged: 2017-08-22 12:38:15 UTC; martinkova
 Repository: CRAN
-Date/Publication: 2017-06-16 06:26:02 UTC
+Date/Publication: 2017-08-22 12:51:06 UTC
