@@ -595,18 +595,22 @@ multi_plot_Input <- reactive({
   dfhw <- data.table(data[, item], zscore)
   dfhw <- dfhw[complete.cases(dfhw), ]
 
-  # fitM <- multinom(relevel(as.factor(unlist(dfhw[, 1])),
-  #                          ref = paste(key[item])) ~ unlist(dfhw[, 2]),
-  #                  trace = F)
-
   pp <- fitted(fitM)
+
+  temp <- as.factor(unlist(dfhw[, 1]))
+  temp <- relevel(temp, ref = paste(key[item]))
+
   if(ncol(pp) == 1){
     pp <- cbind(pp, 1 - pp)
-    colnames(pp) <- c("0", "1")
+    colnames(pp) <- rev(levels(temp))
   }
-  stotals <- rep(unlist(dfhw[, 2]), length(levels(as.factor(unlist(dfhw[, 1, with = F])))))
+
+  stotals <- rep(unlist(dfhw[, 2]),
+                 length(levels(temp)))
+
   df <- cbind(melt(pp), stotals)
   df$Var2 <- relevel(as.factor(df$Var2), ref = paste(key[item]))
+
   df2 <- data.table(table(data[, item], zscore),
                     y = data.table(prop.table(table(data[, item], zscore), 2))[, 3])
   df2$zscore <- as.numeric(paste(df2$zscore))
@@ -644,7 +648,7 @@ multi_plot_Input <- reactive({
 })
 
 # ** Reports: Plot with estimated curves of multinomial regression ######
-multiplotReportInput<-reactive({
+multiplotReportInput <- reactive({
   graflist <- list()
   key <- unlist(test_key())
   data <- test_answers()
@@ -661,9 +665,12 @@ multiplotReportInput<-reactive({
                      trace = F)
 
     pp <- fitted(fitM)
+    temp <- as.factor(unlist(dfhw[, 1]))
+    temp <- relevel(temp, ref = paste(key[item]))
+
     if(ncol(pp) == 1){
       pp <- cbind(pp, 1 - pp)
-      colnames(pp) <- c("0", "1")
+      colnames(pp) <- rev(levels(temp))
     }
 
     stotals <- rep(unlist(dfhw[, 2]), length(levels(as.factor(unlist(dfhw[, 1, with = F])))))
@@ -686,12 +693,17 @@ multiplotReportInput<-reactive({
       ylim(0, 1) +
       labs(x = "Standardized total score",
            y = "Probability of answer") +
+      guides(colour = guide_legend(order = 1),
+             linetype = guide_legend(order = 1),
+             fill = guide_legend(order = 1),
+             size = guide_legend(order = 2)) +
       theme_bw() +
       theme(axis.line  = element_line(colour = "black"),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
             legend.title = element_blank(),
+            legend.box = "horizontal",
             legend.position = c(0, 1),
             legend.justification = c(0, 1),
             legend.background = element_blank(),
@@ -700,7 +712,7 @@ multiplotReportInput<-reactive({
             legend.key.width = unit(1, "cm"))
     g = g +
       ggtitle(paste("Multinomial plot for item", item_numbers()[item])) +
-      theme(text = element_text(size = 12))
+      theme(text = element_text(size = 14))
     g = ggplotGrob(g)
     graflist[[item]] = g
   }
@@ -741,12 +753,25 @@ output$multi_equation <- renderUI ({
 output$multi_table <- renderTable({
   fit <- multi_model()
 
+  key <- t(as.data.table(test_key()))
+  data <- test_answers()
+  item <- input$multiSlider
+
+  dfhw <- na.omit(data.table(data[, item, with = FALSE]))
+  temp <- as.factor(unlist(dfhw[, 1]))
+  temp <- relevel(temp, ref = paste(key[item]))
+
   koef <- as.vector(coef(fit))
   std  <- as.vector(sqrt(diag(vcov(fit))))
   tab  <- cbind(koef, std)
+  rnam <- rownames(coef(fit))
+  if (is.null(dim(coef(fit))[1]) & !(all(levels(temp) %in% c("1", "0")))){
+    rnam <- rev(levels(temp))[1]
+  }
+
   colnames(tab) <- c("Estimate", "SD")
-  rownames(tab) <- c(paste("b", rownames(coef(fit)), "0", sep = ""),
-                     paste("b", rownames(coef(fit)), "1", sep = ""))
+  rownames(tab) <- c(paste("b", rnam, "0", sep = ""),
+                     paste("b", rnam, "1", sep = ""))
   tab
 },
 include.rownames = T)

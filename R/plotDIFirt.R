@@ -36,7 +36,7 @@
 #' Adela Drabinova \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' Faculty of Mathematics and Physics, Charles University \cr
-#' adela.drabinova@gmail.com \cr
+#' drabinova@cs.cas.cz \cr
 #'
 #' Patricia Martinkova \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
@@ -52,18 +52,18 @@
 #' # loading libraries
 #' library(difNLR, difR)
 #'
-#'  # loading data based on GMAT
-#' data(GMAT, package = "difNLR")
+#'  # loading data based on GMAT2
+#' data(GMAT2, package = "difNLR")
 #'
 #' # Estimation of 2PL IRT model and Lord's statistic
 #' # by difR package
-#' fitLord <- difLord(GMAT, group = 21, focal.name = 1, model = "2PL")
+#' fitLord <- difLord(GMAT2, group = 21, focal.name = 1, model = "2PL")
 #' # plot of item 1 and Lord's statistic
 #' plotDIFirt(fitLord$itemParInit, item = 1)
 #'
 #' # Estimation of 2PL IRT model and Raju's statistic
 #' # by difR package
-#' fitRaju <- difRaju(GMAT, group = 21, focal.name = 1, model = "2PL")
+#' fitRaju <- difRaju(GMAT2, group = 21, focal.name = 1, model = "2PL")
 #' # plot of item 1 and Lord's statistic
 #' plotDIFirt(fitRaju$itemParInit, test = "Raju", item = 1)
 #' }
@@ -124,10 +124,14 @@ plotDIFirt <- function(parameters, test = "Lord", item = "all", item.name, same.
     mF <- itemRescale(mR, mF)
   }
 
+  if (is.null(dim(mR))){
+    mR <- as.data.frame(t(mR))
+    mF <- as.data.frame(t(mF))
+  }
+
   CC_plot <- function(x, a, b, c){
     return(c + (1 - c)/(1 + exp(-(a*(x - b)))))
   }
-
 
   coefR <- switch(as.character(ncol(mR)),
                   "2" = data.frame(a = 1, mR[, 1], c = 0),
@@ -176,7 +180,7 @@ plotDIFirt <- function(parameters, test = "Lord", item = "all", item.name, same.
                 ### theme
                 xlab("Ability") +
                 ylab("Probability of correct answer") +
-                scale_y_continuous(expand = c(0, 0), limits = c(0, 1))  +
+                scale_y_continuous(limits = c(0, 1))  +
                 theme_bw() +
                 theme(text = element_text(size = 14),
                       plot.title = element_text(size = 14, face = "bold", vjust = 1.5),

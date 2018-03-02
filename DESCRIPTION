@@ -1,13 +1,17 @@
 Package: ShinyItemAnalysis
 Type: Package
 Title: Test and Item Analysis via Shiny
-Version: 1.2.3
-Date: 2017-08-22
-Author: Patricia Martinkova [aut, cre], Adela Drabinova [aut], Ondrej Leder [aut], Jakub Houdek [aut], Lubomir Stepanek [ctb]
+Version: 1.2.6
+Date: 2018-03-01
+Author: Patricia Martinkova [aut, cre],
+  Adela Drabinova [aut],
+  Ondrej Leder [aut],
+  Jakub Houdek [aut],
+  Lubomir Stepanek [ctb]
 Authors@R: c(person("Patricia", "Martinkova", role = c("aut", "cre"), email = "martinkova@cs.cas.cz"), person("Adela", "Drabinova", role = c("aut")), person("Ondrej", "Leder", role = "aut"), person("Jakub", "Houdek", role = "aut"), person("Lubomir", "Stepanek", role = "ctb"))
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
-Depends: R (>= 3.3.2)
-Imports: corrplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.1.0),
+Depends: R (>= 3.1)
+Imports: corrplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.2.1),
         difR (>= 4.7), ggplot2 (>= 2.2.1), grid, gridExtra, knitr,
         latticeExtra, ltm, mirt (>= 1.24), moments, msm, nnet, plotly,
         psych, psychometric, reshape2, rmarkdown, shiny (>= 1.0.3),
@@ -19,6 +23,6 @@ LazyData: TRUE
 RoxygenNote: 6.0.1
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 NeedsCompilation: no
-Packaged: 2017-08-22 12:38:15 UTC; martinkova
+Packaged: 2018-03-02 12:58:25 UTC; drabinova
 Repository: CRAN
-Date/Publication: 2017-08-22 12:51:06 UTC
+Date/Publication: 2018-03-02 13:07:38 UTC
