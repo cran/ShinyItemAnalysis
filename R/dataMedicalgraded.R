@@ -1,13 +1,14 @@
-#' Dataset of Admission Test to Medical School
+#' Graded Dataset of Admission Test to Medical School
 #'
 #' @docType data
-#' @name dataMedicaltest
-#' @description The \code{dataMedicaltest} dataset consists of the responses of 2,392 subjects
+#' @name dataMedicalgraded
+#' @description The \code{dataMedicalgraded} dataset consists of the responses of 2,392 subjects
 #' (750 males, 1,633 females and 9 subjects without gender specification) to multiple-choice
-#' admission test to a medical school. It contains 100 items, possible answers
-#' were A, B, C, D, while any combination of these can be correct.
+#' admission test to a medical school. It contains 100 items. Each item is graded with 0 to 4
+#' points. Maximum of 4 points were set if all correct answers and none of incorrect answers
+#' were selected.
 #'
-#' @usage data(dataMedicaltest)
+#' @usage data(dataMedicalgraded)
 #'
 #' @author
 #' Cestmir Stuka \cr
@@ -36,11 +37,11 @@
 #'
 #' @keywords datasets
 #'
-#' @seealso \code{\link{dataMedical}}, \code{\link{dataMedicalkey}}, \code{\link{dataMedicalgraded}}
+#' @seealso \code{\link{dataMedical}}, \code{\link{dataMedicaltest}}, \code{\link{dataMedicalkey}}
 #'
-#' @format \code{dataMedicaltest} is a \code{data.frame} consisting of 2,392 observations on
-#' the following 101 variables. The first 100 columns represent answers of subject to
+#' @format A \code{dataMedicalgraded} is a \code{data.frame} consisting of 2,392 observations on
+#' the following 101 variables. The first 100 columns represent graded answers of subject to
 #' items of the test. The 101st column is vector of gender membership; values 0 and 1
 #' refer to males and females. The 102nd columns in criterion variable; value 1 means
-#' that student studies standardly, 0 otherwise (e.g. leaving or interrupting studies).
-"dataMedicaltest"
+#' that student study standardly, 0 otherwise (e.g. leaving or interrupting studies).
+"dataMedicalgraded"

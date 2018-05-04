@@ -1,8 +1,8 @@
 Package: ShinyItemAnalysis
 Type: Package
 Title: Test and Item Analysis via Shiny
-Version: 1.2.6
-Date: 2018-03-01
+Version: 1.2.7
+Date: 2018-05-03
 Author: Patricia Martinkova [aut, cre],
   Adela Drabinova [aut],
   Ondrej Leder [aut],
@@ -15,7 +15,7 @@ Imports: corrplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.2.1),
         difR (>= 4.7), ggplot2 (>= 2.2.1), grid, gridExtra, knitr,
         latticeExtra, ltm, mirt (>= 1.24), moments, msm, nnet, plotly,
         psych, psychometric, reshape2, rmarkdown, shiny (>= 1.0.3),
-        shinyjs (>= 0.9), stringr, WrightMap, xtable
+        shinyBS, shinyjs (>= 0.9), stringr, WrightMap, xtable
 Description: Interactive shiny application for analysis of educational tests and
     their items.
 License: GPL-3
@@ -23,6 +23,6 @@ LazyData: TRUE
 RoxygenNote: 6.0.1
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 NeedsCompilation: no
-Packaged: 2018-03-02 12:58:25 UTC; drabinova
+Packaged: 2018-05-04 12:05:03 UTC; Adisa
 Repository: CRAN
-Date/Publication: 2018-03-02 13:07:38 UTC
+Date/Publication: 2018-05-04 12:41:19 UTC

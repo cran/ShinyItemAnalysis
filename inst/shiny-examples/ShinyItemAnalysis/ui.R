@@ -5,6 +5,15 @@
 require(DT)
 require(plotly)
 require(shinyjs)
+require(shinyBS)
+
+#%%%%%%%%%%%%%%%%%%%%%
+# SOURCING ###########
+#%%%%%%%%%%%%%%%%%%%%%
+
+source("ui/About.R", local = T)
+source("ui/Data.R", local = T)
+source("ui/IRT.R", local = T)
 
 #%%%%%%%%%%%%%%%%%%%%%
 # UI #################
@@ -22,14 +31,10 @@ ui = tagList(
                         src = "report_downloading_message.js"),
             tags$link(rel = "stylesheet",
                       type = "text/css",
-                      href = "flag-icon.css"),
-            tags$link(rel = "stylesheet",
-                      type = "text/css",
                       href = "margins_and_paddings.css"),
-            tags$link(rel = "shortcut icon", href = "Rlogo.png"),
+            tags$link(rel = "shortcut icon", href = "hexbin.png"),
             tags$style(type = "text/css",
                        ".panel-footer {position: fixed; right: 0; bottom: 0; left: 0;}")),
-
   div(class = "busy",
       p("Loading"),
       img(src = "busy_indicator.gif", height = 100, width = 100)
@@ -48,23 +53,25 @@ ui = tagList(
              footer = list(
                div(class = "clear"),
                div(class = "panel-footer",
-                   HTML('<p> <font size = "4"> ShinyItemAnalysis </font>
-                             <font size = "2"> Test and item analysis | Version 1.2.6 </font>
+                   HTML('<img src = "hexbin.png", style = "float:left; width: 65px;">
+                         <p style = "margin:8px 0 0 0;">
+                             <font size = "4"> ShinyItemAnalysis </font>
+                             <font size = "2"> Test and item analysis | Version 1.2.7 </font>
                              <span style = "float:right">
-                                <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/" id = "tooltipweb" target="_blank"> <img src = "web_icon.png", style = "width: 25px;"> </a>
-                                <a href = "https://github.com/patriciamar/ShinyItemAnalysis/" id = "tooltipgithub" target="_blank"> <img src = "github_icon.png", style = "width: 25px;"> </a>
-                                <a href = "https://CRAN.R-project.org/package=ShinyItemAnalysis/" id = "tooltipcran" target="_blank"> <img src = "cran_icon.png", style = "width: 25px;"> </a>
+                                <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/" id = "tooltipweb" target="_blank"> <img src = "footer_web_icon.png", style = "width: 25px;"> </a>
+                                <a href = "https://github.com/patriciamar/ShinyItemAnalysis/" id = "tooltipgithub" target="_blank"> <img src = "footer_github_icon.png", style = "width: 25px;"> </a>
+                                <a href = "https://CRAN.R-project.org/package=ShinyItemAnalysis/" id = "tooltipcran" target="_blank"> <img src = "footer_cran_icon.png", style = "width: 25px;"> </a>
                              </span> </p>
                          <script>
                            $("#tooltipweb").attr("title", "Web");
                            $("#tooltipgithub").attr("title", "GitHub");
                            $("#tooltipcran").attr("title", "CRAN");
                          </script>'),
-                   p(HTML('&copy; 2018  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek'
-                   ),
-                    HTML('<span style = "float:right">'),
-                        textOutput('counter', inline = T),
-                    HTML('</span>')))),
+                   p(`style` = "margin:0 0 0 0;",
+                     HTML('<font size = "2"> &copy; 2018  Patricia Martinkova, Adela Drabinova, Ondrej Leder and Jakub Houdek </font>'),
+                     HTML('<span style = "float:right"> '),
+                     textOutput('counter', inline = T),
+                     HTML('</span>')))),
              theme = "bootstrap.css",
              #%%%%%%%%%%%%%%%%%%%%%
              # MAIN PANEL #########
@@ -73,354 +80,11 @@ ui = tagList(
              #%%%%%%%%%%%%%%%%%%%%%
              # ABOUT ##############
              #%%%%%%%%%%%%%%%%%%%%%
-             tabPanel("About",
-                      h3('Description'),
-                      p(code('ShinyItemAnalysis'), ' provides analysis of educational tests (such as admission tests)
-                        and their items including:' ),
-                      tags$ul(
-                        tags$li("Exploration of total and standard scores on ", strong('Summary'), "page. "),
-                        tags$li("Correlation structure and predictive validity analysis on ", strong('Validity'), "page. "),
-                        tags$li("Item and distractor analysis on ", strong('Item analysis'), "page. "),
-                        tags$li('Item analysis by logistic models on ', strong('Regression'), "page. "),
-                        tags$li('Item analysis by item response theory models on ', strong('IRT models'), "page. "),
-                        tags$li('Differential item functioning (DIF) and differential distractor functioning (DDF)
-                                methods on ', strong('DIF/Fairness'), "page. ")
-                        ),
-                      p('This application is based on the free statistical software',
-                        a('R', href = 'https://cran.r-project.org/', target = "_blank"),
-                        ' and its ',
-                        a('shiny', href = 'http://www.rstudio.com/shiny/', target = "_blank"),
-                        'package. '),
-                      p('For all graphical outputs a download button is provided. Moreover, on ', strong('Reports'),
-                        'page HTML or PDF report can be created. Additionaly, all application outputs are
-                        complemented by selected R code hence the similar analysis can be run and modified in R.'),
-
-                      h4('Data'),
-                      p('For demonstration purposes, by default, 20-item dataset', code('GMAT'),'
-                        from R ', code('difNLR'),' package is used. Other three datasets are available: ',
-                        code('GMAT2'), 'and', code('MSAT-B'), 'from', code('difNLR'), 'package and ',
-                        code('Medical 100'), 'from', code('ShinyItemAnalysis'), 'package.
-                        You can change the dataset (and try your own one) on page', strong('Data.')),
-
-                      h4('Availability'),
-                      p('Application can be downloaded as R package from ',
-                        a('CRAN. ',
-                          href = 'https://CRAN.R-project.org/package=ShinyItemAnalysis',
-                          target = '_blank'),
-                        'It is also available online at ',
-                        a('Czech Academy of Sciences ',
-                          href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/',
-                          target = "_blank"),
-                        HTML(
-                          paste(
-                            "<a href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/' target = '_blank'>",
-                            "<img src = 'Flag_of_the_Czech_Republic.png' height = '16' border = '0' align = 'middle'>",
-                            "</a>.",
-                            sep = ""
-                          )
-                        ),
-                        a('Charles University',
-                          href = 'http://shiny.statest.cz:3838/ShinyItemAnalysis/',
-                          target = "_blank"),
-                        HTML(
-                          paste(
-                            "<a href = 'http://shiny.statest.cz:3838/ShinyItemAnalysis/' target = '_blank'>",
-                            "<img src = 'Flag_of_the_Czech_Republic.png' height = '16' border = '0' align = 'middle'>",
-                            "</a>",
-                            sep = ""
-                          )
-                        ),
-                        'or',
-                        a('shinyapps.io',
-                          href = 'https://patriciamar.shinyapps.io/ShinyItemAnalysis/',
-                          target = "_blank"),
-                        HTML(
-                          paste(
-                            "<a href = 'https://patriciamar.shinyapps.io/ShinyItemAnalysis/' target = '_blank'>",
-                            "<img src = 'Flag_of_the_United_States.png' height = '16' border = '0' align = 'middle'>",
-                            "</a>.",
-                            sep = ""
-                          )
-                        )
-                      ),
-
-                      h4('Version'),
-                      p('Current version of ', code('ShinyItemAnalysis'), ' available on ',
-                        a('CRAN', href = 'https://CRAN.R-project.org/package=ShinyItemAnalysis', target = "_blank"), 'is 1.2.6.
-                        Version available',
-                        a('online', href = 'https://shiny.cs.cas.cz/ShinyItemAnalysis/', target = "_blank"), 'is 1.2.6.
-                        The newest development version available on ',
-                        a('GitHub', href = 'https://github.com/patriciamar/ShinyItemAnalysis', target = "_blank"), 'is 1.2.6.',
-                        br(),
-                        'See also older versions: ',
-                        a('0.1.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/", target = "_blank"),
-                        a('0.2.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV02/", target = "_blank"),
-                        a('1.0.0, ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV100/", target = "_blank"),
-                        a('1.1.0. ', href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV110/", target = "_blank")),
-
-                      h4('Authors and contributors'),
-
-                      fluidRow(
-                        column(1, align = "center",
-                               img(src = 'patricia_new.png', width = 75),
-                               HTML("<figcaption><a href='http://www.cs.cas.cz/martinkova/' target='_blank'>Patricia<br>Martinkova</a></figcaption>")),
-                        column(1, align = "center",
-                               img(src = 'adela.jpg', width = 75),
-                               HTML("<figcaption><a href='http://www.cs.cas.cz/drabinova/' target='_blank'>Adela<br>Drabinova</a></figcaption>")),
-                        column(1, align = "center",
-                               img(src = 'leder.png', width = 75),
-                               HTML("<figcaption><a href='https://www.linkedin.com/in/ond%C5%99ej-leder-3864b1119' target='_blank'>Ondrej<br>Leder</a></figcaption>")),
-                        column(1, align = "center",
-                               img(src = 'jakub_new.png', width = 75),
-                               HTML("<figcaption>Jakub<br>Houdek</figcaption>")),
-                        column(1, align = "center",
-                               img(src = 'Lubos.jpg', width = 75),
-                               HTML("<figcaption>Lubomir<br>Stepanek</figcaption>"))
-                      ),
-
-
-                      h4('List of packages used'),
-                      fluidRow(
-                        column(2,
-                               code('library(corrplot)'), br(),
-                               code('library(CTT)'), br(),
-                               code('library(data.table)'), br(),
-                               code('library(deltaPlotR)'), br(),
-                               code('library(DT)'), br(),
-                               code('library(difNLR)'), br(),
-                               code('library(difR)'), br(),
-                               code('library(ggplot2)'), br(),
-                               code('library(grid)'), br()),
-                        column(2,
-                               code('library(gridExtra)'), br(),
-                               code('library(knitr)'), br(),
-                               code('library(latticeExtra)'), br(),
-                               code('library(ltm)'), br(),
-                               code('library(mirt)'), br(),
-                               code('library(moments)'), br(),
-                               code('library(msm)'), br(),
-                               code('library(nnet)'), br(),
-                               code('library(plotly)'), br()),
-                        column(2,
-                               code('library(psych)'), br(),
-                               code('library(psychometric)'), br(),
-                               code('library(reshape2)'), br(),
-                               code('library(rmarkdown)'), br(),
-                               code('library(shiny)'), br(),
-                               code('library(shinyjs)'), br(),
-                               code('library(stringr)'), br(),
-                               code('library(WrightMap)'), br(),
-                               code('library(xtable)'), br())
-                      ),
-                      h4('References'),
-                      p('To cite package', code('ShinyItemAnalysis'), 'in publications please use:'),
-                      p('Martinkova P., Drabinova A., Leder O., & Houdek J. (2018). ShinyItemAnalysis: Test and item analysis
-  via shiny. R package version 1.2.6. https://CRAN.R-project.org/package=ShinyItemAnalysis'),
-                      p('Martinkova, P., Drabinova, A., & Houdek, J. (2017). ShinyItemAnalysis: Analyza prijimacich a jinych
-  znalostnich ci psychologickych testu [ShinyItemAnalysis: Analyzing admission and other educational and
-  psychological tests]. TESTFORUM, 6(9), 16-35. doi:10.5817/TF2017-9-129'),
-
-                      h4('Bug reports'),
-                      p("If you discover a problem with this application please contact the project maintainer
-                        at martinkova(at)cs.cas.cz or use ", a("GitHub.",
-                                                               href = "https://github.com/patriciamar/ShinyItemAnalysis/issues",
-                                                               target = "_blank")),
-
-                      h4('Acknowledgments'),
-                      p(" Project was supported by grant funded by Czech Science foundation under number ",
-                        a("GJ15-15856Y.",
-                          href = "http://www.cs.cas.cz/martinkova/psychometrics.html",
-                          target = "_blank")),
-
-                      h4('License'),
-                      p("This program is free software and you can redistribute it and or modify it under the terms
-                         of the",
-                        a("GNU GPL 3",
-                          href = "https://www.gnu.org/licenses/gpl-3.0.en.html",
-                          target = "_blank"),
-                        "as published by the Free Software Foundation. This program is distributed in the hope that
-                         it will be useful, but without any warranty; without even the implied warranty of
-                         merchantability of fitness for a particular purpose." ),
-                      br(),
-                      br()
-                      ),
+             About,
              #%%%%%%%%%%%%%%%%%%%%%
              # DATA ###############
              #%%%%%%%%%%%%%%%%%%%%%
-
-
-             tabPanel("Data",
-               tabsetPanel(
-               # ** Summary ####
-               tabPanel("Data",
-                      h3("Data"),
-                      h4("Training datasets"),
-                      p('For demonstration purposes, 20-item dataset ' , code("GMAT"),'
-                         and dataset', code("GMATkey"),' from R ', code('difNLR'),' package are used.
-                         On this page, you may select one of four datasets offered from ', code('difNLR'),
-                        ' and ', code('ShinyItemAnalysis'), 'packages or you may upload your own dataset
-                         (see below). To return to demonstration dataset,
-                         refresh this page in your browser' , strong("(F5)"), '.'),
-                      p('Used dataset ', code("GMAT"), a(' (Martinkova, et al., 2017) ',
-                                 href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
-                        target = "_blank"),
-                        ' is generated based on parameters of real Graduate Management
-                        Admission Test (GMAT) data set (Kingston et al., 1985). However, first two items were
-                        generated to function differently in uniform and non-uniform way respectively.
-                        The data set represents responses of 2,000 subjects (1,000 males, 1,000 females) to
-                        multiple-choice test of 20 items. The distribution of total scores is the same for both groups.
-                        See ', a('Martinkova, et al. (2017) ',
-                                 href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
-                                 target = "_blank"),
-                        'for further discussion. '),
-                      p('Dataset ', code("GMAT2"), ' (Drabinova & Martinkova, 2016) is also generated based on parameters of GMAT (Kingston et
-                         al., 1985) from R ', code('difNLR'),' package . Again, first two items were generated
-                         to function differently in uniform and non-uniform way respectively. The data set
-                         represents responses of 1,000 subjects (500 males, 500 females) to multiple-choice test
-                         of 20 items. '),
-                      p('Dataset ', code("MSAT-B"), ' (Drabinova & Martinkova, 2017) is a subset of real Medical School Admission
-                         Test in Biology in Czech Republic. The data set represents responses of 1,407 subjects (484 males,
-                         923 females) to multiple-choice test of 20 items. First item was previously detected as
-                         functioning differently. For more details of item selection see Drabinova and Martinkova (2017).
-                         Dataset can be found in R ', code('difNLR'),' package.'),
-                      p('Dataset ', code("Medical 100"), ' is a real data set of admission test to medical school
-                         from R ', code('ShinyItemAnalysis'),' package. The data set represents responses of
-                         2,392 subjects (750 males, 1,633 females and 9 subjects without gender specification)
-                         to multiple-choice test of 100 items. '),
-                      br(),
-                      selectInput("dataSelect", "Select dataset",
-                                  c("GMAT" = "GMAT_difNLR",
-                                    "GMAT2" = "GMAT2_difNLR",
-                                    "MSAT-B" = "MSATB_difNLR",
-                                    "Medical 100" = "dataMedical_ShinyItemAnalysis"
-                                  ),
-                                  selected="GMAT_difNLR"),
-                      tags$hr(),
-                      h4("Upload your own datasets"),
-                      p('Main ', strong('data'), ' file should contain responses of individual students (rows) to given items
-                        (columns). Header may contain item names, no row names should be included. If responses
-                        are in unscored ABCD format, the ', strong('key'), ' provides correct response for each item. If responses are
-                        scored 0-1, key is vector of 1s.'),
-                      p(strong('Group'), ' is 0-1 vector, where 0 represents reference group
-                        and 1 represents focal group. Its length need to be the same as number of individual
-                        students in main dataset. If the group is not provided then it wont be possible to run DIF and DDF
-                        detection procedures on ', strong('DIF/Fairness'), ' page. '),
-                      p(strong('Criterion variable'), ' is either
-                        discrete or continuous vector (e.g. future study success or future GPA in case of admission tests) which
-                        should be predicted by the measurement. Again, its length needs to be the same as number of individual
-                        students in the main dataset. If the criterion variable is not provided then it wont be possible to run
-                        validity analysis in ', strong('Predictive validity'), ' section on ', strong('Validity'), ' page.'),
-                      p('In all data sets', strong('header'), 'should be either included or excluded. Columns of dataset are by default renamed to Item and number of particular column. If you
-                        want to keep your own names, check box ', strong('Keep items names'), 'below. Missing values in scored dataset are by default evaluated as 0. If you want to keep them as missing,
-                        check box' , strong('Keep missing values'), 'below.'),
-                      fluidRow(
-                        column(3, offset = 0, fileInput(
-                          'data', 'Choose data (csv file)',
-                          accept = c('text/csv',
-                                     'text/comma-separated-values',
-                                     'text/tab-separated-values',
-                                     'text/plain',
-                                     '.csv',
-                                     '.tsv'
-                          )
-                        )
-                        ),
-                        column(3, fileInput(
-                          'key', 'Choose key (csv file)',
-                          accept = c('text/csv',
-                                     'text/comma-separated-values',
-                                     'text/tab-separated-values',
-                                     'text/plain',
-                                     '.csv',
-                                     '.tsv'
-                          )
-                        )
-                        ),
-                        column(3, fileInput(
-                          'groups', 'Choose groups for DIF (optional)',
-                          accept = c('text/csv',
-                                     'text/comma-separated-values',
-                                     'text/tab-separated-values',
-                                     'text/plain',
-                                     '.csv',
-                                     '.tsv'
-                          )
-                        )
-                        ),
-                        column(3, fileInput(
-                          'criterion_variable', 'Choose criterion variable (optional)',
-                          accept = c('text/csv',
-                                     'text/comma-separated-values',
-                                     'text/tab-separated-values',
-                                     'text/plain',
-                                     '.csv',
-                                     '.tsv'
-                          )
-                        )
-                        )),
-                      div(style = "display: inline-block; vertical-align: top; horizontal-align: center; width: 150px;",
-                          actionButton(inputId = "submitButton", label = "Submit Data")),
-                      div(style = "display: inline-block; vertical-align: top; horizontal-align: center; width: 80%;",
-                          htmlOutput("checkDataText"),
-                          htmlOutput("checkDataColumns01Text")),
-                      tags$hr(),
-                      h4("Data specification"),
-                      fluidRow(
-                        column(3, offset = 0,
-                               checkboxInput('header', 'Header', TRUE),
-                               checkboxInput('itemnam', 'Keep items names', FALSE),
-                               checkboxInput('missval', 'Keep missing values', FALSE)),
-                        column(3, offset = 1, radioButtons('sep', 'Separator',
-                                                           c(Comma = ',',
-                                                             Semicolon = ';',
-                                                             Tab = '\t'
-                                                           ),
-                                                           ','
-                        )
-                        ),
-                        column (3, offset = 0, radioButtons('quote', 'Quote',
-                                                            c(None = '',
-                                                              'Double Quote' = '"',
-                                                              'Single Quote' = "'"
-                                                            ),
-                                                            '"'
-                        )
-                        )
-                      ),
-                      br(),
-                      br()),
-               tabPanel("Data exploration",
-                      h3("Data exploration"),
-                      p("Here you can explore uploaded dataset. Rendering of tables can take some time."),
-                      h4("Main dataset"),
-                      # tableOutput("headdata_print"),
-                      # verbatimTextOutput("headdata_print"),
-                      DT::dataTableOutput('headdata'),
-                      #shiny::dataTableOutput('headdata'),
-                      h4("Key (correct answers)"),
-                      # tableOutput("key_print"),
-                      # verbatimTextOutput("key_print"),
-                      DT::dataTableOutput('key'),
-                      #shiny::dataTableOutput('key'),
-                      h4("Scored test"),
-                      # tableOutput("sc01_print"),
-                      # verbatimTextOutput("sc01_print"),
-                      DT::dataTableOutput('sc01'),
-                      #shiny::dataTableOutput('sc01'),
-                      h4("Group vector"),
-                      # tableOutput("group_print"),
-                      # verbatimTextOutput("group_print"),
-                      DT::dataTableOutput('group'),
-                      #shiny::dataTableOutput('group'),
-                      h4("Criterion variable vector"),
-                      # tableOutput("critvar_print"),
-                      # verbatimTextOutput("critvar_print"),
-                      DT::dataTableOutput('critvar'),
-                      #shiny::dataTableOutput('critvar'),
-                      br(),
-                      br(),
-                      br()
-                      ))),
+             Data,
              #%%%%%%%%%%%%%%%%%%%%%
              # SUMMARY ############
              #%%%%%%%%%%%%%%%%%%%%%
@@ -446,34 +110,15 @@ ui = tagList(
                                                            max = 10,
                                                            value = 1,
                                                            step = 1))),
-                                 p('For selected cut-score, blue part of histogram shows students with total score
-                                   above the cut-score, grey column shows students with total score equal
-                                   to the cut-score and red part of histogram shows students below the cut-score.'),
+                                 p('For selected cut-score, blue part of histogram shows respondents with total score
+                                   above the cut-score, grey column shows respondents with total score equal
+                                   to the cut-score and red part of histogram shows respondents below the cut-score.'),
                                  plotOutput('totalscores_histogram'),
                                  downloadButton(outputId = "DB_totalscores_histogram", label = "Download figure"),
                                  br(),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'), br(),
-                                     code('library(moments)'), br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('score <- apply(data, 1, sum) # Total score'),
-                                     br(),
-                                     br(),
-                                     code('# Summary of total score'),
-                                     br(),
-                                     code('c(min(score), max(score), mean(score), median(score), sd(score), skewness(score), kurtosis(score))'),
-                                     br(),
-                                     code('# Histogram'),
-                                     br(),
-                                     code('cut <- median(score) # cut-score'), br(),
-                                     code('col <- c(rep("red", cut - min(score) + 2), "gray",
-                                          rep("blue", max(score) - cut + 1)) # colors for histogram'), br(),
-                                     code('hist(score, breaks = 0:ncol(data), col = col) ')),
+                                 div(code(HTML("library(difNLR)<br>library(ggplot2)<br>library(moments)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]<br><br>#&nbsp;total&nbsp;score&nbsp;calculation<br>score&nbsp;<-&nbsp;apply(data,&nbsp;1,&nbsp;sum)<br><br>#&nbsp;summary&nbsp;of&nbsp;total&nbsp;score&nbsp;<br>c(min(score),&nbsp;max(score),&nbsp;mean(score),&nbsp;median(score),&nbsp;sd(score),&nbsp;skewness(score),&nbsp;kurtosis(score))<br><br>#&nbsp;colors&nbsp;by&nbsp;cut-score<br>cut&nbsp;<-&nbsp;median(score)&nbsp;#&nbsp;cut-score&nbsp;<br>color&nbsp;<-&nbsp;c(rep(\"red\",&nbsp;cut&nbsp;-&nbsp;min(score)),&nbsp;\"gray\",&nbsp;rep(\"blue\",&nbsp;max(score)&nbsp;-&nbsp;cut))<br>df&nbsp;<-&nbsp;data.frame(score)<br><br>#&nbsp;histogram<br>ggplot(df,&nbsp;aes(score))&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_histogram(binwidth&nbsp;=&nbsp;1,&nbsp;fill&nbsp;=&nbsp;color,&nbsp;col&nbsp;=&nbsp;\"black\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;xlab(\"Total&nbsp;score\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;ylab(\"Number&nbsp;of&nbsp;respondents\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme_bw()&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme(legend.title&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;axis.line&nbsp;&nbsp;=&nbsp;element_line(colour&nbsp;=&nbsp;\"black\"),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.major&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.minor&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;element_text(size&nbsp;=&nbsp;14))"))),
                                  br()
                                  ),
                         # * STANDARD SCORES ####
@@ -496,24 +141,7 @@ ui = tagList(
                                  tableOutput('scores_tables'),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('score <- apply(data, 1, sum) # Total score'),
-                                     br(),
-                                     code('tosc <- sort(unique(score)) # Levels of total score'),
-                                     br(),
-                                     code('perc <- cumsum(prop.table(table(score))) # Percentiles'),
-                                     br(),
-                                     code('sura <- 100 * (tosc / max(score)) # Success rate'),
-                                     br(),
-                                     code('zsco <- sort(unique(scale(score))) # Z-score'),
-                                     br(),
-                                     code('tsco <- 50 + 10 * zsco # T-score')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br><br>#&nbsp;scores&nbsp;calculations<br>score&nbsp;<-&nbsp;apply(data,&nbsp;1,&nbsp;sum)&nbsp;#&nbsp;Total&nbsp;score&nbsp;<br>tosc&nbsp;<-&nbsp;sort(unique(score))&nbsp;#&nbsp;Levels&nbsp;of&nbsp;total&nbsp;score&nbsp;<br>perc&nbsp;<-&nbsp;cumsum(prop.table(table(score)))&nbsp;#&nbsp;Percentiles&nbsp;<br>sura&nbsp;<-&nbsp;100&nbsp;*&nbsp;(tosc&nbsp;/&nbsp;max(score))&nbsp;#&nbsp;Success&nbsp;rate&nbsp;<br>zsco&nbsp;<-&nbsp;sort(unique(scale(score)))&nbsp;#&nbsp;Z-score&nbsp;<br>tsco&nbsp;<-&nbsp;50&nbsp;+&nbsp;10&nbsp;*&nbsp;zsco&nbsp;#&nbsp;T-score"))),
                                  br()
                         )
                         ),
@@ -530,7 +158,7 @@ ui = tagList(
                                      items are correlated (larger and darker circle means larger correlation).
                                      The color of circles indicates in which way the items are correlated - blue
                                      color shows possitive correlation and red color shows negative correlation.'),
-                                  p("Polychoric correlation heat map can be reorder using hierarchical",
+                                  p("Polychoric correlation heat map can be reordered using hierarchical",
                                     HTML("<b>clustering method</b>"), "below.
                                     Ward's method aims at finding compact clusters based on minimizing the within-cluster
                                     sum of squares.
@@ -575,49 +203,21 @@ ui = tagList(
                                   plotOutput('scree_plot'),
                                   downloadButton(outputId = "DB_scree_plot", label = "Download figure"),
                                   h4("Selected R code"),
-                                  div(code('library(corrplot)'),
-                                      br(),
-                                      code('library(difNLR)'),
-                                      br(),
-                                      code('library(psych)'),
-                                      br(),
-                                      code('data(GMAT)'),
-                                      br(),
-                                      code('data  <- GMAT[, 1:20]'),
-                                      br(),
-                                      br(),
-                                      code('# Correlation plot'),
-                                      br(),
-                                      code('corP <- polychoric(data)'),
-                                      br(),
-                                      code('corrplot(corP$rho)'),
-                                      br(),
-                                      code('corP$rho # Correlation matrix'),
-                                      br(),
-                                      br(),
-                                      code('# Scree plot'),
-                                      br(),
-                                      code('plot(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values,
-                                            ylab = "Eigen value", xlab = "Component Number")'),
-                                      br(),
-                                      code('lines(1:length(eigen(corP$rho)$values), eigen(corP$rho)$values)'),
-                                      br(),
-                                      code('eigen(corP$rho) # Eigen values and vectors')),
+                                  div(code(HTML("library(corrplot)&nbsp;<br>library(difNLR)&nbsp;<br>library(psych)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br><br>#&nbsp;correlation&nbsp;heat&nbsp;map&nbsp;<br>corP&nbsp;<-&nbsp;polychoric(data)&nbsp;#&nbsp;polychoric&nbsp;correlation&nbsp;calculation<br>corP$rho&nbsp;#&nbsp;correlation&nbsp;matrix&nbsp;<br>corrplot(corP$rho)&nbsp;#&nbsp;correlation&nbsp;plot&nbsp;<br>corrplot(corP$rho,&nbsp;order&nbsp;=&nbsp;\"hclust\",&nbsp;hclust.method&nbsp;=&nbsp;\"ward.D\",&nbsp;addrect&nbsp;=&nbsp;3)&nbsp;#&nbsp;correlation&nbsp;plot&nbsp;with&nbsp;3&nbsp;clusters&nbsp;using&nbsp;Ward&nbsp;method<br><br>#&nbsp;scree&nbsp;plot&nbsp;<br>ev&nbsp;<-&nbsp;eigen(corP$rho)$values&nbsp;#&nbsp;eigen&nbsp;values<br>df&nbsp;<-&nbsp;data.frame(comp&nbsp;=&nbsp;1:length(ev),&nbsp;ev)<br><br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;comp,&nbsp;y&nbsp;=&nbsp;ev))&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_point()&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_line()&nbsp;+&nbsp;<br>&nbsp;&nbsp;ylab(\"Eigen&nbsp;value\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;xlab(\"Component&nbsp;number\")&nbsp;+<br>&nbsp;&nbsp;theme_bw()&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme(legend.title&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;axis.line&nbsp;&nbsp;=&nbsp;element_line(colour&nbsp;=&nbsp;\"black\"),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.major&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.minor&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;element_text(size&nbsp;=&nbsp;14))"))),
                                   br()
                                     ),
                         # * PREDICTIVE VALIDITY ####
-                        tabPanel('Predictive validity',
+                        tabPanel('Criterion validity',
                                  tabsetPanel(
                                    # ** Summary ####
                                    tabPanel('Summary',
-                                            h3('Predictive validity'),
+                                            h3('Criterion validity'),
                                             p('This section requires criterion variable (e.g. future study success or future GPA in case
-                                              of admission tests) which should be predicted by the measurement. This outcome variable
-                                              can be uploaded in ', strong('Data'), 'section. Then you can explore how data predict this
-                                              variable. '),
+                                              of admission tests) which should correlate with the measurement. Criterion variable
+                                              can be uploaded in ', strong('Data'), 'section.'),
                                             h4('Descriptive plots of criterion variable on total score'),
                                             p('Total scores are plotted according to criterion variable. Boxplot or scatterplot is displayed
-                                              depending on outcome variable - whether it is discrete or continuous. Scatterplot is
+                                              depending on the type of criterion variable - whether it is discrete or continuous. Scatterplot is
                                               provided with red linear regression line. '),
                                             plotOutput('validity_plot'),
                                             downloadButton(outputId = "DB_validity_plot", label = "Download figure"),
@@ -628,44 +228,15 @@ ui = tagList(
                                             tableOutput('validity_table'),
                                             htmlOutput('validity_table_interpretation'),
                                             h4("Selected R code"),
-                                            div(code('library(ShinyItemAnalysis)'),
-                                                br(),
-                                                code('library(difNLR)'),
-                                                br(),
-                                                code('data(GMAT)'),
-                                                br(),
-                                                code('data01  <- GMAT[, 1:20]'),
-                                                br(),
-                                                code('score  <- apply(data01, 1, sum)'),
-                                                br(),
-                                                code('criterion  <- GMAT[, "criterion"]'),
-                                                br(),
-                                                br(),
-                                                code('# Descriptive plots'),
-                                                br(),
-                                                code('### boxplot'),
-                                                br(),
-                                                code('boxplot(criterion ~ score)'),
-                                                br(),
-                                                code('### scatterplot'),
-                                                br(),
-                                                code('plot(criterion ~ score)'),
-                                                br(),
-                                                code('abline(lm(criterion ~ score), col = "red") '),
-                                                br(),
-                                                br(),
-                                                code('# Correlation'),
-                                                br(),
-                                                code('cor.test(criterion, score, method = "spearman", exact = F)')),
+                                            div(code(HTML("library(ShinyItemAnalysis)&nbsp;<br>library(difNLR)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data01&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>#&nbsp;total&nbsp;score&nbsp;calculation<br>score&nbsp;<-&nbsp;apply(data01,&nbsp;1,&nbsp;sum)&nbsp;<br>#&nbsp;criterion&nbsp;variable<br>criterion&nbsp;<-&nbsp;GMAT[,&nbsp;\"criterion\"]&nbsp;<br>#&nbsp;number&nbsp;of&nbsp;respondents&nbsp;in&nbsp;each&nbsp;criterion&nbsp;level<br>size&nbsp;<-&nbsp;as.factor(criterion)<br>levels(size)&nbsp;<-&nbsp;table(as.factor(criterion))<br>size&nbsp;<-&nbsp;as.numeric(paste(size))<br>df&nbsp;<-&nbsp;data.frame(score,&nbsp;criterion,&nbsp;size)<br><br>#&nbsp;descriptive&nbsp;plots&nbsp;<br>###&nbsp;boxplot,&nbsp;for&nbsp;discrete&nbsp;criterion<br>ggplot(df,&nbsp;aes(y&nbsp;=&nbsp;score,&nbsp;x&nbsp;=&nbsp;as.factor(criterion),&nbsp;fill&nbsp;=&nbsp;as.factor(criterion)))&nbsp;+<br>&nbsp;&nbsp;geom_boxplot()&nbsp;+<br>&nbsp;&nbsp;geom_jitter(shape&nbsp;=&nbsp;16,&nbsp;position&nbsp;=&nbsp;position_jitter(0.2))&nbsp;+<br>&nbsp;&nbsp;scale_fill_brewer(palette&nbsp;=&nbsp;\"Blues\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Criterion&nbsp;group\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;coord_flip()&nbsp;+<br>&nbsp;&nbsp;theme_bw()&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme(legend.title&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;axis.line&nbsp;&nbsp;=&nbsp;element_line(colour&nbsp;=&nbsp;\"black\"),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.major&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.minor&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;element_text(size&nbsp;=&nbsp;14))<br><br>###&nbsp;scatterplot,&nbsp;for&nbsp;continuous&nbsp;criterion<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;score,&nbsp;y&nbsp;=&nbsp;criterion))&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_point()&nbsp;+&nbsp;<br>&nbsp;&nbsp;ylab(\"Criterion&nbsp;variable\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;xlab(\"Total&nbsp;score\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_smooth(method&nbsp;=&nbsp;lm,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;se&nbsp;=&nbsp;FALSE,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"red\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme_bw()&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme(legend.title&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;axis.line&nbsp;&nbsp;=&nbsp;element_line(colour&nbsp;=&nbsp;\"black\"),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.major&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;panel.grid.minor&nbsp;=&nbsp;element_blank(),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;element_text(size&nbsp;=&nbsp;14))<br><br>#&nbsp;correlation&nbsp;<br>cor.test(criterion,&nbsp;score,&nbsp;method&nbsp;=&nbsp;\"spearman\",&nbsp;exact&nbsp;=&nbsp;F)"))),
                                             br()
                                             ),
                                    # ** Items ####
                                    tabPanel('Items',
-                                            h3('Predictive validity'),
+                                            h3('Criterion validity'),
                                             p('This section requires criterion variable (e.g. future study success or future GPA in case
-                                              of admission tests) which should be predicted by the measurement. This outcome variable
-                                              can be uploaded in ', strong('Data'), 'section. Here you can explore how data predict this
-                                              variable item by item. '),
+                                              of admission tests) which should correlate with the measurement. Criterion variable
+                                              can be uploaded in ', strong('Data'), 'section. Here you can explore how the criterion correlates with individual items. '),
                                             p('In distractor analysis based on criterion variable, we are interested in how test takers
                                               select the correct answer and how the distractors (wrong answers) with respect to group based
                                               on criterion variable.'),
@@ -702,32 +273,10 @@ ui = tagList(
                                             tableOutput('validity_table_item'),
                                             htmlOutput('validity_table_item_interpretation'),
                                             h4("Selected R code"),
-                                            div(code('library(ShinyItemAnalysis)'),
-                                                br(),
-                                                code('library(difNLR)'),
-                                                br(),
-                                                code('data("GMAT", "GMATtest", "GMATkey")'),
-                                                br(),
-                                                code('data  <- GMATtest[, 1:20]'),
-                                                br(),
-                                                code('data01  <- GMAT[, 1:20]'),
-                                                br(),
-                                                code('key  <- GMATkey'),
-                                                br(),
-                                                code('criterion  <- GMAT[, "criterion"]'),
-                                                br(),
-                                                br(),
-                                                code('# Distractor plot for item 1 and 3 groups'),
-                                                br(),
-                                                code('plotDistractorAnalysis(data, key, num.groups = 3, item = 1, matching = criterion)'),
-                                                br(),
-                                                br(),
-                                                code('# Correlation for item 1'),
-                                                br(),
-                                                code('cor.test(criterion, data01[, 1], method = "spearman", exact = F)')),
+                                            div(code(HTML("library(ShinyItemAnalysis)&nbsp;<br>library(difNLR)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(\"GMAT\",&nbsp;\"GMATtest\",&nbsp;\"GMATkey\")&nbsp;<br>data&nbsp;<-&nbsp;GMATtest[,&nbsp;1:20]&nbsp;<br>data01&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>key&nbsp;<-&nbsp;GMATkey&nbsp;<br>criterion&nbsp;<-&nbsp;GMAT[,&nbsp;\"criterion\"]&nbsp;<br><br>#&nbsp;distractor&nbsp;plot&nbsp;for&nbsp;item&nbsp;1&nbsp;and&nbsp;3&nbsp;groups&nbsp;<br>plotDistractorAnalysis(data,&nbsp;key,&nbsp;num.groups&nbsp;=&nbsp;3,&nbsp;item&nbsp;=&nbsp;1,&nbsp;matching&nbsp;=&nbsp;criterion)&nbsp;<br><br>#&nbsp;correlation&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>cor.test(criterion,&nbsp;data01[,&nbsp;1],&nbsp;method&nbsp;=&nbsp;\"spearman\",&nbsp;exact&nbsp;=&nbsp;F)"))),
                                             br()
-                                   )
-                                            ))),
+                                            )
+                                   ))),
 
              #%%%%%%%%%%%%%%%%%%%%%
              # ITEM ANALYSIS ######
@@ -740,10 +289,10 @@ ui = tagList(
                                  h4("Item difficulty/discrimination plot"),
                                  p("Displayed is difficulty (red) and discrimination (blue)
                                    for all items. Items are ordered by difficulty. ", br(),
-                                   strong("Difficulty"),' of items is estimated as percent of students who
+                                   strong("Difficulty"),' of items is estimated as percent of respondents who
                                    answered correctly to that item.', br(),
                                    strong("Discrimination"),' is by default described by difference of percent correct
-                                   in upper and lower third of students (Upper-Lower Index, ULI). By rule of
+                                   in upper and lower third of respondents (Upper-Lower Index, ULI). By rule of
                                    thumb it should not be lower than 0.2 (borderline in the plot), except for
                                    very easy or very difficult items. Discrimination can be customized (see also Martinkova, Stepanek, et al.
                                    (2017)) by changing number of groups and by changing which groups should be compared: '),
@@ -775,37 +324,7 @@ ui = tagList(
                                  tableOutput('itemanalysis_table'),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(psych)'),
-                                     br(),
-                                     code('library(psychometric)'),
-                                     br(),
-                                     code('library(ShinyItemAnalysis)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Difficulty and discrimination plot'),
-                                     br(),
-                                     code('DDplot(data, k = 3, l = 1, u = 3)'),
-                                     br(),
-                                     br(),
-                                     code('# Cronbach alpha'),
-                                     br(),
-                                     code('psych::alpha(data)'),
-                                     br(),
-                                     br(),
-                                     code('# Table'),
-                                     br(),
-                                     code('tab <- round(data.frame(item.exam(data, discr = TRUE)[, c(4, 1, 5, 2, 3)],
-                                          psych::alpha(data)$alpha.drop[, 1], gDiscrim(data, k = 3, l = 1, u = 3)), 2)'),
-                                     br(),
-                                     code('colnames(tab) <- c("Difficulty", "SD", "Dsicrimination ULI", "Discrimination RIT", "Discrimination RIR", "Alpha Drop", "Customized Discrimination")'),
-                                     br(),
-                                     code('tab')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(psych)&nbsp;<br>library(psychometric)&nbsp;<br>library(ShinyItemAnalysis)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br><br>#&nbsp;difficulty&nbsp;and&nbsp;discrimination&nbsp;plot&nbsp;<br>DDplot(data,&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)&nbsp;<br><br>#&nbsp;Cronbach&nbsp;alpha&nbsp;<br>psych::alpha(data)&nbsp;<br><br>#&nbsp;traditional&nbsp;item&nbsp;analysis&nbsp;table&nbsp;<br>tab&nbsp;<-&nbsp;round(data.frame(item.exam(data,&nbsp;discr&nbsp;=&nbsp;TRUE)[,&nbsp;c(4,&nbsp;1,&nbsp;5,&nbsp;2,&nbsp;3)],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;psych::alpha(data)$alpha.drop[,&nbsp;1],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gDiscrim(data,&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)),&nbsp;2)&nbsp;<br>colnames(tab)&nbsp;<-&nbsp;c(\"Difficulty\",&nbsp;\"SD\",&nbsp;\"Dsicrimination&nbsp;ULI\",&nbsp;\"Discrimination&nbsp;RIT\",&nbsp;\"Discrimination&nbsp;RIR\",&nbsp;\"Alpha&nbsp;Drop\",&nbsp;\"Customized&nbsp;Discrimination\")&nbsp;<br>tab"))),
                                  br()
                                  ),
                         # * DISTRACTORS ####
@@ -858,40 +377,7 @@ ui = tagList(
                                  br(),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(ShinyItemAnalysis)'),
-                                     br(),
-                                     code('data(GMATtest)'),
-                                     br(),
-                                     code('data  <- GMATtest[, colnames(GMATtest) != "group"]'),
-                                     br(),
-                                     code('data(GMATkey)'),
-                                     br(),
-                                     code('key  <- GMATkey'),
-                                     br(),
-                                     br(),
-                                     code('# Combinations - plot for item 1 and 3 groups'),
-                                     br(),
-                                     code('plotDistractorAnalysis(data, key, num.group = 3, item = 1,
-                                          multiple.answers = T)'),
-                                     br(),
-                                     code('# Distractors - plot for item 1 and 3 groups'),
-                                     br(),
-                                     code('plotDistractorAnalysis(data, key, num.group = 3, item = 1,
-                                          multiple.answers = F)'),
-                                     br(),
-                                     code('# Table with counts and margins - item 1 and 3 groups'),
-                                     br(),
-                                     code('DA <- DistractorAnalysis(data, key, num.groups = 3)[[1]]'),
-                                     br(),
-                                     code('dcast(as.data.frame(DA), response ~ score.level, sum, margins = T, value.var = "Freq")'),
-                                     br(),
-                                     code('# Table with proportions - item 1 and 3 groups'),
-                                     br(),
-                                     code('DistractorAnalysis(data, key, num.groups = 3, p.table = T)[[1]]'),
-                                     br(),
-                                     code('tab')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ShinyItemAnalysis)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMATtest)&nbsp;<br>data&nbsp;<-&nbsp;GMATtest[,&nbsp;1:20]&nbsp;<br>data(GMATkey)&nbsp;<br>key&nbsp;<-&nbsp;GMATkey&nbsp;<br><br>#&nbsp;combinations&nbsp;-&nbsp;plot&nbsp;for&nbsp;item&nbsp;1&nbsp;and&nbsp;3&nbsp;groups&nbsp;<br>plotDistractorAnalysis(data,&nbsp;key,&nbsp;num.group&nbsp;=&nbsp;3,&nbsp;item&nbsp;=&nbsp;1,&nbsp;multiple.answers&nbsp;=&nbsp;T)&nbsp;<br><br>#&nbsp;distractors&nbsp;-&nbsp;plot&nbsp;for&nbsp;item&nbsp;1&nbsp;and&nbsp;3&nbsp;groups&nbsp;<br>plotDistractorAnalysis(data,&nbsp;key,&nbsp;num.group&nbsp;=&nbsp;3,&nbsp;item&nbsp;=&nbsp;1,&nbsp;multiple.answers&nbsp;=&nbsp;F)&nbsp;<br><br>#&nbsp;table&nbsp;with&nbsp;counts&nbsp;and&nbsp;margins&nbsp;-&nbsp;item&nbsp;1&nbsp;and&nbsp;3&nbsp;groups&nbsp;<br>DA&nbsp;<-&nbsp;DistractorAnalysis(data,&nbsp;key,&nbsp;num.groups&nbsp;=&nbsp;3)[[1]]&nbsp;<br>dcast(as.data.frame(DA),&nbsp;response&nbsp;~&nbsp;score.level,&nbsp;sum,&nbsp;margins&nbsp;=&nbsp;T,&nbsp;value.var&nbsp;=&nbsp;\"Freq\")&nbsp;<br><br>#&nbsp;table&nbsp;with&nbsp;proportions&nbsp;-&nbsp;item&nbsp;1&nbsp;and&nbsp;3&nbsp;groups&nbsp;<br>DistractorAnalysis(data,&nbsp;key,&nbsp;num.groups&nbsp;=&nbsp;3,&nbsp;p.table&nbsp;=&nbsp;T)[[1]]"))),
                                  br()
                                  )
                         ),
@@ -900,6 +386,7 @@ ui = tagList(
              # REGRESSION #########
              #%%%%%%%%%%%%%%%%%%%%%
              navbarMenu("Regression",
+                        "Dichotomous models",
                         # * LOGISTIC ####
                         tabPanel("Logistic",
                                  h3("Logistic regression on total scores"),
@@ -927,33 +414,7 @@ ui = tagList(
                                  htmlOutput("logreg_interpretation"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('score  <- apply(data, 1, sum)'),
-                                     br(),
-                                     br(),
-                                     code('# Logistic model for item 1'),
-                                     br(),
-                                     code('fit <- glm(data[, 1] ~ score, family = binomial)'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Function for plot'),
-                                     br(),
-                                     code('fun <- function(x, b0, b1){exp(b0 + b1 * x) / (1 + exp(b0 + b1 * x))}'),
-                                     br(),
-                                     code('# Plot of estimated curve'),
-                                     br(),
-                                     code('curve(fun(x, b0 = coef(fit)[1], b1 = coef(fit)[2]), 0, 20,
-                                          xlab = "Total score",
-                                          ylab = "Probability of correct answer",
-                                          ylim = c(0, 1))')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ggplot2)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>score&nbsp;<-&nbsp;apply(data,&nbsp;1,&nbsp;sum)&nbsp;#&nbsp;total&nbsp;score<br><br>#&nbsp;logistic&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit&nbsp;<-&nbsp;glm(data[,&nbsp;1]&nbsp;~&nbsp;score,&nbsp;family&nbsp;=&nbsp;binomial)&nbsp;<br><br>#&nbsp;coefficients&nbsp;<br>coef(fit)&nbsp;<br><br>#&nbsp;function&nbsp;for&nbsp;plot&nbsp;<br>fun&nbsp;<-&nbsp;function(x,&nbsp;b0,&nbsp;b1){exp(b0&nbsp;+&nbsp;b1&nbsp;*&nbsp;x)&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(b0&nbsp;+&nbsp;b1&nbsp;*&nbsp;x))}&nbsp;<br><br>#&nbsp;empirical&nbsp;probabilities&nbsp;calculation<br>df&nbsp;<-&nbsp;data.frame(x&nbsp;=&nbsp;sort(unique(score)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;tapply(data[,&nbsp;1],&nbsp;score,&nbsp;mean),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;as.numeric(table(score)))<br><br>#&nbsp;plot&nbsp;of&nbsp;estimated&nbsp;curve<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;x,&nbsp;y&nbsp;=&nbsp;y))&nbsp;+<br>&nbsp;&nbsp;geom_point(aes(size&nbsp;=&nbsp;size),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fill&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;=&nbsp;21,&nbsp;alpha&nbsp;=&nbsp;0.5)&nbsp;+<br>&nbsp;&nbsp;stat_function(fun&nbsp;=&nbsp;fun,&nbsp;geom&nbsp;=&nbsp;\"line\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args&nbsp;=&nbsp;list(b0&nbsp;=&nbsp;coef(fit)[1],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b1&nbsp;=&nbsp;coef(fit)[2]),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Probability&nbsp;of&nbsp;correct&nbsp;answer\")&nbsp;+<br>&nbsp;&nbsp;ylim(0,&nbsp;1)&nbsp;+<br>&nbsp;&nbsp;ggtitle(\"Item&nbsp;1\")"))),
                                  br()
                                  ),
                         # * LOGISTIC Z ####
@@ -982,33 +443,7 @@ ui = tagList(
                                  htmlOutput("z_logreg_interpretation"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('stand.score  <- scale(apply(data, 1, sum))'),
-                                     br(),
-                                     br(),
-                                     code('# Logistic model for item 1'),
-                                     br(),
-                                     code('fit <- glm(data[, 1] ~ stand.score, family = binomial)'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Function for plot'),
-                                     br(),
-                                     code('fun <- function(x, b0, b1){exp(b0 + b1 * x) / (1 + exp(b0 + b1 * x))}'),
-                                     br(),
-                                     code('# Plot of estimated curve'),
-                                     br(),
-                                     code('curve(fun(x, b0 = coef(fit)[1], b1 = coef(fit)[2]), -3, 3,
-                                          xlab = "Standardized total score",
-                                          ylab = "Probability of correct answer",
-                                          ylim = c(0, 1))')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ggplot2)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(data,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br><br>#&nbsp;logistic&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit&nbsp;<-&nbsp;glm(data[,&nbsp;1]&nbsp;~&nbsp;zscore,&nbsp;family&nbsp;=&nbsp;binomial)&nbsp;<br><br>#&nbsp;coefficients&nbsp;<br>coef(fit)&nbsp;<br><br>#&nbsp;function&nbsp;for&nbsp;plot&nbsp;<br>fun&nbsp;<-&nbsp;function(x,&nbsp;b0,&nbsp;b1){exp(b0&nbsp;+&nbsp;b1&nbsp;*&nbsp;x)&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(b0&nbsp;+&nbsp;b1&nbsp;*&nbsp;x))}&nbsp;<br><br>#&nbsp;empirical&nbsp;probabilities&nbsp;calculation<br>df&nbsp;<-&nbsp;data.frame(x&nbsp;=&nbsp;sort(unique(zscore)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;tapply(data[,&nbsp;1],&nbsp;zscore,&nbsp;mean),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;as.numeric(table(zscore)))<br><br>#&nbsp;plot&nbsp;of&nbsp;estimated&nbsp;curve<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;x,&nbsp;y&nbsp;=&nbsp;y))&nbsp;+<br>&nbsp;&nbsp;geom_point(aes(size&nbsp;=&nbsp;size),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fill&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;=&nbsp;21,&nbsp;alpha&nbsp;=&nbsp;0.5)&nbsp;+<br>&nbsp;&nbsp;stat_function(fun&nbsp;=&nbsp;fun,&nbsp;geom&nbsp;=&nbsp;\"line\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args&nbsp;=&nbsp;list(b0&nbsp;=&nbsp;coef(fit)[1],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b1&nbsp;=&nbsp;coef(fit)[2]),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Standardized&nbsp;total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Probability&nbsp;of&nbsp;correct&nbsp;answer\")&nbsp;+<br>&nbsp;&nbsp;ylim(0,&nbsp;1)&nbsp;+<br>&nbsp;&nbsp;ggtitle(\"Item&nbsp;1\")"))),
                                  br()
                                  ),
                         # * LOGISTIC IRT Z ####
@@ -1038,99 +473,73 @@ ui = tagList(
                                  htmlOutput("z_logreg_irt_interpretation"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('stand.score  <- scale(apply(data, 1, sum))'),
-                                     br(),
-                                     br(),
-                                     code('# Logistic model for item 1'),
-                                     br(),
-                                     code('fit <- glm(data[, 1] ~ stand.score, family = binomial)'),
-                                     br(),
-                                     code('# Coefficients - tranformation'),
-                                     br(),
-                                     code('coef <- c(a = coef(fit)[2], b = - coef(fit)[1] / coef(fit)[2])'),
-                                     br(),
-                                     code('coef'),
-                                     br(),
-                                     code('# Function for plot'),
-                                     br(),
-                                     code('fun <- function(x, a, b){exp(a * (x - b)) / (1 + exp(a * (x - b)))}'),
-                                     br(),
-                                     code('# Plot of estimated curve'),
-                                     br(),
-                                     code('curve(fun(x, a = coef[1], b = coef[2]), -3, 3,
-                                          xlab = "Standardized total score",
-                                          ylab = "Probability of correct answer",
-                                          ylim = c(0, 1))')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ggplot2)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(data,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br><br>#&nbsp;logistic&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit&nbsp;<-&nbsp;glm(data[,&nbsp;1]&nbsp;~&nbsp;zscore,&nbsp;family&nbsp;=&nbsp;binomial)&nbsp;<br><br>#&nbsp;coefficients<br>coef&nbsp;<-&nbsp;c(a&nbsp;=&nbsp;coef(fit)[2],&nbsp;b&nbsp;=&nbsp;-&nbsp;coef(fit)[1]&nbsp;/&nbsp;coef(fit)[2])&nbsp;<br>coef&nbsp;&nbsp;<br><br>#&nbsp;function&nbsp;for&nbsp;plot&nbsp;<br>fun&nbsp;<-&nbsp;function(x,&nbsp;a,&nbsp;b){exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b))&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b)))}&nbsp;<br><br>#&nbsp;empirical&nbsp;probabilities&nbsp;calculation<br>df&nbsp;<-&nbsp;data.frame(x&nbsp;=&nbsp;sort(unique(zscore)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;tapply(data[,&nbsp;1],&nbsp;zscore,&nbsp;mean),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;as.numeric(table(zscore)))<br><br>#&nbsp;plot&nbsp;of&nbsp;estimated&nbsp;curve<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;x,&nbsp;y&nbsp;=&nbsp;y))&nbsp;+<br>&nbsp;&nbsp;geom_point(aes(size&nbsp;=&nbsp;size),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fill&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;=&nbsp;21,&nbsp;alpha&nbsp;=&nbsp;0.5)&nbsp;+<br>&nbsp;&nbsp;stat_function(fun&nbsp;=&nbsp;fun,&nbsp;geom&nbsp;=&nbsp;\"line\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args&nbsp;=&nbsp;list(a&nbsp;=&nbsp;coef[1],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;coef[2]),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Standardized&nbsp;total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Probability&nbsp;of&nbsp;correct&nbsp;answer\")&nbsp;+<br>&nbsp;&nbsp;ylim(0,&nbsp;1)&nbsp;+<br>&nbsp;&nbsp;ggtitle(\"Item&nbsp;1\")"))),
                                  br()
                                  ),
 
-                        # * NONLINEAR Z ####
-                        tabPanel("Nonlinear IRT Z",
-                                 h3("Nonlinear regression on standardized total scores with IRT parameterization"),
+                        # * NONLINEAR 3P IRT Z ####
+                        tabPanel("Nonlinear 3P IRT Z",
+                                 h3("Nonlinear three parameter regression on standardized total scores with IRT parameterization"),
                                  p('Various regression models may be fitted to describe
                                    item properties in more detail.',
                                    strong('Nonlinear regression'), 'can model dependency of probability of correct answer on
                                    standardized total score (Z-score) by s-shaped logistic curve. The IRT parametrization used here corresponds
                                    to the parametrization used in IRT models. Parameter ', strong( 'b'),' describes horizontal position of the fitted curve (difficulty),
                                    parameter ',strong( 'a'), ' describes its slope at inflection point (discrimination). This model allows for nonzero lower left
-                                   asymptote ', strong( 'c'), ' (pseudo-guessing). '),
+                                   asymptote ', strong( 'c'), ' (pseudo-guessing parameter). '),
                                  br(),
                                  h4("Plot with estimated nonlinear curve"),
                                  p('Points represent proportion of correct answer with respect to standardized
                                    total score. Their size is determined by count of respondents who achieved given
                                    level of standardized total score.'),
-                                 sliderInput("nlsSlider", "Item",
-                                             min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
-                                 plotOutput('nlr_plot'),
-                                 downloadButton("DB_nlr_plot", label = "Download figure"),
+                                 sliderInput(inputId = "slider_nlr_3P_item", label = "Item",
+                                             min = 1, value = 1, max = 10, step = 1, animate = TRUE),
+                                 plotOutput('nlr_3P_plot'),
+                                 downloadButton("DB_nlr_3P_plot", label = "Download figure"),
                                  h4("Equation"),
                                  ('$$\\mathrm{P}(Y = 1|Z, b_0, b_1, c) = \\mathrm{E}(Y|Z, b_0, b_1, c) = c + \\left( 1-c \\right) \\cdot \\frac{e^{a\\left(Z-b\\right) }}{1+e^{a\\left(Z-b\\right) }} $$'),
                                  h4("Table of parameters"),
-                                 fluidRow(column(12, align = "center", tableOutput('nlr_table'))),
-                                 htmlOutput("nlr_interpretation"),
+                                 fluidRow(column(12, align = "center", tableOutput('nlr_3P_table'))),
+                                 htmlOutput("nlr_3P_interpretation"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('Data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('stand.score  <- scale(apply(Data, 1, sum))'),
-                                     br(),
-                                     br(),
-                                     code('# NLR model for item 1'),
-                                     br(),
-                                     code('fun <- function(x, a, b, c){c + (1 - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))}'),
-                                     br(),
-                                     code('fit <- nls(data[, 1] ~ fun(stand.score, a, b, c), algorithm = "port",
-                                          start = startNLR(data, GMAT[, "group"], model = "3PLcg")[1, 1:3])'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Plot of estimated curve'),
-                                     br(),
-                                     code('curve(fun(x, a = coef(fit)[1], b = coef(fit)[2], c = coef(fit)[3]), -3, 3,
-                                          xlab = "Standardized total score",
-                                          ylab = "Probability of correct answer",
-                                          ylim = c(0, 1))')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ggplot2)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(data,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br><br>#&nbsp;NLR&nbsp;3P&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fun&nbsp;<-&nbsp;function(x,&nbsp;a,&nbsp;b,&nbsp;c){c&nbsp;+&nbsp;(1&nbsp;-&nbsp;c)&nbsp;*&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b))&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b)))}&nbsp;<br><br>fit&nbsp;<-&nbsp;nls(data[,&nbsp;1]&nbsp;~&nbsp;fun(zscore,&nbsp;a,&nbsp;b,&nbsp;c),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm&nbsp;=&nbsp;\"port\",&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;startNLR(data,&nbsp;GMAT[,&nbsp;\"group\"],&nbsp;model&nbsp;=&nbsp;\"3PLcg\",&nbsp;parameterization&nbsp;=&nbsp;\"classic\")[[1]][1:3],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;=&nbsp;c(-Inf,&nbsp;-Inf,&nbsp;0,),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper&nbsp;=&nbsp;c(Inf,&nbsp;Inf,&nbsp;1))&nbsp;<br>#&nbsp;coefficients&nbsp;<br>coef(fit)&nbsp;<br><br>#&nbsp;empirical&nbsp;probabilities&nbsp;calculation<br>df&nbsp;<-&nbsp;data.frame(x&nbsp;=&nbsp;sort(unique(zscore)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;tapply(data[,&nbsp;1],&nbsp;zscore,&nbsp;mean),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;as.numeric(table(zscore)))<br><br>#&nbsp;plot&nbsp;of&nbsp;estimated&nbsp;curve<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;x,&nbsp;y&nbsp;=&nbsp;y))&nbsp;+<br>&nbsp;&nbsp;geom_point(aes(size&nbsp;=&nbsp;size),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fill&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;=&nbsp;21,&nbsp;alpha&nbsp;=&nbsp;0.5)&nbsp;+<br>&nbsp;&nbsp;stat_function(fun&nbsp;=&nbsp;fun,&nbsp;geom&nbsp;=&nbsp;\"line\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args&nbsp;=&nbsp;list(a&nbsp;=&nbsp;coef(fit)[1],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;coef(fit)[2],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;coef(fit)[3]),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Standardized&nbsp;total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Probability&nbsp;of&nbsp;correct&nbsp;answer\")&nbsp;+<br>&nbsp;&nbsp;ylim(0,&nbsp;1)&nbsp;+<br>&nbsp;&nbsp;ggtitle(\"Item&nbsp;1\")"))),
                                  br()
                                  ),
-                        "----",
+                        # * NONLINEAR 4P IRT Z ####
+                        tabPanel("Nonlinear 4P IRT Z",
+                                 h3("Nonlinear four parameter regression on standardized total scores with IRT parameterization"),
+                                 p('Various regression models may be fitted to describe
+                                   item properties in more detail.',
+                                   strong('Nonlinear four parameter regression'), 'can model dependency of probability of correct answer on
+                                   standardized total score (Z-score) by s-shaped logistic curve. The IRT parametrization used here corresponds
+                                   to the parametrization used in IRT models. Parameter ', strong( 'b'),' describes horizontal position of the fitted curve (difficulty),
+                                   parameter ', strong( 'a'), ' describes its slope at inflection point (discrimination), pseudo-guessing parameter ', strong('c'), '
+                                   is describes lower asymptote and inattention parameter ', strong('d'), 'describes upper asymptote.'),
+                                 br(),
+                                 h4("Plot with estimated nonlinear curve"),
+                                 p('Points represent proportion of correct answer with respect to standardized
+                                   total score. Their size is determined by count of respondents who achieved given
+                                   level of standardized total score.'),
+                                 sliderInput(inputId = "slider_nlr_4P_item", label = "Item",
+                                             min = 1, value = 1, max = 10, step = 1, animate = TRUE),
+                                 plotOutput('nlr_4P_plot'),
+                                 downloadButton("DB_nlr_4P_plot", label = "Download figure"),
+                                 h4("Equation"),
+                                 ('$$\\mathrm{P}(Y = 1|Z, b_0, b_1, c) = \\mathrm{E}(Y|Z, b_0, b_1, c) = c + \\left( d-c \\right) \\cdot \\frac{e^{a\\left(Z-b\\right) }}{1+e^{a\\left(Z-b\\right) }} $$'),
+                                 h4("Table of parameters"),
+                                 fluidRow(column(12, align = "center", tableOutput('nlr_4P_table'))),
+                                 htmlOutput("nlr_4P_interpretation"),
+                                 br(),
+                                 h4("Selected R code"),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(ggplot2)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(data,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br><br>#&nbsp;NLR&nbsp;4P&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fun&nbsp;<-&nbsp;function(x,&nbsp;a,&nbsp;b,&nbsp;c,&nbsp;d){c&nbsp;+&nbsp;(d&nbsp;-&nbsp;c)&nbsp;*&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b))&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b)))}&nbsp;<br><br>fit&nbsp;<-&nbsp;nls(data[,&nbsp;1]&nbsp;~&nbsp;fun(zscore,&nbsp;a,&nbsp;b,&nbsp;c,&nbsp;d),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm&nbsp;=&nbsp;\"port\",&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;startNLR(data,&nbsp;GMAT[,&nbsp;\"group\"],&nbsp;model&nbsp;=&nbsp;\"4PLcgdg\",&nbsp;parameterization&nbsp;=&nbsp;\"classic\")[[1]][1:4],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;=&nbsp;c(-Inf,&nbsp;-Inf,&nbsp;0,&nbsp;0),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper&nbsp;=&nbsp;c(Inf,&nbsp;Inf,&nbsp;1,&nbsp;1))&nbsp;<br>#&nbsp;coefficients&nbsp;<br>coef(fit)&nbsp;<br><br>#&nbsp;empirical&nbsp;probabilities&nbsp;calculation<br>df&nbsp;<-&nbsp;data.frame(x&nbsp;=&nbsp;sort(unique(zscore)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y&nbsp;=&nbsp;tapply(data[,&nbsp;1],&nbsp;zscore,&nbsp;mean),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;as.numeric(table(zscore)))<br><br>#&nbsp;plot&nbsp;of&nbsp;estimated&nbsp;curve<br>ggplot(df,&nbsp;aes(x&nbsp;=&nbsp;x,&nbsp;y&nbsp;=&nbsp;y))&nbsp;+<br>&nbsp;&nbsp;geom_point(aes(size&nbsp;=&nbsp;size),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fill&nbsp;=&nbsp;\"darkblue\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;=&nbsp;21,&nbsp;alpha&nbsp;=&nbsp;0.5)&nbsp;+<br>&nbsp;&nbsp;stat_function(fun&nbsp;=&nbsp;fun,&nbsp;geom&nbsp;=&nbsp;\"line\",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args&nbsp;=&nbsp;list(a&nbsp;=&nbsp;coef(fit)[1],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;coef(fit)[2],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;coef(fit)[3],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d&nbsp;=&nbsp;coef(fit)[4]),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size&nbsp;=&nbsp;1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color&nbsp;=&nbsp;\"darkblue\")&nbsp;+<br>&nbsp;&nbsp;xlab(\"Standardized&nbsp;total&nbsp;score\")&nbsp;+<br>&nbsp;&nbsp;ylab(\"Probability&nbsp;of&nbsp;correct&nbsp;answer\")&nbsp;+<br>&nbsp;&nbsp;ylim(0,&nbsp;1)&nbsp;+<br>&nbsp;&nbsp;ggtitle(\"Item&nbsp;1\")"))),
+                                 br()
+                                 ),
                         # * MODELS COMPARISON ####
                         tabPanel("Model comparison",
                                  h3("Logistic regression model selection"),
                                  p('Here you can compare classic 2PL logistic regression model to non-linear model
-                                   item by item using some information criterions: '),
+                                   item by item using some information criteria: '),
                                  tags$ul(
                                    tags$li(strong('AIC'), 'is the Akaike information criterion (Akaike, 1974), '),
                                    tags$li(strong('BIC'), 'is the Bayesian information criterion (Schwarz, 1978)')
@@ -1153,47 +562,11 @@ ui = tagList(
                                  DT::dataTableOutput('regr_comp_table'),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('Data  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('stand.score  <- scale(apply(Data, 1, sum))'),
-                                     br(),
-                                     br(),
-                                     code('# Fitting models'),
-                                     br(),
-                                     code('fun <- function(x, a, b, c){c + (1 - c) * exp(a * (x - b)) / (1 + exp(a * (x - b)))}'),
-                                     br(),
-                                     code('# 2PL model for item 1'),
-                                     br(),
-                                     code('fit2PL <- nls(Data[, 1] ~ fun(stand.score, a, b, c = 0), algorithm = "port",
-                                          start = startNLR(Data, GMAT[, "group"], model = "3PLcg")[1, 1:2])'),
-                                     br(),
-                                     code('# 3PL model for item 1'),
-                                     br(),
-                                     code('fit3PL <- nls(Data[, 1] ~ fun(stand.score, a, b, c), algorithm = "port",
-                                          start = startNLR(Data, GMAT[, "group"], model = "3PLcg")[1, 1:3])'),
-                                     br(),
-                                     br(),
-                                     code('# Comparison'),
-                                     br(),
-                                     code('AIC(fit2PL); AIC(fit3PL)'),
-                                     br(),
-                                     code('BIC(fit2PL); BIC(fit3PL)'),
-                                     br(),
-                                     code('LRstat <- -2 * (sapply(fit2PL, logLik) - sapply(fit3PL, logLik))'),
-                                     br(),
-                                     code('LRdf <- 1'),
-                                     br(),
-                                     code('LRpval <- 1 - pchisq(LRstat, LRdf)'),
-                                     br(),
-                                     code('LRpval <- p.adjust(LRpval, method = "BH")'),
-                                     br()),
+                                 div(code(HTML("library(difNLR)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>Data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(Data,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br><br>#&nbsp;function&nbsp;for&nbsp;fitting&nbsp;models<br>fun&nbsp;<-&nbsp;function(x,&nbsp;a,&nbsp;b,&nbsp;c,&nbsp;d){c&nbsp;+&nbsp;(d&nbsp;-&nbsp;c)&nbsp;*&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b))&nbsp;/&nbsp;(1&nbsp;+&nbsp;exp(a&nbsp;*&nbsp;(x&nbsp;-&nbsp;b)))}&nbsp;<br><br>#&nbsp;starting&nbsp;values&nbsp;for&nbsp;item&nbsp;1<br>start&nbsp;<-&nbsp;startNLR(Data,&nbsp;GMAT[,&nbsp;\"group\"],&nbsp;model&nbsp;=&nbsp;\"4PLcgdg\",&nbsp;parameterization&nbsp;=&nbsp;\"classic\")[[1]][,&nbsp;1:4]<br><br>#&nbsp;2PL&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit2PL&nbsp;<-&nbsp;nls(Data[,&nbsp;1]&nbsp;~&nbsp;fun(zscore,&nbsp;a,&nbsp;b,&nbsp;c&nbsp;=&nbsp;0,&nbsp;d&nbsp;=&nbsp;1),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm&nbsp;=&nbsp;\"port\",&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;start[1:2])&nbsp;<br>#&nbsp;NLR&nbsp;3P&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit3PL&nbsp;<-&nbsp;nls(Data[,&nbsp;1]&nbsp;~&nbsp;fun(zscore,&nbsp;a,&nbsp;b,&nbsp;c,&nbsp;d&nbsp;=&nbsp;1),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm&nbsp;=&nbsp;\"port\",&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;start[1:3],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;=&nbsp;c(-Inf,&nbsp;-Inf,&nbsp;0),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper&nbsp;=&nbsp;c(Inf,&nbsp;Inf,&nbsp;1))&nbsp;<br>#&nbsp;NLR&nbsp;4P&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit3PL&nbsp;<-&nbsp;nls(Data[,&nbsp;1]&nbsp;~&nbsp;fun(zscore,&nbsp;a,&nbsp;b,&nbsp;c,&nbsp;d),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm&nbsp;=&nbsp;\"port\",&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start&nbsp;=&nbsp;start,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;=&nbsp;c(-Inf,&nbsp;-Inf,&nbsp;0,&nbsp;0),&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper&nbsp;=&nbsp;c(Inf,&nbsp;Inf,&nbsp;1,&nbsp;1))&nbsp;<br><br>#&nbsp;comparison&nbsp;<br>###&nbsp;AIC<br>AIC(fit2PL);&nbsp;AIC(fit3PL);&nbsp;AIC(fit4PL)&nbsp;<br>###&nbsp;BIC<br>BIC(fit2PL);&nbsp;BIC(fit3PL);&nbsp;BIC(fit4PL)&nbsp;<br>###&nbsp;LR&nbsp;test,&nbsp;using&nbsp;Benjamini-Hochberg&nbsp;correction<br>######&nbsp;2PL&nbsp;vs&nbsp;NLR&nbsp;3P<br>LRstat&nbsp;<-&nbsp;-2&nbsp;*&nbsp;(sapply(fit2PL,&nbsp;logLik)&nbsp;-&nbsp;sapply(fit3PL,&nbsp;logLik))&nbsp;<br>LRdf&nbsp;<-&nbsp;1&nbsp;<br>LRpval&nbsp;<-&nbsp;1&nbsp;-&nbsp;pchisq(LRstat,&nbsp;LRdf)&nbsp;<br>LRpval&nbsp;<-&nbsp;p.adjust(LRpval,&nbsp;method&nbsp;=&nbsp;\"BH\")&nbsp;<br>######&nbsp;NLR&nbsp;3P&nbsp;vs&nbsp;NLR&nbsp;4P<br>LRstat&nbsp;<-&nbsp;-2&nbsp;*&nbsp;(sapply(fit3PL,&nbsp;logLik)&nbsp;-&nbsp;sapply(fit4PL,&nbsp;logLik))&nbsp;<br>LRdf&nbsp;<-&nbsp;1&nbsp;<br>LRpval&nbsp;<-&nbsp;1&nbsp;-&nbsp;pchisq(LRstat,&nbsp;LRdf)&nbsp;<br>LRpval&nbsp;<-&nbsp;p.adjust(LRpval,&nbsp;method&nbsp;=&nbsp;\"BH\")"))),
                                  br()
                                  ),
                         "----",
+                        "Polytomous models",
                         # * MULTINOMIAL ####
                         tabPanel("Multinomial",
                                  h3("Multinomial regression on standardized total scores"),
@@ -1219,832 +592,14 @@ ui = tagList(
                                  htmlOutput("multi_interpretation"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(nnet)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data.scored  <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('stand.score  <- scale(apply(data.scored, 1, sum))'),
-                                     br(),
-                                     code('data(GMATtest)'),
-                                     br(),
-                                     code('data  <- GMATtest[, colnames(GMATtest) != "group"]'),
-                                     br(),
-                                     code('data(GMATkey)'),
-                                     br(),
-                                     code('key  <- GMATkey'),
-
-                                     br(),
-                                     br(),
-                                     code('# multinomial model for item 1'),
-                                     br(),
-                                     code('fit <- multinom(relevel(data[, 1], ref = paste(key[1])) ~ stand.score)'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)')),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(nnet)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT,&nbsp;GMATtest,&nbsp;GMATkey)&nbsp;<br>zscore&nbsp;<-&nbsp;scale(apply(GMAT[,&nbsp;1:20]&nbsp;,&nbsp;1,&nbsp;sum))&nbsp;#&nbsp;standardized&nbsp;total&nbsp;score<br>data&nbsp;<-&nbsp;GMATtest[,&nbsp;1:20]&nbsp;<br>key&nbsp;<-GMATkey<br><br>#&nbsp;multinomial&nbsp;model&nbsp;for&nbsp;item&nbsp;1&nbsp;<br>fit&nbsp;<-&nbsp;multinom(relevel(data[,&nbsp;1],&nbsp;ref&nbsp;=&nbsp;paste(key[1]))&nbsp;~&nbsp;zscore)&nbsp;<br><br>#&nbsp;coefficients&nbsp;<br>coef(fit)"))),
                                  br()
                                  )
                         ),
              #%%%%%%%%%%%%%%%%%%%%%
              # IRT MODELS #########
              #%%%%%%%%%%%%%%%%%%%%%
-             navbarMenu("IRT models",
-                        "Used methods",
-                        # * RASCH ####
-                        tabPanel("Rasch",
-                                 h3("Rasch Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p('In',
-                                   strong('Rasch IRT model'), '(Rasch, 1960), all items are assumed to have the same slope in inflection point – the
-                                   same discrimination', strong('a'), 'which is fixed to value of 1. Items can differ in location of their inflection point – in item difficulty',
-                                   strong('b.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, b_{j} \\right) =  \\frac{e^{\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('rasch_mirt'),
-                                 downloadButton("DP_rasch_mirt", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('raschiic_mirt'),
-                                 downloadButton("DP_raschiic_mirt", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('raschtif_mirt'),
-                                 downloadButton("DP_raschtif_mirt", label = "Download figure"),
-                                 h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
-                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
-                                 tableOutput('raschcoef_mirt'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 textOutput('raschFactorCor_mirt'),
-                                 plotOutput('raschFactor_mirt'),
-                                 downloadButton("DP_raschFactor_mirt", label = "Download figure"),
-                                 h4('Wright map'),
-                                 p('Wright map (Wilson, 2005; Wright & Stone, 1979), also called item-person map, is a graphical tool
-                                   to display person estimates and item parameters. The person side
-                                   (left) represents histogram of estimated knowledge of students.
-                                   The item side (right) displays estimates of difficulty of particular items. '),
-                                 plotOutput('raschWrightMap_mirt'),
-                                 downloadButton('DP_raschWM_mirt', label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('library(WrightMap)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- mirt(data, model = 1, itemtype = "Rasch", SE = T)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit, type = "trace", facet_items = F)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "infotrace", facet_items = F)'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, type = "infoSE")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit, simplify = TRUE)'),
-                                     br(),
-                                     code('coef(fit, IRTpars = TRUE, simplify = TRUE)'),
-                                     br(),
-                                     code('# Item fit statistics'),
-                                     br(),
-                                     code('itemfit(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('fs <- as.vector(fscores(fit))'),
-                                     br(),
-                                     code('sts <- as.vector(scale(apply(data, 1, sum)))'),
-                                     br(),
-                                     code('plot(fs ~ sts)'),
-                                     br(),
-                                     br(),
-                                     code('# Wright Map'),
-                                     br(),
-                                     code('b <- sapply(1:ncol(data), function(i) coef(fit)[[i]][, "d"])'),
-                                     br(),
-                                     code('wrightMap(fs, b, item.side = itemClassic)')),
-                                 br()
-                                 ),
-                        # * 1 PL IRT ####
-                        tabPanel("1PL",
-                                 h3("One parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p('In',
-                                   strong('1PL IRT model'), ', all items are assumed to have the same slope in inflection point – the
-                                   same discrimination', strong('a'), '. Items can differ in location of their inflection point – in item difficulty',
-                                   strong('b.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a, b_{j} \\right) =  \\frac{e^{a\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('oneparamirt_mirt'),
-                                 downloadButton("DP_oneparamirt_mirt", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('oneparamirtiic_mirt'),
-                                 downloadButton("DP_oneparamirtiic_mirt", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('oneparamirttif_mirt'),
-                                 downloadButton("DP_oneparamirttif_mirt", label = "Download figure"),
-                                 h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics
-                                   (Ames & Penfield, 2015). SX2 is computed only when no missing data are present.
-                                   In such a case consider using imputed dataset!'),
-                                 tableOutput('oneparamirtcoef_mirt'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 textOutput('oneparamirtFactorCor_mirt'),
-                                 plotOutput('oneparamirtFactor_mirt'),
-                                 downloadButton("DP_oneparamirtFactor_mirt", label = "Download figure"),
-                                 h4('Wright map'),
-                                 p('Wright map (Wilson, 2005; Wright & Stone, 1979), also called item-person map, is a graphical tool
-                                   to display person estimates and item parameters. The person side
-                                   (left) represents histogram of estimated knowledge of students.
-                                   The item side (right) displays estimates of difficulty of particular items. '),
-                                 plotOutput('oneparamirtWrightMap_mirt'),
-                                 downloadButton('DP_oneparamirtWM_mirt', label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('library(WrightMap)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- mirt(data, model = 1, itemtype = "2PL", constrain = list((1:ncol(data)) + seq(0, (ncol(data) - 1)*3, 3)), SE = T)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit, type = "trace", facet_items = F)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "infotrace", facet_items = F)'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, type = "infoSE")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit, simplify = TRUE)'),
-                                     br(),
-                                     code('coef(fit, IRTpars = TRUE, simplify = TRUE)'),
-                                     br(),
-                                     code('# Item fit statistics'),
-                                     br(),
-                                     code('itemfit(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('fs <- as.vector(fscores(fit))'),
-                                     br(),
-                                     code('sts <- as.vector(scale(apply(data, 1, sum)))'),
-                                     br(),
-                                     code('plot(fs ~ sts)'),
-                                     br(),
-                                     br(),
-                                     code('# Wright Map'),
-                                     br(),
-                                     code('b <- sapply(1:ncol(data), function(i) coef(fit)[[i]][, "d"])'),
-                                     br(),
-                                     code('wrightMap(fs, b, item.side = itemClassic)'),
-                                     br(),
-                                     br(),
-                                     br(),
-                                     code('# You can also use ltm library for IRT models'),
-                                     br(),
-                                     code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- rasch(data)'),
-                                     br(),
-                                     code('# for Rasch model use'),
-                                     br(),
-                                     code('# fit <- rasch(data, constraint = cbind(ncol(data) + 1, 1))'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')
-                                    ),
-                                 br()
-                                 ),
-                        # * 2PL ####
-                        tabPanel("2PL ",
-                                 h3("Two parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('2PL IRT model'), ' allows for different slopes in inflection point – different
-                                   discriminations', strong('a.'), 'Items can also differ in location of their inflection point – in item difficulty',
-                                   strong('b.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a_{j}, b_{j}\\right) =  \\frac{e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('twoparamirt_mirt'),
-                                 downloadButton("DP_twoparamirt_mirt", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('twoparamirtiic_mirt'),
-                                 downloadButton("DP_twoparamirtiic_mirt", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('twoparamirttif_mirt'),
-                                 downloadButton("DP_twoparamirttif_mirt", label = "Download figure"),
-                                 h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
-                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
-                                 tableOutput('twoparamirtcoef_mirt'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 textOutput('twoparamirtFactorCor_mirt'),
-                                 plotOutput('twoparamirtFactor_mirt'),
-                                 downloadButton("DP_twoparamirtFactor_mirt", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- mirt(data, model = 1, itemtype = "2PL", SE = T)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit, type = "trace", facet_items = F)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "infotrace", facet_items = F)'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, type = "infoSE")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit, simplify = TRUE)'),
-                                     br(),
-                                     code('coef(fit, IRTpars = TRUE, simplify = TRUE)'),
-                                     br(),
-                                     code('# Item fit statistics'),
-                                     br(),
-                                     code('itemfit(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('fs <- as.vector(fscores(fit))'),
-                                     br(),
-                                     code('sts <- as.vector(scale(apply(data, 1, sum)))'),
-                                     br(),
-                                     code('plot(fs ~ sts)'),
-                                     br(),
-                                     br(),
-                                     br(),
-                                     code('# You can also use ltm library for IRT models'),
-                                     br(),
-                                     code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- ltm(data ~ z1, IRT.param = TRUE)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')),
-                                 br()
-                                 ),
-                        # * 3PL ####
-                        tabPanel("3PL ",
-                                 h3("Three parameter Item Response Theory model"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p(strong('3PL IRT model'), ' allows for different discriminations of items', strong('a,'),
-                                   'different item difficulties',
-                                   strong('b,'), 'and allows also for nonzero left asymptote – pseudo-guessing', strong('c.')),
-                                 h4("Equation"),
-                                 ('$$\\mathrm{P}\\left(Y_{ij} = 1\\vert \\theta_{i}, a_{j}, b_{j}, c_{j} \\right) = c_{j} + \\left(1 - c_{j}\\right) \\cdot \\frac{e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }}{1+e^{a_{j}\\left(\\theta_{i}-b_{j}\\right) }} $$'),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('threeparamirt_mirt'),
-                                 downloadButton("DP_threeparamirt_mirt", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('threeparamirtiic_mirt'),
-                                 downloadButton("DP_threeparamirtiic_mirt", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('threeparamirttif_mirt'),
-                                 downloadButton("DP_threeparamirttif_mirt", label = "Download figure"),
-                                 h4("Table of parameters with item fit statistics"),
-                                 p('Estimates of parameters are completed by SX2 item fit statistics (Ames & Penfield, 2015).
-                                   SX2 is computed only when no missing data are present. In such a case consider using imputed dataset!'),
-                                 tableOutput('threeparamirtcoef_mirt'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 textOutput('threeparamirtFactorCor_mirt'),
-                                 plotOutput('threeparamirtFactor_mirt'),
-                                 downloadButton("DP_threeparamirtFactor_mirt", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- mirt(data, model = 1, itemtype = "3PL", SE = T)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit, type = "trace", facet_items = F)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "infotrace", facet_items = F)'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, type = "infoSE")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit, simplify = TRUE)'),
-                                     br(),
-                                     code('coef(fit, IRTpars = TRUE, simplify = TRUE)'),
-                                     br(),
-                                     code('# Item fit statistics'),
-                                     br(),
-                                     code('itemfit(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('fs <- as.vector(fscores(fit))'),
-                                     br(),
-                                     code('sts <- as.vector(scale(apply(data, 1, sum)))'),
-                                     br(),
-                                     code('plot(fs ~ sts)'),
-                                     br(),
-                                     code('# You can also use ltm library for IRT models'),
-                                     br(),
-                                     br(),
-                                     br(),
-                                     code('library(difNLR)'),
-                                     br(),
-                                     code('library(ltm)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- tpm(data, IRT.param = TRUE)'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "IIC")'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, items = 0, type = "IIC")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('df1  <- ltm::factor.scores(fit, return.MIvalues = T)$score.dat'),
-                                     br(),
-                                     code('FS   <- as.vector(df1[, "z1"])'),
-                                     br(),
-                                     code('df2  <- df1'),
-                                     br(),
-                                     code('df2$Obs <- df2$Exp <- df2$z1 <- df2$se.z1 <- NULL'),
-                                     br(),
-                                     code('STS <- as.vector(scale(apply(df2, 1, sum)))'),
-                                     br(),
-                                     code('df  <- data.frame(FS, STS)'),
-                                     br(),
-                                     code('plot(FS ~ STS, data = df,
-                                          xlab = "Standardized total score",
-                                          ylab = "Factor score")')),
-                                 br()
-                                 ),
-                        "----",
-                        # * MODEL COMPARISON ####
-                        tabPanel("Model comparison ",
-                                 h3("Item Response Theory model selection"),
-                                 p('Item Response Theory (IRT) models are mixed-effect regression models in which
-                                   student ability (theta) is assumed to be a random effect and is estimated together with item
-                                   paramters. Ability (theta) is often assumed to follow normal distibution.'),
-                                 p('IRT models can be compared by several information criterions: '),
-                                 tags$ul(
-                                   tags$li(strong('AIC'), 'is the Akaike information criterion (Akaike, 1974), '),
-                                   tags$li(strong('AICc'), 'is AIC with a correction for finite sample size, '),
-                                   tags$li(strong('BIC'), 'is the Bayesian information criterion (Schwarz, 1978).'),
-                                   tags$li(strong('SABIC'), 'is the Sample-sized adjusted BIC criterion, ')
-                                 ),
-                                 p('Another approach to compare IRT models can be likelihood ratio chi-squared test.
-                                   Significance level is set to 0.05.'),
-                                 h4("Table of comparison statistics"),
-                                 p('Row ', strong('BEST'), 'indicates which model has the lowest value of criterion, or is the largest
-                                   significant model by likelihood ratio test.'),
-                                 tableOutput('irtcomparison'),
-                                 tags$style(type = "text/css", "#irtcomparison tr:last-child {font-weight:bold;}"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# 1PL IRT model'),
-                                     br(),
-                                     code('fit1PL <- mirt(data, model = 1, itemtype = "3PL", SE = T)'),
-                                     br(),
-                                     code('# 2PL IRT model'),
-                                     br(),
-                                     code('fit2PL <- mirt(data, model = 1, itemtype = "2PL")'),
-                                     br(),
-                                     code('# 3PL IRT model'),
-                                     br(),
-                                     code('fit3PL <- mirt(data, model = 1, itemtype = "3PL")'),
-                                     br(),
-                                     br(),
-                                     code('# Comparison'),
-                                     br(),
-                                     code('anova(fit1PL, fit2PL)'),
-                                     br(),
-                                     code('anova(fit2PL, fit3PL)')),
-                                 br()
-                                 ),
-                        "----",
-                        # * BOCK'S NOMINAL MODEL ####
-                        tabPanel("Bock's nominal model",
-                                 h3("Bock's nominal Item Response Theory model"),
-                                 p('The nominal response model (NRM) was introduced by Bock (1972) as a way to model
-                                   responses to items with two or more nominal categories. This model is suitable for
-                                   multiple-choice items with no particular ordering of distractors. The correct answer
-                                   represent the highest category, in terms of the measured latent trait. '),
-                                 h4('Equation'),
-                                 withMathJax('For ', strong('K'), ' possible test choices is the probability of the choice ', strong('k'), ' for
-                                   person ', strong('i'), ' with latent trait', strong('\\(\\theta\\)'), ' in item ', strong('j'),
-                                   'given by the following equation: '),
-                                 ('$$\\mathrm{P}(Y_{ij} = k|\\theta_i, a_{j1}, al_{j(l-1)}, d_{j(l-1)}, l = 1, \\dots, K) =
-                                             \\frac{e^{(ak_{j(k-1)} * a_{j1} * \\theta_i + d_{j(k-1)})}}{\\sum_l e^{(al_{j(l-1)} * a_{j1} * \\theta_i + d_{j(l-1)})}}$$'),
-                                 br(),
-                                 h4("Item characteristic curves"),
-                                 plotOutput('bock_CC'),
-                                 downloadButton("DP_bock_CC", label = "Download figure"),
-                                 h4("Item information curves"),
-                                 plotOutput('bock_IIC'),
-                                 downloadButton("DP_bock_IIC", label = "Download figure"),
-                                 h4("Test information function"),
-                                 plotOutput('bock_TIF'),
-                                 downloadButton("DP_bock_TIF", label = "Download figure"),
-                                 h4("Table of parameters"),
-                                 textOutput("bock_coef_warning"),
-                                 tableOutput('bock_coef'),
-                                 h4('Scatter plot of factor scores and standardized total scores'),
-                                 textOutput('bockFactorCorInput_mirt'),
-                                 plotOutput('bock_factor'),
-                                 downloadButton("DP_bock_factor", label = "Download figure"),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('library(mirt)'),
-                                     br(),
-                                     code('data(GMAT)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     br(),
-                                     code('# Model'),
-                                     br(),
-                                     code('fit <- mirt(data, model = 1, itemtype = "nominal")'),
-                                     br(),
-                                     code('# Item Characteristic Curves'),
-                                     br(),
-                                     code('plot(fit, type = "trace", facet_items = F)'),
-                                     br(),
-                                     code('# Item Information Curves'),
-                                     br(),
-                                     code('plot(fit, type = "infotrace", facet_items = F)'),
-                                     br(),
-                                     code('# Test Information Function'),
-                                     br(),
-                                     code('plot(fit, type = "infoSE")'),
-                                     br(),
-                                     code('# Coefficients'),
-                                     br(),
-                                     code('coef(fit, simplify = TRUE)'),
-                                     br(),
-                                     code('coef(fit, IRTpars = TRUE, simplify = TRUE)'),
-                                     br(),
-                                     code('# Factor scores vs Standardized total scores'),
-                                     br(),
-                                     code('fs <- as.vector(fscores(fit))'),
-                                     br(),
-                                     code('sts <- as.vector(scale(apply(data, 1, sum)))'),
-                                     br(),
-                                     code('plot(fs ~ sts)')),
-                                 br()
-                                 ),
-                        "----",
-                        "Training",
-                        # * ITEM PLOTS ####
-                        tabPanel("Characteristic and information curves",
-                                 h3("Characteristic and information curves"),
-                                 p('Here you can explore behaviour of two item characteristic curves \\(\\mathrm{P}\\left(\\theta\\right)\\) and their item
-                                   information functions \\(\\mathrm{I}\\left(\\theta\\right)\\) in 4PL IRT model. '),
-                                 h4("Parameters"),
-                                 p('Select parameters ', strong('a'), '(discrimination), ', strong('b'), '(difficulty), ',
-                                   strong('c'), '(guessing) and ', strong('d'), '(inattention). By constraining a = 1, c = 0, d = 1 you get
-                                   Rasch model. With option c = 0 and d = 1 you get 2PL model and with option d = 1 3PL model.'),
-                                 p('When you set different curve parameters, you can follow a phenomenon called Differential Item Functioning (DIF). See further
-                                   section for more information. '),
-                                 # be careful about the order of sliders!!!
-                                 # this probably has nicer solution
-                                 tags$style(HTML(".js-irs-12 .irs-single, .js-irs-12 .irs-bar-edge, .js-irs-12 .irs-bar {
-                                                  background: red;
-                                                  border-top-color: red;
-                                                  border-bottom-color: red;
-                                                  border-left-color: red;
-                                                  border-right-color: red}")),
-                                 tags$style(HTML(".js-irs-13 .irs-single, .js-irs-13 .irs-bar-edge, .js-irs-13 .irs-bar {
-                                                  background: red;
-                                                  border-top-color: red;
-                                                  border-bottom-color: red;
-                                                  border-left-color: red;
-                                                  border-right-color: red}")),
-                                 tags$style(HTML(".js-irs-14 .irs-single, .js-irs-14 .irs-bar-edge, .js-irs-14 .irs-bar {
-                                                  background: red;
-                                                  border-top-color: red;
-                                                  border-bottom-color: red;
-                                                  border-left-color: red;
-                                                  border-right-color: red}")),
-                                 tags$style(HTML(".js-irs-15 .irs-single, .js-irs-15 .irs-bar-edge, .js-irs-15 .irs-bar {
-                                                  background: red;
-                                                  border-top-color: red;
-                                                  border-bottom-color: red;
-                                                  border-left-color: red;
-                                                  border-right-color: red}")),
-                                 tags$style(HTML(".js-irs-16 .irs-single, .js-irs-16 .irs-bar-edge, .js-irs-16 .irs-bar {
-                                                  background: blue;
-                                                  border-top-color: blue;
-                                                  border-bottom-color: blue;
-                                                  border-left-color: blue;
-                                                  border-right-color: blue}")),
-                                 tags$style(HTML(".js-irs-17 .irs-single, .js-irs-17 .irs-bar-edge, .js-irs-17 .irs-bar {
-                                                  background: blue;
-                                                  border-top-color: blue;
-                                                  border-bottom-color: blue;
-                                                  border-left-color: blue;
-                                                  border-right-color: blue}")),
-                                 tags$style(HTML(".js-irs-18 .irs-single, .js-irs-18 .irs-bar-edge, .js-irs-18 .irs-bar {
-                                                  background: blue;
-                                                  border-top-color: blue;
-                                                  border-bottom-color: blue;
-                                                  border-left-color: blue;
-                                                  border-right-color: blue}")),
-                                 tags$style(HTML(".js-irs-19 .irs-single, .js-irs-19 .irs-bar-edge, .js-irs-19 .irs-bar {
-                                                  background: blue;
-                                                  border-top-color: blue;
-                                                  border-bottom-color: blue;
-                                                  border-left-color: blue;
-                                                  border-right-color: blue}")),
-                                 tags$style(HTML(".js-irs-20 .irs-single, .js-irs-20 .irs-bar-edge, .js-irs-20 .irs-bar {
-                                                  background: gray;
-                                                  border-top-color: gray;
-                                                  border-bottom-color: gray;
-                                                  border-left-color: gray;
-                                                  border-right-color: gray}")),
-                                 fluidRow(
-                                   column(12,
-                                          splitLayout(
-                                            cellWidths = c("16%", "1%", "8%", "16%", "1%", "8%", "16%", "1%", "8%", "16%", "1%", "8%"),
-                                            sliderInput("ccIRTSlider_a1", "a - discrimination", min = -4, max = 4,
-                                                        value = 1, step = 0.1),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_a1", "", value = 1)),
-                                            sliderInput("ccIRTSlider_b1", "b - difficulty", min = -4, max = 4,
-                                                        value = 0, step = 0.1),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_b1", "", value = 0)),
-                                            sliderInput("ccIRTSlider_c1", "c - guessing", min = 0, max = 1,
-                                                        value = 0, step = 0.01),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_c1", "", value = 0)),
-                                            sliderInput("ccIRTSlider_d1", "d - inattention", min = 0, max = 1,
-                                                        value = 1, step = 0.01),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_d1", "", value = 1))))),
-                                 fluidRow(
-                                   column(12,
-                                          splitLayout(
-                                            cellWidths = c("16%", "1%", "8%", "16%", "1%", "8%", "16%", "1%", "8%", "16%", "1%", "8%"),
-                                            sliderInput("ccIRTSlider_a2", "a - discrimination", min = -4, max = 4,
-                                                        value = 2, step = 0.1),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_a2", "", value = 2)),
-                                            sliderInput("ccIRTSlider_b2", "b - difficulty", min = -4, max = 4,
-                                                        value = 0.5, step = 0.1),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_b2", "", value = 0.5)),
-                                            sliderInput("ccIRTSlider_c2", "c - guessing", min = 0, max = 1,
-                                                        value = 0, step = 0.01),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("&ensp;")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_c2", "", value = 0)),
-                                            sliderInput("ccIRTSlider_d2", "d - inattention", min = 0, max = 1,
-                                                        value = 1, step = 0.01),
-                                            div(style="display: inline-block; vertical-align: middle; width: 50%;", HTML("&ensp;")),
-                                            div(style= "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_d2", "", value = 1))))),
-                                 p("Select also the value of latent ability", HTML("<b>&#952;</b>"), "to see the intepretation of the
-                                   item characteristic curves. "),
-                                 fluidRow(
-                                   column(3,
-                                          splitLayout(
-                                            cellWidths = c("68%", "6%", "36%"),
-                                            sliderInput("ccIRTSlider_theta", div(HTML('&#952;'), "- latent ability"), min = -4, max = 4,
-                                                        value = 0, step = 0.1),
-                                            div(style = "display: inline-block; vertical-align: middle; width: 50%;", HTML("<br>")),
-                                            div(style = "display: inline-block; vertical-align: middle; height: 100%; width: 50%",
-                                                textInput("ccIRTtext_theta", "", value = 0))))),
-                                 h4("Equations"),
-                                 ('$$\\mathrm{P}\\left(\\theta \\vert a, b, c, d \\right) = c + \\left(d - c\\right) \\cdot \\frac{e^{a\\left(\\theta-b\\right) }}{1+e^{a\\left(\\theta-b\\right) }} $$'),
-                                 ('$$\\mathrm{I}\\left(\\theta \\vert a, b, c, d \\right) = a^2 \\cdot \\left(d - c\\right) \\cdot \\frac{e^{a\\left(\\theta-b\\right) }}{\\left[1+e^{a\\left(\\theta-b\\right)}\\right]^2} $$'),
-                                 uiOutput("ccIRT_interpretation"),
-                                 br(),
-                                 splitLayout(cellWidths = c("50%", "50%"), plotlyOutput('ccIRT_plot'), plotlyOutput('iccIRT_plot')),
-                                 splitLayout(cellWidths = c("50%", "50%"), downloadButton("DB_ccIRT", label = "Download figure"), downloadButton("DB_iccIRT", label = "Download figure")),
-                                 br(),
-                                 h4("Selected R code"),
-                                 div(code('library(ggplot2)'),
-                                     br(),
-                                     code('# parameters'),
-                                     br(),
-                                     code('a1 <- 1; b1 <- 0; c1 <- 0; d1 <- 1'),
-                                     br(),
-                                     code('a2 <- 2; b2 <- 0.5; c2 <- 0; d2 <- 1'),
-                                     br(),
-                                     code('# latent ability'),
-                                     br(),
-                                     code('theta <- 0'),
-                                     br(),
-                                     code('# function for IRT characteristic curve'),
-                                     br(),
-                                     code('ccirt <- function(theta, a, b, c, d){
-                                          return(c + (d - c)/(1 + exp(-a*(theta - b))))
-                                          }'),
-                                 br(),
-                                     code('# plot for characteristic curves'),
-                                 br(),
-                                     HTML('<code>g <- ggplot(data = data.frame(x = -4:4), mapping = aes(x = x)) +<br>
-                                          stat_function(fun = ccirt, args = list(a = a1, b = b1, c = c1, d = d1), aes(color = "2", linetype = "2")) +<br>
-                                          stat_function(fun = ccirt, args = list(a = a2, b = b2, c = c2, d = d2), aes(color = "3", linetype = "3")) +<br>
-                                          geom_segment(aes(y = ccirt(theta, a = a1, b = b1, c = c1, d = d1), yend = ccirt(theta, a = a1, b = b1, c = c1, d = d1), x = -4, xend = theta, color = "1", linetype = "1")) +<br>
-                                          geom_segment(aes(y = ccirt(theta, a = a2, b = b2, c = c2, d = d2), yend = ccirt(theta, a = a2, b = b2, c = c2, d = d2), x = -4, xend = theta, color = "1", linetype = "1")) +<br>
-                                          geom_segment(aes(y = 0, yend = max(ccirt(theta, a = a1, b = b1, c = c1, d = d1), ccirt(theta, a = a2, b = b2, c = c2, d = d2)), x = theta, xend = theta, color = "1", linetype = "1")) +<br>
-                                          xlim(-4, 4) +<br>
-                                          xlab("Ability") +<br>
-                                          ylab("Probability of correct answer") +<br>
-                                          theme_bw() +<br>
-                                          ylim(0, 1) +<br>
-                                          theme(axis.line  = element_line(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = c(0.97, 0.03), legend.justification = c(0.97, 0.03)) +<br>
-                                          scale_color_manual(name = "", breaks = c("1", "2", "3"), values = c("gray", "red", "blue"), labels = c(paste(expression(theta), "=", theta), paste(paste(letters[1:4], "=", c(a1, b1, c1, d1)), collapse = ", "), paste(paste(letters[1:4], "=", c(a2, b2, c2, d2)), collapse = ", "))) +<br>
-                                          scale_linetype_manual(name = "", breaks = c("1", "2", "3"), values = c("dashed", "solid", "solid"), labels = c(paste(expression(theta), "=", theta), paste(paste(letters[1:4], "=", c(a1, b1, c1, d1)), collapse = ", "), paste(paste(letters[1:4], "=", c(a2, b2, c2, d2)), collapse = ", "))) +<br>
-                                          ggtitle("Item characteristic curve")</code>'),
-                                     br(),
-                                     code('g')),
-                                 br()
-                                 )
-                                 ),
+             IRT,
              #%%%%%%%%%%%%%%%%%%%%%
              # DIF/FAIRNESS #######
              #%%%%%%%%%%%%%%%%%%%%%
@@ -2054,7 +609,7 @@ ui = tagList(
                         tabPanel('About DIF',
                                  h3('Differential Item Functioning / Item Fairness'),
                                  p('Differential item functioning (DIF) occurs when people from different
-                                   groups (commonly gender or ethnicity) with the same underlying true
+                                   social groups (commonly gender or ethnicity) with the same underlying true
                                    ability have a different probability of answering the item correctly.
                                    If item functions differently for two groups, it is potentially unfair.
                                    In general, two type of DIF can be recognized: if the item has different
@@ -2063,12 +618,10 @@ ui = tagList(
                                    discrimination and possibly also different difficulty for given two groups, ',
                                    strong('non-uniform'), 'DIF is present (right figure)'),
                                  br(),
-                                 fluidRow(
-                                   column(6, align="center",
-                                          img(src = 'fig_NLR_uniformDIF.png', width = 380)),
-                                   column(6, align="center",
-                                          img(src = 'fig_NLR_nonuniformDIF.png', width = 380))
-                                 ),
+                                 img(src = "fig_DIF_uniform.png",
+                                     style = "float: left; width: 32%; margin-right: 2%; margin-left: 16%; margin-bottom: 0.5em;"),
+                                 img(src = "fig_DIF_nonuniform.png",
+                                     style = "float: left; width: 32%; margin-right: 16%; margin-left: 2%; margin-bottom: 0.5em;"),
                                  br(),
                                  br()
                         ),
@@ -2079,15 +632,18 @@ ui = tagList(
                                  h3("Total scores"),
                                  p('DIF is not about total scores! Two groups may have the same distribution of total scores, yet,
                                    some item may function differently for two groups. Also, one of the groups may have signifficantly
-                                   lower total score, yet, it may happen that there is no DIF item!'),
+                                   lower total score, yet, it may happen that there is no DIF item!',
+                                 a('(Martinkova et al., 2017). ',
+                                 href = "https://www.lifescied.org/doi/10.1187/cbe.16-10-0307",
+                                 target = "_blank")),
                                  h4("Summary of total scores for groups"),
                                  tableOutput('resultsgroup'),
                                  h4("Histograms of total scores for groups"),
                                  sliderInput("inSlider2group", "Cut-score", min = 1, value = 1, max = 10,
                                              step = 1, animate = TRUE),
-                                 p('For selected cut-score, blue part of histogram shows students with total score
-                                   above the cut-score, grey column shows students with Total Score equal
-                                   to cut-score and red part of histogram shows students below the cut-score.'),
+                                 p('For selected cut-score, blue part of histogram shows respondents with total score
+                                   above the cut-score, grey column shows respondents with Total Score equal
+                                   to cut-score and red part of histogram shows respondents below the cut-score.'),
                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('histbyscoregroup0'),plotOutput('histbyscoregroup1')),
                                  splitLayout(cellWidths = c("50%", "50%"), downloadButton("DP_histbyscoregroup0", label = "Download figure"),
                                  downloadButton("DP_histbyscoregroup1", label = "Download figure")),
@@ -2769,12 +1325,10 @@ ui = tagList(
                                               to detect DIF. In statistical terms, Lord statistic is
                                               equal to Wald statistic.'),
                                             br(),
-                                            fluidRow(
-                                              column(6, align="center",
-                                                     img(src = 'lord_udif.png', width = 380)),
-                                              column(6, align="center",
-                                                     img(src = 'lord_nudif.png', width = 380))
-                                            ),
+                                            img(src = "fig_lord_uniform.png",
+                                                style = "float: left; width: 32%; margin-right: 2%; margin-left: 16%; margin-bottom: 0.5em;"),
+                                            img(src = "fig_lord_nonuniform.png",
+                                                style = "float: left; width: 32%; margin-right: 16%; margin-left: 2%; margin-bottom: 0.5em;"),
                                             br(),
                                             h4('Summary table'),
                                             p('Here you can choose ', strong('model'), ' to test DIF. You can also select ',
@@ -2970,12 +1524,10 @@ ui = tagList(
                                               uses the area between the item charateristic curves
                                               for the two groups to detect DIF.'),
                                             br(),
-                                            fluidRow(
-                                              column(6, align="center",
-                                                     img(src = 'raju_udif.png', width = 380)),
-                                              column(6, align="center",
-                                                     img(src = 'raju_nudif.png', width = 380))
-                                            ),
+                                            img(src = "fig_raju_uniform.png",
+                                                style = "float: left; width: 32%; margin-right: 2%; margin-left: 16%; margin-bottom: 0.5em;"),
+                                            img(src = "fig_raju_nonuniform.png",
+                                                style = "float: left; width: 32%; margin-right: 16%; margin-left: 2%; margin-bottom: 0.5em;"),
                                             br(),
                                             h4('Summary table'),
                                             p('Here you can choose ', strong('model'), ' to test DIF. You can also select ',
@@ -3391,7 +1943,8 @@ ui = tagList(
                                                  "Rasch" = "rasch",
                                                  "1PL" = "1pl",
                                                  "2PL" = "2pl",
-                                                 "3PL" = "3pl"),
+                                                 "3PL" = "3pl",
+                                                 "4PL" = "4pl"),
                                                selected = "1pl")
                            )
                          ),
@@ -3498,6 +2051,11 @@ ui = tagList(
                         Practice, 34(3), 39-48.', a("See online.",
                                                     href = "http://onlinelibrary.wiley.com/doi/10.1111/emip.12067/full",
                                                     target = "_blank")),
+                      p('Andrich, D. (1978). A rating formulation for ordered response categories.
+                        Psychometrika, 43(4), 561-573.',
+                        a("See online.",
+                          href = "https://link.springer.com/article/10.1007/BF02293814",
+                          target = "_blank")),
                       p('Angoff, W. H., & Ford, S. F. (1973). Item-Race Interaction on a Test of
                         Scholastic Aptitude. Journal of Educational Measurement, 10(2), 95-105.',
                         a("See online.",
@@ -3536,11 +2094,26 @@ ui = tagList(
                         (2017). Checking Equity: Why Differential Item Functioning Analysis Should Be a Routine Part
                         of Developing Conceptual Assessments. CBE-Life Sciences Education, 16(2). ",
                         a('See online.',
-                          href = "http://www.lifescied.org/content/16/2/rm2.full.pdf+html?with-ds=yes",
+                          href = "https://www.lifescied.org/doi/10.1187/cbe.16-10-0307",
                           target = "_blank")),
                       p("Martinkova, P., Stepanek, L., Drabinova, A., Houdek, J., Vejrazka, M., & Stuka, C. (2017).
                         Semi-real-time analyses of item characteristics for medical school admission tests. In: Proceedings of
                         the 2017 Federated Conference on Computer Science and Information Systems. In print."),
+                      p("Masters, G. N. (1982). A Rasch model for partial credit scoring. Psychometrika, 47(2), 149-174.",
+                        a('See online.',
+                          href = "https://link.springer.com/article/10.1007/BF02296272",
+                          target = "_blank")),
+                      p("McFarland, J. L., Price, R. M., Wenderoth, M. P., Martinkova, P., Cliff, W., Michael, J., ... & Wright, A. (2017).
+                        Development and validation of the homeostasis concept inventory.
+                        CBE-Life Sciences Education, 16(2), ar35.",
+                        a('See online.',
+                          href = "https://www.lifescied.org/doi/abs/10.1187/cbe.16-10-0305",
+                          target = "_blank")),
+                      p("Muraki, E. (1992). A generalized partial credit model: Application of an EM algorithm.
+                        ETS Research Report Series, 1992(1).",
+                        a('See online.',
+                          href = "https://onlinelibrary.wiley.com/doi/abs/10.1002/j.2333-8504.1992.tb01436.x",
+                          target = "_blank")),
                       p("Swaminathan, H., & Rogers, H. J. (1990). Detecting Differential Item
                         Functioning Using Logistic Regression Procedures. Journal of Educational
                         Measurement, 27(4), 361-370.",
@@ -3559,6 +2132,11 @@ ui = tagList(
                           target = "_blank")),
                       p('Rasch, G. (1960) Probabilistic Models for Some Intelligence and Attainment Tests.
                         Copenhagen: Paedagogiske Institute.'),
+                      p("Samejima, F. (1969). Estimation of latent ability using a response pattern of graded scores.
+                        Psychometrika, 34(1), 1-97.",
+                        a('See online.',
+                          href = "https://link.springer.com/article/10.1007%2FBF03372160",
+                          target = "_blank")),
                       p('Schwarz, G. (1978). Estimating the Dimension of a Model. The Annals of Statistics,
                         6(2), 461-464.', a('See online.',
                                            href = "https://projecteuclid.org/euclid.aos/1176344136",
