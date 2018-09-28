@@ -11,6 +11,7 @@ header-includes:
    - \usepackage{titlepage}
    - \renewcommand{\refname}{}
    - \usepackage{ragged2e}
+   - \usepackage{longtable}
 includes:
     before_body: latex/before_body.tex
 fontsize:
@@ -92,7 +93,7 @@ To cite ShinyItemAnalysis application in publications, please, use:
 \bibitem{martinkova2018}
   Martinkov\'a P., Drabinov\'a A., Leder O., \& Houdek J.
   (2018)
-  ShinyItemAnalysis: Test and item analysis via shiny. R package version 1.2.7.
+  ShinyItemAnalysis: Test and item analysis via shiny. R package version 1.2.8.
   https://CRAN.R-project.org/package=ShinyItemAnalysis
 
 \bibitem{martinkova2017}
@@ -128,7 +129,8 @@ colnames(table) = NULL
 print(xtable(t(table), 
              digits = c(0, 0, 0, 2, 2, 2, 2, 2), 
              align = rep('c', 8)), 
-      booktabs = T, comment = F, include.rownames = F)
+      booktabs = T, comment = F, include.rownames = F,
+      tabular.environment = "longtable", floating = F)
 ```
 
 ### Histogram of total scores
@@ -157,7 +159,8 @@ table = params$standardscores_table
 print(xtable(table, 
              digits = c(0, 0, 2, 0, 2, 2), 
              align = rep('c', 6)), 
-      booktabs = T, comment = F, include.rownames = F)
+      booktabs = T, comment = F, include.rownames = F,
+      tabular.environment = "longtable", floating = F)
 ```
 
 `r if (any(params$corr_plot != "") | params$validity_check) {"\\pagebreak"}`
@@ -183,7 +186,7 @@ print(xtable(table,
 
 `r if (any(params$corr_plot != "") & params$corr_plot_clustmethod != "none") {"\\vspace{2em}"}`
 
-```{r corr-plot, echo = FALSE, fig.height = 5, fig.width = 9, dpi = 300}
+```{r corr-plot, fig.align = 'center', echo = FALSE, fig.height = 5, fig.width = 9, dpi = 300}
 if (any(params$corr_plot != "")) {
   corP <- params$corr_plot
   numclust <- params$corr_plot_numclust
@@ -306,7 +309,8 @@ colnames(table) = c("Item", "Diff.", "SD", "D. ULI", "D. RIT", "D. RIR", "Alpha 
 print(xtable(table, 
              digits = c(0, 0, 2, 2, 2, 2, 2, 2, 2), 
              align = rep('c', 9)), 
-      booktabs = T, comment = F, include.rownames = FALSE)
+      booktabs = T, comment = F, include.rownames = FALSE,
+      tabular.environment = "longtable", floating = F)
 ```
 
 \pagebreak
@@ -367,11 +371,10 @@ if (params$irt_type == "none") {
 
 `r if (any(params$wrightMap!="")) {"Wright map, also called item-person map, is a graphical tool to display person estimates and item parameters. The person side (left) represents histogram of estimated knowledge of respondents. The item side (right) displays estimates of difficulty of particular items."}`
 
-\vspace{-1em}
 
-```{r wright-map, echo = FALSE, results = "hide", fig.height = 5.8, fig.width = 11, dpi = 300}
+```{r wright-map, echo = FALSE, results = "hide", fig.height = 4.5, fig.width = 11, dpi = 300}
 if (any(params$wrightMap != "")) {
-  wrightMap(params$wrightMap[[1]], params$wrightMap[[2]], item.side = itemClassic)
+  ggWrightMap(params$wrightMap[[1]], params$wrightMap[[2]], size = 16)
 }
 ```
 
@@ -429,7 +432,8 @@ if (params$irt_type != "none") {
   print(xtable(table, 
              digits = c(0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2), 
              align = rep('c', 12)), 
-      booktabs = T, comment = F, include.rownames = T)
+      booktabs = T, comment = F, include.rownames = T,
+      tabular.environment = "longtable", floating = F)
 }
 ```
 
@@ -453,7 +457,8 @@ if (params$histCheck) {
     print(xtable(params$resultsgroup, 
                  digits = c(0, 0, 0, 2, 2, 2, 2, 2), 
                  align = rep('c', 8)), 
-          booktabs = T, comment = F)
+          booktabs = T, comment = F,
+          tabular.environment = "longtable", floating = F)
   }
 }
 ```
@@ -501,7 +506,8 @@ if (params$deltaplotCheck) {
     print(xtable(tab, 
                  digits = c(0, 3, 3, 3, 3, 3), 
                  align = rep('c', 6)), 
-          booktabs = T, comment = F)
+          booktabs = T, comment = F,
+          tabular.environment = "longtable", floating = F)
   }
 }
 ```
@@ -561,7 +567,8 @@ if (params$logregCheck) {
   print(xtable(tab, 
                  digits = c(0, 3, 3, 3, 0, 0), 
                  align = c('l', 'c', 'l', 'c', 'c', 'c')), 
-          booktabs = T, comment = F)
+        booktabs = T, comment = F,
+        tabular.environment = "longtable", floating = F)
   } 
 }
 ```
@@ -634,12 +641,14 @@ if (params$multiCheck) {
     rownames(tab) <- colnames(res$Data)
     if (ncol(tab) == 2){
       colnames(tab) <- c("Stat.", "P-value")
-      print(xtable(tab, align = c('l', 'c', 'l')), 
-          booktabs = T, comment = F)
+      print(xtable(tab, align = c('l', 'c', 'l')),
+            booktabs = T, comment = F,
+            tabular.environment = "longtable", floating = F)
     } else {
       colnames(tab) <- c("Stat.", "P-value", "Adj. p-value")
-      print(xtable(tab, align = c('l', 'c', 'c', 'l')), 
-          booktabs = T, comment = F)
+      print(xtable(tab, align = c('l', 'c', 'c', 'l')),
+            booktabs = T, comment = F,
+            tabular.environment = "longtable", floating = F)
     }
   }
 }

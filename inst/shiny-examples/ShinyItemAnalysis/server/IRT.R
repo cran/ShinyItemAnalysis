@@ -137,7 +137,7 @@ raschFactorInput_mirt <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -171,7 +171,7 @@ raschWrightMapInput_mirt <- reactive({
   b <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
   names(b) <- item_names()
 
-  wrightMap(fs, b, item.side = itemClassic)
+  ggWrightMap(fs, b)
 
 })
 
@@ -184,15 +184,10 @@ output$DP_raschWM_mirt <- downloadHandler(
     paste("fig_RaschWrightMap.png", sep = "")
   },
   content = function(file) {
-    fs <- as.vector(fscores(rasch_model_mirt()))
-    fit <- rasch_model_mirt()
-
-    b <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
-    names(b) <- item_names()
-
-    png(file, height = 800, width = 1200, res = 100)
-    wrightMap(fs, b, item.side = itemClassic)
-    dev.off()
+    ggsave(file, plot = raschWrightMapInput_mirt() +
+             theme(text = element_text(size = 10)),
+           device = "png",
+           height = 4, width = 8, dpi = 300)
   }
 )
 
@@ -345,7 +340,7 @@ oneparamirtFactorInput_mirt <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -379,7 +374,7 @@ oneparamirtWrightMapInput_mirt <- reactive({
   b <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
   names(b) <- item_names()
 
-  wrightMap(fs, b, item.side = itemClassic)
+  ggWrightMap(fs, b)
 })
 
 
@@ -412,15 +407,10 @@ output$DP_oneparamirtWM_mirt <- downloadHandler(
     paste("fig_1PLWrightMap.png", sep = "")
   },
   content = function(file) {
-    fit <- one_param_irt_mirt()
-    fs <- as.vector(fscores(fit))
-
-    b <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
-    names(b) <- item_names()
-
-    png(file, height = 800, width = 1200, res = 100)
-    wrightMap(fs, b, item.side = itemClassic)
-    dev.off()
+    ggsave(file, plot = oneparamirtWrightMapInput_mirt() +
+             theme(text = element_text(size = 10)),
+           device = "png",
+           height = 4, width = 8, dpi = 300)
   }
 )
 
@@ -568,7 +558,7 @@ twoparamirtFactorInput_mirt <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -752,7 +742,7 @@ threeparamirtFactorInput_mirt <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -937,7 +927,7 @@ irt_4PL_factorscores_plot_Input <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -1197,7 +1187,7 @@ bock_factor_Input <- reactive({
   ggplot(df, aes_string("sts", "fs")) +
     geom_point(size = 3) +
     labs(x = "Standardized total score", y = "Factor score") +
-    theme_shiny +
+    theme_app() +
     theme(legend.box.just = "left",
           legend.justification = c(1, 0),
           legend.position = c(1, 0),
@@ -1325,7 +1315,7 @@ ccIRT_plot_Input <- reactive({
                                         collapse = ", "),
                                   paste(paste(paste(letters[1:4], "=", c(a2, b2, c2, d2))),
                                         collapse = ", "))) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Item characteristic curve")
   g
 
@@ -1387,7 +1377,8 @@ output$ccIRT_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_ccIRT <- downloadHandler(
@@ -1441,7 +1432,7 @@ iccIRT_plot_Input <- reactive({
                                         collapse = ", "),
                                   paste(paste(paste(letters[1:4], "=", c(a2, b2, c2, d2))),
                                         collapse = ", "))) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Item information function")
   g
 })
@@ -1465,7 +1456,8 @@ output$iccIRT_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_iccIRT <- downloadHandler(
@@ -1890,7 +1882,7 @@ irt_training_grm_plot_cummulative_Input <- reactive({
     xlim(-4, 4) +
     ylim(0, 1) +
     scale_color_manual("", values = col, labels = paste0("P(Y >= ", 1:length(col), ")")) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Cummulative probabilities")
 
   g
@@ -1911,7 +1903,8 @@ output$irt_training_grm_plot_cummulative <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_grm_plot_cummulative <- downloadHandler(
@@ -1969,7 +1962,7 @@ irt_training_grm_plot_category_Input <- reactive({
     xlim(-4, 4) +
     ylim(0, 1) +
     scale_color_manual("", values = col, labels = paste0("P(Y >= ", 0:(length(col)-1), ")")) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Category probabilities")
 
   g
@@ -1990,7 +1983,8 @@ output$irt_training_grm_plot_category <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_grm_plot_category <- downloadHandler(
@@ -2042,7 +2036,7 @@ irt_training_grm_plot_expected_Input <- reactive({
     ylab("Expected item score") +
     xlim(-4, 4) +
     ylim(0, num) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Expected item score")
 
   g
@@ -2063,7 +2057,8 @@ output$irt_training_grm_plot_expected <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_grm_plot_expected <- downloadHandler(
@@ -2166,7 +2161,7 @@ irt_training_gpcm_plot_Input <- reactive({
     xlim(-4, 4) +
     ylim(0, 1) +
     scale_color_manual("", values = col, labels = paste0("P(Y = ", 0:(length(col)-1), ")")) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Category probabilities")
 
   g
@@ -2187,7 +2182,8 @@ output$irt_training_gpcm_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_gpcm_plot <- downloadHandler(
@@ -2245,7 +2241,7 @@ irt_training_gpcm_plot_expected_Input <- reactive({
     ylab("Expected item score") +
     xlim(-4, 4) +
     ylim(0, num) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Expected item score")
 
   g
@@ -2266,7 +2262,8 @@ output$irt_training_gpcm_plot_expected <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_gpcm_plot_expected <- downloadHandler(
@@ -2407,7 +2404,7 @@ irt_training_nrm_plot_Input <- reactive({
     xlim(-4, 4) +
     ylim(0, 1) +
     scale_color_manual("", values = col, labels = paste0("P(Y = ", 0:(length(col)-1), ")")) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Category probabilities")
 
   g
@@ -2428,7 +2425,8 @@ output$irt_training_nrm_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  p %>% config(displayModeBar = F)
+  # p %>% config(displayModeBar = F)
+  p
 })
 
 output$DB_irt_training_nrm_plot <- downloadHandler(

@@ -69,7 +69,7 @@ histbyscoregroup1Input <- reactive({
     scale_y_continuous(expand = c(0, 0),
                        limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
     scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Histogram of total scores for focal group")
   g
 })
@@ -122,7 +122,7 @@ histbyscoregroup0Input <- reactive ({
     scale_y_continuous(expand = c(0, 0),
                        limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
     scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-    theme_shiny +
+    theme_app() +
     ggtitle("Histogram of total scores for reference group")
   g
 })
@@ -207,7 +207,7 @@ deltaplotInput <- reactive({
   p <- ggplot(df,
               aes(x = X1, y = X2, label = nam)) +
     geom_point() +
-    geom_text(hjust = 0, nudge_x = 0.05) +
+    geom_text(hjust = 0, nudge_x = 0.05, size = 6) +
     geom_abline(intercept = par[1], slope = par[2],
                 size = 1) +
     geom_abline(intercept = par[1] + thr * sqrt(par[2]^2 + 1),
@@ -224,12 +224,12 @@ deltaplotInput <- reactive({
          y = "Focal group") +
     xlim(min(dp$Deltas, na.rm = T) - 0.5, max(dp$Deltas, na.rm = T) + 0.5) +
     ylim(min(dp$Deltas, na.rm = T) - 0.5, max(dp$Deltas, na.rm = T) + 0.5) +
-    theme_shiny
+    theme_app()
   if (is.numeric(dp$DIFitems)){
     df2 <- df[dp$DIFitems, ]
     p <- p + geom_point(data = df2,
                         aes(x = X1, y = X2, label = nam),
-                        size = 6, color = "black", shape = 1)
+                        size = 8, color = "black", shape = 1)
   }
   p <- p + ggtitle("Delta plot")
   p
@@ -271,7 +271,7 @@ deltaplotInput_report<-reactive({
          y = "Focal group") +
     xlim(min(dp$Deltas, na.rm = T) - 0.5, max(dp$Deltas, na.rm = T) + 0.5) +
     ylim(min(dp$Deltas, na.rm = T) - 0.5, max(dp$Deltas, na.rm = T) + 0.5) +
-    theme_shiny
+    theme_app()
 
   if (is.numeric(dp$DIFitems)){
     df2 <- df[dp$DIFitems, ]
@@ -472,7 +472,6 @@ plot_DIF_logisticInput <- reactive({
                        IRT = F,
                        p.adjust.method = input$correction_method_logItems,
                        purify = input$puri_LR_plot)
-  g <- g + theme_shiny
   g
 })
 
@@ -539,7 +538,6 @@ DIF_logistic_plotReport <- reactive({
                            IRT = F,
                            p.adjust.method = p.adjust.method_report,
                            purify = purify_report)
-      g <- g + theme_shiny
       g = g + ggtitle(paste0("DIF logistic plot for item ", item_numbers()[mod$DIFitems[i]])) +
         theme(text = element_text(size = 12),
               plot.title = element_text(size = 12, face = "bold"))
@@ -551,120 +549,119 @@ DIF_logistic_plotReport <- reactive({
   graflist
 })
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# * LOGISTIC IRT Z ######
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# ** Model for plot ######
-model_DIF_logistic_IRT_Z_plot <- reactive({
-  group <- unlist(DIF_groups())
-  data <- data.frame(correct_answ())
-
-  mod <- difLogistic(Data = data, group = group, focal.name = 1,
-                     type = input$type_plot_DIF_logistic_IRT_Z,
-                     match = scale(scored_test()),
-                     p.adjust.method = input$correction_method_logZItems,
-                     all.cov = T,
-                     purify = F)
-  mod
-})
-
-# ** Model for print ######
-model_DIF_logistic_IRT_Z_print <- reactive({
-  group <- unlist(DIF_groups())
-  data <- data.frame(correct_answ())
-
-  mod <- difLogistic(Data = data, group = group, focal.name = 1,
-                     type = input$type_print_DIF_logistic_IRT_Z,
-                     match = scale(scored_test()),
-                     p.adjust.method = input$correction_method_logZSummary,
-                     all.cov = T,
-                     purify = F)
-  mod
-})
-
-# ** Output print ######
-output$print_DIF_logistic_IRT_Z <- renderPrint({
-  print(model_DIF_logistic_IRT_Z_print())
-})
-
-# ** Plot ######
-plot_DIF_logistic_IRT_ZInput <- reactive ({
-  group <- unlist(DIF_groups())
-  data <- data.frame(correct_answ())
-
-  type <- input$type_plot_DIF_logistic
-  g <- plotDIFLogistic(data, group,
-                       type = input$type_plot_DIF_logistic_IRT_Z,
-                       item =  input$diflog_irtSlider,
-                       IRT = T,
-                       p.adjust.method = input$correction_method_logZItems,
-                       purify = F)
-  g <- g + theme_shiny
-  g
-})
-
-output$plot_DIF_logistic_IRT_Z <- renderPlot({
-  plot_DIF_logistic_IRT_ZInput()
-})
-
-output$DP_plot_DIF_logistic_IRT_Z <- downloadHandler(
-  filename =  function() {
-    paste("fig_DIFLogisticIRTZ_",item_names()[input$diflog_irtSlider],".png", sep = "")
-  },
-  content = function(file) {
-    ggsave(file, plot = plot_DIF_logistic_IRT_ZInput() +
-             theme(text = element_text(size = 10)),
-           device = "png",
-           height = 4, width = 8, dpi = 300)
-  }
-)
-
-output$tab_coef_DIF_logistic_IRT_Z <- renderTable({
-
-  fit <- model_DIF_logistic_IRT_Z_plot()
-  i <- input$diflog_irtSlider
-
-  tab_coef_old <- fit$logitPar[i, ]
-
-  tab_coef <- c()
-  # a = b1, b = -b0/b1, adif = b3, bdif = -(b1b2-b0b3)/(b1(b1+b3))
-  tab_coef[1] <- tab_coef_old[2]
-  tab_coef[2] <- -(tab_coef_old[1] / tab_coef_old[2])
-  tab_coef[3] <- tab_coef_old[4]
-  tab_coef[4] <- -(tab_coef_old[2] * tab_coef_old[3] + tab_coef_old[1] * tab_coef_old[4] ) /
-    (tab_coef_old[2] * (tab_coef_old[2] + tab_coef_old[4]))
-
-  # delta method
-  g <- list( ~ x2,  ~ -x1/x2, ~ x4, ~ -((x2 * x3 - x1 * x4) / (x2 * (x2 + x4))))
-  if (is.character(fit$DIFitems) | !(i %in% fit$DIFitems)){
-    d <- dim(fit$cov.M1[[i]])[1]
-    cov <- matrix(0, ncol = 4, nrow = 4)
-    cov[1:d, 1:d] <-  fit$cov.M1[[i]]
-  } else {
-    d <- dim(fit$cov.M0[[i]])[1]
-    cov <- matrix(0, ncol = 4, nrow = 4)
-    cov[1:d, 1:d] <-  fit$cov.M0[[i]]
-  }
-  cov <- as.matrix(cov)
-  syms <- paste("x", 1:4, sep = "")
-  for (i in 1:4) assign(syms[i], tab_coef_old[i])
-  gdashmu <- t(sapply(g, function(form) {
-    as.numeric(attr(eval(deriv(form, syms)), "gradient"))
-    # in some shiny v. , envir = parent.frame() in eval() needs to be added
-  }))
-  new.covar <- gdashmu %*% cov %*% t(gdashmu)
-  tab_sd <- sqrt(diag(new.covar))
-
-  tab <- data.frame(tab_coef, tab_sd)
-
-  rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF')
-  colnames(tab) <- c("Estimate", "SD")
-
-  tab
-},
-include.rownames = T,
-include.colnames = T)
+# #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# # * LOGISTIC IRT Z ######
+# #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#
+# # ** Model for plot ######
+# model_DIF_logistic_IRT_Z_plot <- reactive({
+#   group <- unlist(DIF_groups())
+#   data <- data.frame(correct_answ())
+#
+#   mod <- difLogistic(Data = data, group = group, focal.name = 1,
+#                      type = input$type_plot_DIF_logistic_IRT_Z,
+#                      match = scale(scored_test()),
+#                      p.adjust.method = input$correction_method_logZItems,
+#                      all.cov = T,
+#                      purify = F)
+#   mod
+# })
+#
+# # ** Model for print ######
+# model_DIF_logistic_IRT_Z_print <- reactive({
+#   group <- unlist(DIF_groups())
+#   data <- data.frame(correct_answ())
+#
+#   mod <- difLogistic(Data = data, group = group, focal.name = 1,
+#                      type = input$type_print_DIF_logistic_IRT_Z,
+#                      match = scale(scored_test()),
+#                      p.adjust.method = input$correction_method_logZSummary,
+#                      all.cov = T,
+#                      purify = F)
+#   mod
+# })
+#
+# # ** Output print ######
+# output$print_DIF_logistic_IRT_Z <- renderPrint({
+#   print(model_DIF_logistic_IRT_Z_print())
+# })
+#
+# # ** Plot ######
+# plot_DIF_logistic_IRT_ZInput <- reactive ({
+#   group <- unlist(DIF_groups())
+#   data <- data.frame(correct_answ())
+#
+#   type <- input$type_plot_DIF_logistic
+#   g <- plotDIFLogistic(data, group,
+#                        type = input$type_plot_DIF_logistic_IRT_Z,
+#                        item =  input$diflog_irtSlider,
+#                        IRT = T,
+#                        p.adjust.method = input$correction_method_logZItems,
+#                        purify = F)
+#   g
+# })
+#
+# output$plot_DIF_logistic_IRT_Z <- renderPlot({
+#   plot_DIF_logistic_IRT_ZInput()
+# })
+#
+# output$DP_plot_DIF_logistic_IRT_Z <- downloadHandler(
+#   filename =  function() {
+#     paste("fig_DIFLogisticIRTZ_",item_names()[input$diflog_irtSlider],".png", sep = "")
+#   },
+#   content = function(file) {
+#     ggsave(file, plot = plot_DIF_logistic_IRT_ZInput() +
+#              theme(text = element_text(size = 10)),
+#            device = "png",
+#            height = 4, width = 8, dpi = 300)
+#   }
+# )
+#
+# output$tab_coef_DIF_logistic_IRT_Z <- renderTable({
+#
+#   fit <- model_DIF_logistic_IRT_Z_plot()
+#   i <- input$diflog_irtSlider
+#
+#   tab_coef_old <- fit$logitPar[i, ]
+#
+#   tab_coef <- c()
+#   # a = b1, b = -b0/b1, adif = b3, bdif = -(b1b2-b0b3)/(b1(b1+b3))
+#   tab_coef[1] <- tab_coef_old[2]
+#   tab_coef[2] <- -(tab_coef_old[1] / tab_coef_old[2])
+#   tab_coef[3] <- tab_coef_old[4]
+#   tab_coef[4] <- -(tab_coef_old[2] * tab_coef_old[3] + tab_coef_old[1] * tab_coef_old[4] ) /
+#     (tab_coef_old[2] * (tab_coef_old[2] + tab_coef_old[4]))
+#
+#   # delta method
+#   g <- list( ~ x2,  ~ -x1/x2, ~ x4, ~ -((x2 * x3 - x1 * x4) / (x2 * (x2 + x4))))
+#   if (is.character(fit$DIFitems) | !(i %in% fit$DIFitems)){
+#     d <- dim(fit$cov.M1[[i]])[1]
+#     cov <- matrix(0, ncol = 4, nrow = 4)
+#     cov[1:d, 1:d] <-  fit$cov.M1[[i]]
+#   } else {
+#     d <- dim(fit$cov.M0[[i]])[1]
+#     cov <- matrix(0, ncol = 4, nrow = 4)
+#     cov[1:d, 1:d] <-  fit$cov.M0[[i]]
+#   }
+#   cov <- as.matrix(cov)
+#   syms <- paste("x", 1:4, sep = "")
+#   for (i in 1:4) assign(syms[i], tab_coef_old[i])
+#   gdashmu <- t(sapply(g, function(form) {
+#     as.numeric(attr(eval(deriv(form, syms)), "gradient"))
+#     # in some shiny v. , envir = parent.frame() in eval() needs to be added
+#   }))
+#   new.covar <- gdashmu %*% cov %*% t(gdashmu)
+#   tab_sd <- sqrt(diag(new.covar))
+#
+#   tab <- data.frame(tab_coef, tab_sd)
+#
+#   rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF')
+#   colnames(tab) <- c("Estimate", "SD")
+#
+#   tab
+# },
+# include.rownames = T,
+# include.colnames = T)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * NLR DIF ######
@@ -672,18 +669,122 @@ include.colnames = T)
 
 # ** Model for print ######
 model_DIF_NLR_print <- reactive({
-  group <- unlist(DIF_groups())
   data <- data.frame(correct_answ())
+  group <- unlist(DIF_groups())
 
-  type <- input$type_print_DIF_NLR
-  adj.method <- input$correction_method_nlrSummary
-  model <- "3PLcg"
-  purify <- input$puri_NLR_print
+  model <- input$DIF_NLR_model_print
+  type <- paste0(input$DIF_NLR_type_print, collapse = "")
+  adj.method <- input$DIF_NLR_correction_method_print
+  purify <- input$DIF_NLR_purification_print
 
   fit <- difNLR(Data = data, group = group, focal.name = 1,
                 model = model, type = type,
-                p.adjust.method = adj.method, purify = purify)
+                p.adjust.method = adj.method, purify = purify,
+                test = "LR")
   fit
+})
+
+# ** Enabling/disabling options for type of DIF in print ####
+observeEvent(input$DIF_NLR_model_print, {
+  # what parameters can be selected with choice of model
+  enaSelection <- switch(input$DIF_NLR_model_print,
+                         "Rasch" = c("b"),
+                         "1PL" = c("b"),
+                         "2PL" = c("a", "b"),
+                         "3PLcg" = c("a", "b"),
+                         "3PLdg" = c("a", "b"),
+                         "3PLc" = c("a", "b", "c"),
+                         "3PLd" = c("a", "b", "d"),
+                         "4PLcgdg" = c("a", "b"),
+                         "4PLcg" = c("a", "b", "d"),
+                         "4PLdg" = c("a", "b", "c"),
+                         "4PL" = c("a", "b", "c", "d"))
+  # what parameters cannot be selected with choice of model
+  disSelection <- setdiff(letters[1:4], enaSelection)
+
+  # converting letters to numbers
+  myLetters <- letters[1:26]
+  disNum <- match(disSelection, myLetters)
+  enaNum <- match(enaSelection, myLetters)
+
+  # updating selected choices for type of DIF
+  updateCheckboxGroupInput(session = session,
+                           inputId = "DIF_NLR_type_print",
+                           selected = enaSelection)
+
+  # create object that identifies enabled and disabled options
+  disElement <- paste0("#DIF_NLR_type_print :nth-child(", disNum,") label")
+  enaElement <- paste0("#DIF_NLR_type_print :nth-child(", enaNum,") label")
+
+  # disable checkbox options of group
+  shinyjs::enable(selector = enaElement)
+  shinyjs::disable(selector = disElement)
+})
+
+# ** Equation ####
+output$DIF_NLR_equation_print <- renderUI({
+  model <- input$DIF_NLR_model_print
+
+  if (model == "Rasch"){
+    txta <- ""
+  } else {
+    if (model == "1PL"){
+      txta <- "a_j"
+    } else {
+      txta <- "a_{jG_i}"
+    }
+  }
+
+  txtb <- "b_{jG_i}"
+
+  txt2 <- paste0(txta, "\\left(Z_i - ", txtb, "\\right)")
+  txt2 <- paste0("e^{", txt2, "}")
+  txt2 <- paste0("\\frac{", txt2,"}{1 + ", txt2,"}")
+
+  if (model %in% c("3PLcg", "4PLcgdg", "4PLcg")){
+    txtc <- "c_j"
+  } else {
+    if (model %in% c("3PLc", "4PLdg", "4PL")){
+      txtc <- "c_{jG_i}"
+    } else {
+      txtc <- ""
+    }
+  }
+
+  if (model %in% c("3PLdg", "4PLcgdg", "4PLdg")){
+    txtd <- "d_j"
+  } else {
+    if (model %in% c("3PLd", "4PLcg", "4PL")){
+      txtd <- "d_{jG_i}"
+    } else {
+      txtd <- ""
+    }
+  }
+
+  if (txtc == "" & txtd == ""){
+    txt3 <- ""
+  } else {
+    if (txtd == ""){
+      txt3 <- paste0(txtc, " + \\left(1 - ", txtc, "\\right) \\cdot ")
+    } else {
+      if (txtc == ""){
+        txt3 <- txtd
+      } else {
+        txt3 <- paste0(txtc, " + \\left(", txtd, " - ", txtc, "\\right) \\cdot ")
+      }
+    }
+  }
+
+  txtp <- c(txta, txtb, txtc, txtd)
+  txtp <- txtp[txtp != ""]
+
+  txt1 <- paste0("\\mathrm{P}\\left(Y_{ij} = 1 | Z_i, G_i, ",
+                paste(txtp, collapse = ", "),
+                "\\right) = ")
+
+  txt <- withMathJax(paste0("$$", txt1, txt3, txt2, "$$"))
+  txt
+
 })
 
 # ** Output print ######
@@ -691,15 +792,121 @@ output$print_DIF_NLR <- renderPrint({
   print(model_DIF_NLR_print())
 })
 
+# ** Updating inputs for plot based on print ####
+observeEvent(input$DIF_NLR_model_print,{
+  if (all(input$DIF_NLR_model_plot != input$DIF_NLR_model_print)){
+    updateSelectInput(session = session,
+                      inputId = "DIF_NLR_model_plot",
+                      selected = input$DIF_NLR_model_print)
+  }
+})
+
+observeEvent(input$DIF_NLR_type_print,{
+  delay(3000,
+        if (length(input$DIF_NLR_type_plot) != length(input$DIF_NLR_type_print) ||
+            all(input$DIF_NLR_type_plot != input$DIF_NLR_type_print)){
+          updateCheckboxGroupInput(session = session,
+                                   inputId = "DIF_NLR_type_plot",
+                                   selected = input$DIF_NLR_type_print)
+        })
+})
+
+observeEvent(input$DIF_NLR_correction_method_print,{
+  if (all(input$DIF_NLR_correction_method_plot != input$DIF_NLR_correction_method_print)){
+    updateSelectInput(session = session,
+                      inputId = "DIF_NLR_correction_method_plot",
+                      selected = input$DIF_NLR_correction_method_print)
+  }
+})
+
+observeEvent(input$DIF_NLR_purification_print,{
+  if (all(input$DIF_NLR_purification_plot != input$DIF_NLR_purification_print)){
+    updateCheckboxInput(session = session,
+                        inputId = "DIF_NLR_purification_plot",
+                        value = input$DIF_NLR_purification_print)
+  }
+})
+
+# ** Enabling/disabling options for type of DIF in plot ####
+observeEvent(input$DIF_NLR_model_plot, {
+  # what parameters can be selected with choice of model
+  enaSelection <- switch(input$DIF_NLR_model_plot,
+                         "Rasch" = c("b"),
+                         "1PL" = c("b"),
+                         "2PL" = c("a", "b"),
+                         "3PLcg" = c("a", "b"),
+                         "3PLdg" = c("a", "b"),
+                         "3PLc" = c("a", "b", "c"),
+                         "3PLd" = c("a", "b", "d"),
+                         "4PLcgdg" = c("a", "b"),
+                         "4PLcg" = c("a", "b", "d"),
+                         "4PLdg" = c("a", "b", "c"),
+                         "4PL" = c("a", "b", "c", "d"))
+  # what parameters cannot be selected with choice of model
+  disSelection <- setdiff(letters[1:4], enaSelection)
+
+  # converting letters to numbers
+  myLetters <- letters[1:26]
+  disNum <- match(disSelection, myLetters)
+  enaNum <- match(enaSelection, myLetters)
+
+  # updating selected choices for type of DIF
+  updateCheckboxGroupInput(session = session,
+                           inputId = "DIF_NLR_type_plot",
+                           selected = enaSelection)
+
+  # create object that identifies enabled and disabled options
+  disElement <- paste0("#DIF_NLR_type_plot :nth-child(", disNum,") label")
+  enaElement <- paste0("#DIF_NLR_type_plot :nth-child(", enaNum,") label")
+
+  # disable checkbox options of group
+  shinyjs::enable(selector = enaElement)
+  shinyjs::disable(selector = disElement)
+})
+
+# ** Updating inputs for plot print on plot ####
+observeEvent(input$DIF_NLR_model_plot,{
+  if (all(input$DIF_NLR_model_plot != input$DIF_NLR_model_print)){
+    updateSelectInput(session = session,
+                      inputId = "DIF_NLR_model_print",
+                      selected = input$DIF_NLR_model_plot)
+  }
+})
+
+observeEvent(input$DIF_NLR_type_plot,{
+  delay(3000,
+        if (length(input$DIF_NLR_type_plot) != length(input$DIF_NLR_type_print) ||
+            all(input$DIF_NLR_type_plot != input$DIF_NLR_type_print)){
+          updateCheckboxGroupInput(session = session,
+                                   inputId = "DIF_NLR_type_print",
+                                   selected = input$DIF_NLR_type_plot)
+  })
+})
+
+observeEvent(input$DIF_NLR_correction_method_plot,{
+  if (all(input$DIF_NLR_correction_method_plot != input$DIF_NLR_correction_method_print)){
+    updateSelectInput(session = session,
+                      inputId = "DIF_NLR_correction_method_print",
+                      selected = input$DIF_NLR_correction_method_plot)
+  }
+})
+observeEvent(input$DIF_NLR_purification_plot,{
+  if (all(input$DIF_NLR_purification_plot != input$DIF_NLR_purification_print)){
+    updateCheckboxInput(session = session,
+                        inputId = "DIF_NLR_purification_print",
+                        value = input$DIF_NLR_purification_plot)
+  }
+})
+
 # ** Model for plot ######
 model_DIF_NLR_plot <- reactive({
-  group <- unlist(DIF_groups())
   data <- data.frame(correct_answ())
+  group <- unlist(DIF_groups())
 
-  type <- input$type_plot_DIF_NLR
-  adj.method <- input$correction_method_nlrItems
-  model <- "3PLcg"
-  purify <- input$puri_NLR_plot
+  model <- input$DIF_NLR_model_print
+  type <- paste0(input$DIF_NLR_type_print, collapse = "")
+  adj.method <- input$DIF_NLR_correction_method_print
+  purify <- input$DIF_NLR_purification_print
 
   fit <- difNLR(Data = data, group = group, focal.name = 1,
                 model = model, type = type,
@@ -710,10 +917,15 @@ model_DIF_NLR_plot <- reactive({
 # ** Plot ######
 plot_DIF_NLRInput <- reactive({
   fit <- model_DIF_NLR_plot()
-  item <- input$difnlrSlider
+  item <- input$DIF_NLR_item_plot
 
   g <- plot(fit, item = item)[[1]] +
-    theme_shiny +
+    theme_app() +
+    theme(legend.box.just = "top",
+          legend.position = c(0.01, 0.98),
+          legend.justification = c(0, 1),
+          legend.key.width = unit(1, "cm"),
+          legend.box = "horizontal") +
     ggtitle(item_names()[item])
   g
 })
@@ -726,7 +938,7 @@ output$plot_DIF_NLR <- renderPlot({
 # ** Plot download ######
 output$DP_plot_DIF_NLR <- downloadHandler(
   filename =  function() {
-    paste("fig_DIFNonlinear_",item_names()[input$difnlrSlider],".png", sep = "")
+    paste0("fig_DIFNonlinear_", item_names()[input$DIF_NLR_item_plot], ".png")
   },
   content = function(file) {
     ggsave(file, plot = plot_DIF_NLRInput() +
@@ -736,16 +948,82 @@ output$DP_plot_DIF_NLR <- downloadHandler(
   }
 )
 
+# ** Equation ####
+output$DIF_NLR_equation_plot <- renderUI({
+  model <- input$DIF_NLR_model_plot
+
+  if (model == "Rasch"){
+    txta <- ""
+  } else {
+    if (model == "1PL"){
+      txta <- "a_j"
+    } else {
+      txta <- "a_{jG_i}"
+    }
+  }
+
+  txtb <- "b_{jG_i}"
+
+  txt2 <- paste0(txta, "\\left(Z_i - ", txtb, "\\right)")
+  txt2 <- paste0("e^{", txt2, "}")
+  txt2 <- paste0("\\frac{", txt2,"}{1 + ", txt2,"}")
+
+  if (model %in% c("3PLcg", "4PLcgdg", "4PLcg")){
+    txtc <- "c_j"
+  } else {
+    if (model %in% c("3PLc", "4PLdg", "4PL")){
+      txtc <- "c_{jG_i}"
+    } else {
+      txtc <- ""
+    }
+  }
+
+  if (model %in% c("3PLdg", "4PLcgdg", "4PLdg")){
+    txtd <- "d_j"
+  } else {
+    if (model %in% c("3PLd", "4PLcg", "4PL")){
+      txtd <- "d_{jG_i}"
+    } else {
+      txtd <- ""
+    }
+  }
+
+  if (txtc == "" & txtd == ""){
+    txt3 <- ""
+  } else {
+    if (txtd == ""){
+      txt3 <- paste0(txtc, " + \\left(1 - ", txtc, "\\right) \\cdot ")
+    } else {
+      if (txtc == ""){
+        txt3 <- txtd
+      } else {
+        txt3 <- paste0(txtc, " + \\left(", txtd, " - ", txtc, "\\right) \\cdot ")
+      }
+    }
+  }
+
+  txtp <- c(txta, txtb, txtc, txtd)
+  txtp <- txtp[txtp != ""]
+
+  txt1 <- paste0("\\mathrm{P}\\left(Y_{ij} = 1 | Z_i, G_i, ",
+                 paste(txtp, collapse = ", "),
+                 "\\right) = ")
+
+  txt <- withMathJax(paste0("$$", txt1, txt3, txt2, "$$"))
+  txt
+
+})
+
 # ** Table of coefficients ######
 output$tab_coef_DIF_NLR <- renderTable({
-  item <- input$difnlrSlider
+  item <- input$DIF_NLR_item_plot
   fit <- model_DIF_NLR_plot()
 
-  tab_coef <- fit$nlrPAR[[item]][c('a', 'b', 'aDif', 'bDif', 'c')]
-  tab_sd <- fit$nlrSE[[item]][c('a', 'b', 'aDif', 'bDif', 'c')]
+  tab_coef <- fit$nlrPAR[[item]]
+  tab_sd <- fit$nlrSE[[item]]
 
   tab <- t(rbind(tab_coef, tab_sd))
-  rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF', 'c')
+  # rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF', 'c')
   colnames(tab) <- c("Estimate", "SD")
 
   tab
@@ -820,7 +1098,6 @@ plot_DIF_IRT_LordInput <- reactive({
   g <- plotDIFirt(parameters = fitLord$itemParInit,
                   item = item,
                   item.name = item_names()[item])[[item]]
-  g <- g + theme_shiny
   g
 })
 
@@ -1009,7 +1286,6 @@ plot_DIF_IRT_RajuInput <- reactive({
 
   g <- plotDIFirt(parameters = fitRaju$itemParInit, test = "Raju",
                   item = item, item.name = item_names()[item])[[item]]
-  g <- g + theme_shiny
   g
 })
 
@@ -1132,6 +1408,37 @@ output$tab_coef_DIF_IRT_Raju <- renderTable({
 include.rownames = T,
 include.colnames = T)
 
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# * SIBTEST ######
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# ** Model for print ####
+DIF_SIBTEST_model <- reactive({
+  # data
+  group <- unlist(DIF_groups())
+  a <- data.frame(correct_answ())
+  colnames(a) <- item_names()
+
+  # inputs
+  type <- input$DIF_SIBTEST_type
+  purify <- input$DIF_SIBTEST_purification
+  adj.method <- input$DIF_SIBTEST_correction_method
+
+  # model
+  fit <- difSIBTEST(Data = a, group = group, focal.name = 1,
+                    type = type,
+                    purify = purify, p.adjust.method = adj.method)
+
+  fit
+})
+
+# ** Output print ######
+output$DIF_SIBTEST_print <- renderPrint({
+  print(DIF_SIBTEST_model())
+})
+
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * DDF ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1207,7 +1514,12 @@ plot_DDFInput <- reactive({
 
   g <- plot(fit, item = item)[[1]]
   g <- g +
-    theme_shiny +
+    theme_app() +
+    theme(legend.box.just = "top",
+          legend.position = c(0.01, 0.98),
+          legend.justification = c(0, 1),
+          legend.key.width = unit(1, "cm"),
+          legend.box = "horizontal") +
     ggtitle(item_names()[item])
   g
 })

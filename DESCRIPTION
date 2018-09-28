@@ -1,8 +1,8 @@
 Package: ShinyItemAnalysis
 Type: Package
 Title: Test and Item Analysis via Shiny
-Version: 1.2.7
-Date: 2018-05-03
+Version: 1.2.8
+Date: 2018-09-27
 Author: Patricia Martinkova [aut, cre],
   Adela Drabinova [aut],
   Ondrej Leder [aut],
@@ -11,18 +11,19 @@ Author: Patricia Martinkova [aut, cre],
 Authors@R: c(person("Patricia", "Martinkova", role = c("aut", "cre"), email = "martinkova@cs.cas.cz"), person("Adela", "Drabinova", role = c("aut")), person("Ondrej", "Leder", role = "aut"), person("Jakub", "Houdek", role = "aut"), person("Lubomir", "Stepanek", role = "ctb"))
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Depends: R (>= 3.1)
-Imports: corrplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.2.1),
-        difR (>= 4.7), ggplot2 (>= 2.2.1), grid, gridExtra, knitr,
+Imports: corrplot, cowplot, CTT, data.table, deltaPlotR, DT, difNLR (>=
+        1.2.2), difR (>= 5.0), ggplot2 (>= 2.2.1), gridExtra, knitr,
         latticeExtra, ltm, mirt (>= 1.24), moments, msm, nnet, plotly,
         psych, psychometric, reshape2, rmarkdown, shiny (>= 1.0.3),
-        shinyBS, shinyjs (>= 0.9), stringr, WrightMap, xtable
+        shinyBS, shinydashboard, shinyjs (>= 0.9), stringr, xtable
 Description: Interactive shiny application for analysis of educational tests and
     their items.
 License: GPL-3
 LazyData: TRUE
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
+Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2018-05-04 12:05:03 UTC; Adisa
+Packaged: 2018-09-27 16:13:02 UTC; Adisa
 Repository: CRAN
-Date/Publication: 2018-05-04 12:41:19 UTC
+Date/Publication: 2018-09-28 08:10:02 UTC
