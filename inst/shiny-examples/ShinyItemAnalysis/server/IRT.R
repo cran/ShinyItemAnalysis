@@ -6,18 +6,56 @@
 # * RASCH ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 rasch_model_mirt <- reactive({
-  fitRasch <- mirt(correct_answ(), model = 1, itemtype = "Rasch",
+  fitRasch <- mirt(binary(), model = 1, itemtype = "Rasch",
                    SE = T, verbose = F)
+})
+
+# ** UPDATING MAXIMUM VALUE IN INPUT SLIDER, IN ITEMS TAB ** #
+observe({
+  updateSliderInput(session, 'rachSliderChar', max = length(item_names()))
 })
 
 # *** CC ######
 raschInput_mirt <- reactive({
-  g <- plot(rasch_model_mirt(), type = "trace", facet_items = F)
-  g
+  plt <- plot(rasch_model_mirt(), type = 'trace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c("Ability", "Probability", "Item")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability, color = Item)) +
+    geom_line() +
+    ylab("Probability of correct answer") +
+    theme_app()
 })
 
-output$rasch_mirt <- renderPlot({
-  raschInput_mirt()
+output$rasch_mirt <- renderPlotly({
+  g <- raschInput_mirt()
+  p <- ggplotly(g)
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_rasch_mirt <- downloadHandler(
@@ -25,20 +63,109 @@ output$DP_rasch_mirt <- downloadHandler(
     paste("fig_RaschItemCharacteristicCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(raschInput_mirt())
-    dev.off()
+    ggsave(file, plot = raschInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** CC items ######
+raschInput_mirt_tab <- reactive({
+  plt <- plot(rasch_model_mirt(), type = 'trace', which.item = input$rachSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c("Ability", "Probability")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability)) +
+    geom_line(color = cols[input$rachSliderChar]) +
+    ylab("Probability of correct answer") +
+    ggtitle(item_names()[input$rachSliderChar]) +
+    theme_app()
+})
+
+output$rasch_mirt_tab <- renderPlotly({
+  g <- raschInput_mirt_tab()
+  p <- ggplotly(g)
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_rasch_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_RaschItemCharacteristicCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = raschInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 raschiicInput_mirt <- reactive({
-  g <- plot(rasch_model_mirt(), type = "infotrace", facet_items = F)
-  g
+  plt <- plot(rasch_model_mirt(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c("Ability", "Information", "Item")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information, color = Item )) +
+    geom_line() +
+    theme_app()
 })
 
-output$raschiic_mirt <- renderPlot({
-  raschiicInput_mirt()
+
+output$raschiic_mirt <- renderPlotly({
+  g <- raschiicInput_mirt()
+  p <- ggplotly(g)
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_raschiic_mirt <- downloadHandler(
@@ -46,20 +173,101 @@ output$DP_raschiic_mirt <- downloadHandler(
     paste("fig_RaschItemInformationCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(raschiicInput_mirt())
-    dev.off()
+    ggsave(file, plot = raschiicInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** ICC items ######
+raschiicInput_mirt_tab <- reactive({
+  plt <- plot(rasch_model_mirt(), type = 'infotrace', which.item = input$rachSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  colnames(df) <- c("Ability", "Information")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$rachSliderChar]) +
+    ggtitle(item_names()[input$rachSliderChar]) +
+    theme_app()
+})
+
+
+output$raschiic_mirt_tab <- renderPlotly({
+  g <- raschiicInput_mirt_tab()
+  p <- ggplotly(g)
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_raschiic_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_RaschItemInformationCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = raschiicInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 raschtifInput_mirt <- reactive({
-  g <- plot(rasch_model_mirt(), type = "infoSE")
-  g
+  plt <- plot(rasch_model_mirt(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
+
 })
 
-output$raschtif_mirt <- renderPlot({
-  raschtifInput_mirt()
+output$raschtif_mirt <- renderPlotly({
+  g <- raschtifInput_mirt()
+
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_raschtif_mirt <- downloadHandler(
@@ -67,9 +275,11 @@ output$DP_raschtif_mirt <- downloadHandler(
     paste("fig_RaschTestInformationFunction.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(raschtifInput_mirt())
-    dev.off()
+    ggsave(file, plot = raschtifInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -88,15 +298,15 @@ raschcoefInput_mirt <- reactive({
   if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
     cat("ERROR : ", conditionMessage(e), "\n")}))){
     tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
-    colnames(tab) <- c("b", "SD(b)", "SX2-value", "df", "p-value")
+    colnames(tab) <- c("b", "SE(b)", "SX2-value", "df", "p-value")
   } else {
-    colnames(tab) <- c("b", "SD(b)")
+    colnames(tab) <- c("b", "SE(b)")
   }
   rownames(tab) <- item_names()
 
   n <- length(item_names())
   tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
-  colnames(tab.comp) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)",
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
                           "SX2-value", "df", "p-value")
   rownames(tab.comp) <- item_names()
 
@@ -111,10 +321,98 @@ output$raschcoef_mirt <- renderTable({
 },
 include.rownames = T)
 
+raschcoefInput_mirt_tab <- reactive({
+  fit <- rasch_model_mirt()
+
+  par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, "b"]
+  se_list <- coef(fit, printSE = T)
+  se_tab <- sapply(1:length(par_tab), function(i) se_list[[i]]["SE", "d"])
+
+  tab <- cbind(par_tab, se_tab)
+
+  tab <- round(tab, 3)
+
+  if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
+    cat("ERROR : ", conditionMessage(e), "\n")}))){
+    tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
+    colnames(tab) <- c("b", "SE(b)", "SX2-value", "df", "p-value")
+  } else {
+    colnames(tab) <- c("b", "SE(b)")
+  }
+  rownames(tab) <- item_names()
+
+  n <- length(item_names())
+  tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
+                          "SX2-value", "df", "p-value")
+  rownames(tab.comp) <- item_names()
+
+  tab <- round(tab, 3)
+  tab.comp[, colnames(tab.comp) %in% colnames(tab)] <- tab
+
+  tab.comp[input$rachSliderChar,]
+})
+
+output$raschcoef_mirt_tab <- renderTable({
+  raschcoefInput_mirt_tab()
+},
+include.rownames = T)
+
+
+
+# ** Download table ######
+output$download_Rasch_table <- downloadHandler(
+  filename = function() {
+    paste("Rasch_table",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- raschcoefInput_mirt()
+    write.csv(data,file)
+  }
+)
+
+# * Abilities estimates parameters * #
+raschAbilities <- reactive({
+  fit <- rasch_model_mirt()
+
+  ts <- as.vector(total_score())
+  sts <- as.vector(z_score())
+  fs <- as.vector(fscores(fit))
+  fs.Err <- as.vector(fscores(fit, full.scores.SE = TRUE)[, 2])
+
+  tab <- data.frame(cbind(ts, sts, fs, fs.Err))
+  colnames(tab) <- c('Total scores', 'Z-score', 'F-scores', 'SE of F-score')
+  n <- nrow(tab)
+  nam <- vector('character', length = n)
+  for (i in 1:n) {
+    nam[i] <- paste('Respondent', i)
+  }
+  rownames(tab) <- c(nam)
+  tab
+})
+
+output$raschcoef_abilities <- renderTable({
+
+  head(raschAbilities(), 6)
+
+}, include.rownames = TRUE)
+
+# ** Download abilities ######
+output$download_Rasch_abilities <- downloadHandler(
+  filename = function() {
+    paste("Rasch_abilities",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- raschAbilities()
+    write.csv(data,file, col.names = TRUE)
+  }
+)
+
+
 # *** Factor scores correlation ######
 raschFactorCorInput_mirt <- reactive({
   fs <- as.vector(fscores(rasch_model_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -130,7 +428,7 @@ output$raschFactorCor_mirt <- renderText({
 raschFactorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(rasch_model_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -157,9 +455,10 @@ output$DP_raschFactor_mirt <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = raschFactorInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -185,9 +484,10 @@ output$DP_raschWM_mirt <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = raschWrightMapInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -196,21 +496,60 @@ output$DP_raschWM_mirt <- downloadHandler(
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 one_param_irt_mirt <- reactive({
-  data <- correct_answ()
+  data <- binary()
   s <- paste("F = 1-", ncol(data), "\n",
-                 "CONSTRAIN = (1-", ncol(data), ", a1)")
+             "CONSTRAIN = (1-", ncol(data), ", a1)")
   model <- mirt.model(s)
-  fit1PL <- mirt(data, model = model, itemtype = "2PL", SE = T, verbose = F)
+  fit1PL <- mirt(data, model = model, itemtype = "2PL", SE = T, verbose = F,
+                 technical = list(NCYCLES = input$ncycles))
 })
+
+# Updating number of items in slider input, in ITEMS tab #
+observe({
+  updateSliderInput(session, 'onePLSliderChar', max = length(item_names()))
+})
+
 
 # *** CC ####
 oneparamirtInput_mirt <- reactive({
-  g <- plot(one_param_irt_mirt(), type = "trace", facet_items = F)
-  g
+  plt <- plot(one_param_irt_mirt(), type = 'trace',facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Probability', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability, color = Item )) +
+    geom_line() +
+    ylab("Probability of correct answer") +
+    theme_app()
 })
 
-output$oneparamirt_mirt <- renderPlot({
-  oneparamirtInput_mirt()
+output$oneparamirt_mirt <- renderPlotly({
+  p <- ggplotly(oneparamirtInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+
 })
 
 output$DP_oneparamirt_mirt <- downloadHandler(
@@ -218,19 +557,108 @@ output$DP_oneparamirt_mirt <- downloadHandler(
     paste("fig_1PLItemCharactersticCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
+    png(file, height = setting_figures$height,
+        width = setting_figures$width,
+        units = "in",
+        res = setting_figures$dpi,
+        pointsize = setting_figures$dpi/72)
     print(oneparamirtInput_mirt())
     dev.off()
+  }
+)
+# *** CC items ####
+oneparamirtInput_mirt_tab <- reactive({
+  plt <- plot(one_param_irt_mirt(), type = 'trace', which.item = input$onePLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c("Ability", "Probability")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability)) +
+    geom_line(color = cols[input$onePLSliderChar]) +
+    ylab("Probability of correct answer") +
+    ggtitle(item_names()[input$onePLSliderChar]) +
+    theme_app()
+})
+
+output$oneparamirt_mirt_tab <- renderPlotly({
+
+  p <- ggplotly(oneparamirtInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_oneparamirt_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_1PLItemCharactersticCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = oneparamirtInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 oneparamirtiicInput_mirt <- reactive({
-  plot(one_param_irt_mirt(), type = "infotrace", facet_items = F)
+  plt <- plot(one_param_irt_mirt(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Information', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information, color = Item )) +
+    geom_line() +
+    ylab('Information') +
+    theme_app()
 })
 
-output$oneparamirtiic_mirt <- renderPlot({
-  oneparamirtiicInput_mirt()
+output$oneparamirtiic_mirt <- renderPlotly({
+  p <- ggplotly(oneparamirtiicInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ","",p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_oneparamirtiic_mirt <- downloadHandler(
@@ -238,32 +666,115 @@ output$DP_oneparamirtiic_mirt <- downloadHandler(
     paste("fig_1PLItemInformationCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
+    png(file, height = setting_figures$height,
+        width = setting_figures$width,
+        units = "in",
+        res = setting_figures$dpi,
+        pointsize = setting_figures$dpi/72)
     print(oneparamirtiicInput_mirt())
     dev.off()
+  }
+)
+# *** IIC items ####
+oneparamirtiicInput_mirt_tab <- reactive({
+  plt <- plot(one_param_irt_mirt(), type = 'infotrace', which.item = input$onePLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c('Ability', 'Information')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$onePLSliderChar]) +
+    ylab("Information") +
+    ggtitle(item_names()[input$onePLSliderChar]) +
+    theme_app()
+})
+
+
+output$oneparamirtiic_mirt_tab <- renderPlotly({
+  p <- ggplotly(oneparamirtiicInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_oneparamirtiic_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_1PLItemInformationCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = oneparamirtiicInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 oneparamirttifInput_mirt <- reactive({
-  plot(one_param_irt_mirt(), type = "infoSE")
+  plt <- plot(one_param_irt_mirt(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
+
 })
 
-output$oneparamirttif_mirt <- renderPlot({
-  oneparamirttifInput_mirt()
+output$oneparamirttif_mirt <- renderPlotly({
+  g <- oneparamirttifInput_mirt()
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
+
 
 output$DP_oneparamirttif_mirt <- downloadHandler(
   filename =  function() {
     paste("fig_1PLTestInformationFunction.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(oneparamirttifInput_mirt())
-    dev.off()
+    ggsave(file, plot = oneparamirttifInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
-
 
 # *** Table of parameters ######
 oneparamirtcoefInput_mirt <- reactive({
@@ -290,15 +801,15 @@ oneparamirtcoefInput_mirt <- reactive({
   if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
     cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
     tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "SX2-value", "df", "p-value")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "SX2-value", "df", "p-value")
   } else {
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)")
   }
   rownames(tab) <- item_names()
 
   n <- length(item_names())
   tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
-  colnames(tab.comp) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)",
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
                           "SX2-value", "df", "p-value")
   rownames(tab.comp) <- item_names()
 
@@ -313,12 +824,106 @@ output$oneparamirtcoef_mirt <- renderTable({
 },
 include.rownames = T)
 
+oneparamirtcoefInput_mirt_tab <- reactive({
+  fit <- one_param_irt_mirt()
+
+  par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b")]
+
+  parvec <- extract.mirt(fit, 'parvec')
+  vcov <- vcov(fit)
+
+  se_tab <- c()
+  for (item in 1:nrow(par_tab)){
+    pick <- c(1, item + 1)
+    ad <- parvec[pick]
+    v <- vcov[pick, pick]
+
+    SEs <- deltamethod(list(~ x1, ~ -x2/x1), ad, v)
+    names(SEs) <- c('a', 'b')
+    se_tab <- rbind(se_tab, SEs)
+  }
+
+  tab <- cbind(par_tab, se_tab)[, c(1, 3, 2, 4)]
+
+  if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
+    cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
+    tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "SX2-value", "df", "p-value")
+  } else {
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)")
+  }
+  rownames(tab) <- item_names()
+
+  n <- length(item_names())
+  tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
+                          "SX2-value", "df", "p-value")
+  rownames(tab.comp) <- item_names()
+
+  tab <- round(tab, 3)
+  tab.comp[, colnames(tab.comp) %in% colnames(tab)] <- tab
+
+  tab.comp[input$onePLSliderChar,]
+})
+
+output$oneparamirtcoef_mirt_tab <- renderTable({
+  oneparamirtcoefInput_mirt_tab()
+},
+include.rownames = T)
+
+# ** Download table ######
+output$download_1pl_table <- downloadHandler(
+  filename = function() {
+    paste("1PL_table",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- oneparamirtcoefInput_mirt()
+    write.csv(data,file)
+  }
+)
+
+# * Abilities estimates parameters * #
+onePlAbilities <- reactive({
+
+  ts <- as.vector(total_score())
+  sts <- as.vector(z_score())
+  fs <- as.vector(fscores(one_param_irt_mirt()))
+  fs.Err <- as.vector(fscores(one_param_irt_mirt(), full.scores.SE = TRUE)[,2])
+  tab <- data.frame(cbind(ts,sts,fs,fs.Err))
+  colnames(tab) <- c('Total scores', 'Z-score', 'F-scores', 'SE of F-score')
+  n <- nrow(tab)
+  nam <- vector('character', length = n)
+  for (i in 1:n) {
+
+    nam[i] <- paste('Respondent',i)
+
+  }
+  rownames(tab) <- c(nam)
+  tab
+})
+
+output$one_PL_abilities <- renderTable({
+
+  head(onePlAbilities(),6)
+
+}, include.rownames = TRUE)
+
+# ** Download abilities ######
+output$download_onePL_abilities <- downloadHandler(
+  filename = function() {
+    paste("1PL_abilities",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- onePlAbilities()
+    write.csv(data,file, col.names = TRUE)
+  }
+)
 
 # *** Factor scores correlation ######
 oneparamirtFactorCorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(one_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -333,7 +938,7 @@ output$oneparamirtFactorCor_mirt <- renderText({
 oneparamirtFactorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(one_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -360,9 +965,10 @@ output$DP_oneparamirtFactor_mirt <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = oneparamirtFactorInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -408,9 +1014,10 @@ output$DP_oneparamirtWM_mirt <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = oneparamirtWrightMapInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -418,19 +1025,58 @@ output$DP_oneparamirtWM_mirt <- downloadHandler(
 # * 2PL IRT ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 two_param_irt_mirt <- reactive({
-  data <- correct_answ()
+  data <- binary()
   fit2PL <- mirt(data, model = 1, itemtype = "2PL",
                  constrain = NULL,
-                 SE = T, verbose = F)
+                 SE = T, verbose = F,
+                 technical = list(NCYCLES = input$ncycles))
+})
+
+# Updating number of items in slider input, in ITEMS tab #
+observe({
+  updateSliderInput(session, 'twoPLSliderChar', max = length(item_names()))
 })
 
 # *** CC ######
 twoparamirtInput_mirt <- reactive({
-  plot(two_param_irt_mirt(), type = "trace", facet_items = F)
+  plt <- plot(two_param_irt_mirt(), type = 'trace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Probability', 'Item')
+
+  g <- ggplot(data= df, aes(x = Ability, y = Probability, color = Item )) +
+    geom_line() +
+    ylab('Probability of correct answer') +
+    theme_app()
 })
 
-output$twoparamirt_mirt <- renderPlot({
-  twoparamirtInput_mirt()
+output$twoparamirt_mirt <- renderPlotly({
+  p <- ggplotly(twoparamirtInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_twoparamirt_mirt <- downloadHandler(
@@ -438,19 +1084,106 @@ output$DP_twoparamirt_mirt <- downloadHandler(
     paste("fig_2PLItemCharacteristicCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(twoparamirtInput_mirt())
-    dev.off()
+    ggsave(file, plot = twoparamirtInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** CC items ######
+twoparamirtInput_mirt_tab <- reactive({
+  plt <- plot(two_param_irt_mirt(), type = 'trace', which.item = input$twoPLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c("Ability", "Probability")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability)) +
+    geom_line(color = cols[input$twoPLSliderChar]) +
+    ylab("Probability of correct answer") +
+    ggtitle(item_names()[input$twoPLSliderChar]) +
+    theme_app()
+})
+
+output$twoparamirt_mirt_tab <- renderPlotly({
+  p <- ggplotly(twoparamirtInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ","", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_twoparamirt_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_2PLItemCharacteristicCurves.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = twoparamirtInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 twoparamirtiicInput_mirt <- reactive({
-  plot(two_param_irt_mirt(), type = "infotrace", facet_items = F)
+  plt <- plot(two_param_irt_mirt(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Information', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information, color = Item)) +
+    geom_line() +
+    ylab('Information') +
+    theme_app()
 })
 
-output$twoparamirtiic_mirt <- renderPlot({
-  twoparamirtiicInput_mirt()
+output$twoparamirtiic_mirt <- renderPlotly({
+  p <- ggplotly(twoparamirtiicInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_twoparamirtiic_mirt <- downloadHandler(
@@ -458,19 +1191,97 @@ output$DP_twoparamirtiic_mirt <- downloadHandler(
     paste("fig_2PLItemInformationCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(twoparamirtiicInput_mirt())
-    dev.off()
+    ggsave(file, plot = twoparamirtiicInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** IIC items ####
+twoparamirtiicInput_mirt_tab <- reactive({
+  plt <- plot(two_param_irt_mirt(), type = 'infotrace', which.item = input$twoPLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c('Ability', 'Information')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$twoPLSliderChar]) +
+    ylab("Information") +
+    ggtitle(item_names()[input$twoPLSliderChar]) +
+    theme_app()
+})
+
+output$twoparamirtiic_mirt_tab <- renderPlotly({
+  p <- ggplotly(twoparamirtiicInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_twoparamirtiic_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_2PLItemInformationCurves.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = twoparamirtiicInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 twoparamirttifInput_mirt <- reactive({
-  plot(two_param_irt_mirt(), type = "infoSE")
+  plt <- plot(two_param_irt_mirt(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
+
 })
 
-output$twoparamirttif_mirt <- renderPlot({
-  twoparamirttifInput_mirt()
+output$twoparamirttif_mirt <- renderPlotly({
+  g <- twoparamirttifInput_mirt()
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_twoparamirttif_mirt <- downloadHandler(
@@ -478,9 +1289,11 @@ output$DP_twoparamirttif_mirt <- downloadHandler(
     paste("fig_2PLTestInformationFunction.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(twoparamirttifInput_mirt())
-    dev.off()
+    ggsave(file, plot = twoparamirttifInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -509,15 +1322,15 @@ twoparamirtcoefInput_mirt <- reactive({
   if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
     cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
     tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "SX2-value", "df", "p-value")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "SX2-value", "df", "p-value")
   } else {
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)")
   }
   rownames(tab) <- item_names()
 
   n <- length(item_names())
   tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
-  colnames(tab.comp) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)",
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SEd)",
                           "SX2-value", "df", "p-value")
   rownames(tab.comp) <- item_names()
 
@@ -531,11 +1344,103 @@ output$twoparamirtcoef_mirt <- renderTable({
   twoparamirtcoefInput_mirt()
 },
 include.rownames = T)
+
+twoparamirtcoefInput_mirt_tab <- reactive({
+  fit <- two_param_irt_mirt()
+
+  par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b")]
+
+  parvec <- extract.mirt(fit, 'parvec')
+  vcov <- vcov(fit)
+
+  se_tab <- c()
+  for (item in seq(1, 2*nrow(par_tab), 2)){
+    pick <- c(item, item + 1)
+    ad <- parvec[pick]
+    v <- vcov[pick, pick]
+
+    SEs <- deltamethod(list(~ x1, ~ -x2/x1), ad, v)
+    names(SEs) <- c('a', 'b')
+    se_tab <- rbind(se_tab, SEs)
+  }
+
+  tab <- cbind(par_tab, se_tab)[, c(1, 3, 2, 4)]
+
+  if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
+    cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
+    tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "SX2-value", "df", "p-value")
+  } else {
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)")
+  }
+  rownames(tab) <- item_names()
+
+  n <- length(item_names())
+  tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SEd)",
+                          "SX2-value", "df", "p-value")
+  rownames(tab.comp) <- item_names()
+
+  tab <- round(tab, 3)
+  tab.comp[, colnames(tab.comp) %in% colnames(tab)] <- tab
+
+  tab.comp[input$twoPLSliderChar,]
+})
+
+output$twoparamirtcoef_mirt_tab <- renderTable({
+  twoparamirtcoefInput_mirt_tab()
+},
+include.rownames = T)
+
+# ** Download table ######
+output$download_2pl_table <- downloadHandler(
+  filename = function() {
+    paste("2PL_table",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- twoparamirtcoefInput_mirt()
+    write.csv(data,file)
+  }
+)
+
+# * Abilities estimates parameters * #
+twoPlAbilities <- reactive({
+
+  ts <- as.vector(total_score())
+  sts <- as.vector(z_score())
+  fs <- as.vector(fscores(two_param_irt_mirt()))
+  fs.Err <- as.vector(fscores(two_param_irt_mirt(), full.scores.SE = TRUE)[, 2])
+  tab <- data.frame(cbind(ts, sts, fs, fs.Err))
+  colnames(tab) <- c('Total scores', 'Z-score', 'F-scores', 'SE of F-score')
+  n <- nrow(tab)
+  nam <- vector('character', length = n)
+  for (i in 1:n) {
+    nam[i] <- paste('Respondent', i)
+  }
+  rownames(tab) <- c(nam)
+  tab
+})
+
+output$two_PL_abilities <- renderTable({
+  head(twoPlAbilities(), 6)
+}, include.rownames = TRUE)
+
+# ** Download abilities ######
+output$download_twoPL_abilities <- downloadHandler(
+  filename = function() {
+    paste("2PL_abilities", ".csv", sep = "")
+  },
+  content = function(file) {
+    data <- twoPlAbilities()
+    write.csv(data, file, col.names = TRUE)
+  }
+)
+
 # *** Factor scores correlation ######
 twoparamirtFactorCorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(two_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -551,7 +1456,7 @@ output$twoparamirtFactorCor_mirt <- renderText({
 twoparamirtFactorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(two_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -572,15 +1477,18 @@ output$twoparamirtFactor_mirt <- renderPlot({
   twoparamirtFactorInput_mirt()
 })
 
+
+
 output$DP_twoparamirtFactor_mirt <- downloadHandler(
   filename =  function() {
     paste("fig_2PLFactorVsStandardized.png", sep = "")
   },
   content = function(file) {
     ggsave(file, plot = twoparamirtFactorInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -589,11 +1497,16 @@ output$DP_twoparamirtFactor_mirt <- downloadHandler(
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 three_param_irt_mirt <- reactive({
-  data <- correct_answ()
+  data <- binary()
   fit3PL <- mirt(data, model = 1, itemtype = "3PL",
                  constrain = NULL,
-                 SE = T, technical = list(NCYCLES = 2000),
+                 SE = T, technical = list(NCYCLES = input$ncycles),
                  verbose = F)
+})
+
+# Updating number of items in slider input, in ITEMS tab #
+observe({
+  updateSliderInput(session, 'threePLSliderChar', max = length(item_names()))
 })
 
 output$irt_3PL_model_converged <- renderUI({
@@ -601,19 +1514,52 @@ output$irt_3PL_model_converged <- renderUI({
   txt <- ifelse(fit@OptimInfo$converged,
                 "",
                 "<font color = 'orange'>
-          Estimation process terminated without convergence.
-          Estimates are not reliable.
-          </font>")
+                Estimation process terminated without convergence.
+                Estimates are not reliable.
+                </font>")
   HTML(txt)
 })
 
 # *** CC ######
 threeparamirtInput_mirt <- reactive({
-  plot(three_param_irt_mirt(), type = "trace", facet_items = F)
+  plt <- plot(three_param_irt_mirt(), type = 'trace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Probability', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability, color = Item )) +
+    geom_line() +
+    ylab('Probability of correct answer') +
+    theme_app()
 })
 
-output$threeparamirt_mirt <- renderPlot({
-  threeparamirtInput_mirt()
+output$threeparamirt_mirt <- renderPlotly({
+  p <- ggplotly(threeparamirtInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_threeparamirt_mirt <- downloadHandler(
@@ -621,39 +1567,203 @@ output$DP_threeparamirt_mirt <- downloadHandler(
     paste("fig_3PLItemCharacteristicCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(threeparamirtInput_mirt())
-    dev.off()
+    ggsave(file, plot = threeparamirtInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** CC items ####
+threeparamirtInput_mirt_tab <- reactive({
+  plt <- plot(three_param_irt_mirt(), type = 'trace', which.item = input$threePLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c("Ability", "Probability")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability)) +
+    geom_line(color = cols[input$threePLSliderChar]) +
+    ylab("Probability of correct answer") +
+    ggtitle(item_names()[input$threePLSliderChar]) +
+    theme_app()
+})
+
+output$threeparamirt_mirt_tab <- renderPlotly({
+  p <- ggplotly(threeparamirtInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_threeparamirt_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_3PLItemCharacteristicCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = threeparamirtInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 threeparamirtiicInput_mirt <- reactive({
-  plot(three_param_irt_mirt(), type = "infotrace", facet_items = F)
+  plt <- plot(three_param_irt_mirt(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Information', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information, color = Item )) +
+    geom_line() +
+    ylab('Information') +
+    theme_app()
 })
 
-output$threeparamirtiic_mirt <- renderPlot({
-  threeparamirtiicInput_mirt()
+output$threeparamirtiic_mirt <- renderPlotly({
+  p <- ggplotly(threeparamirtiicInput_mirt())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_threeparamirtiic_mirt <- downloadHandler(
   filename =  function() {
-    paste("fig_3PLItemInformationCurves.png", sep = "")
+    paste("fig_3PLItemInformationCurve.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(threeparamirtiicInput_mirt())
-    dev.off()
+    ggsave(file, plot = threeparamirtiicInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** IIC items ######
+threeparamirtiicInput_mirt_tab <- reactive({
+  plt <- plot(three_param_irt_mirt(), type = 'infotrace', which.item = input$threePLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c('Ability', 'Information')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$threePLSliderChar]) +
+    ylab("Information") +
+    ggtitle(item_names()[input$threePLSliderChar]) +
+    theme_app()
+})
+
+output$threeparamirtiic_mirt_tab <- renderPlotly({
+  p <- ggplotly(threeparamirtiicInput_mirt_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DP_threeparamirtiic_mirt_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_3PLItemInformationCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = threeparamirtiicInput_mirt_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 threeparamirttifInput_mirt <- reactive({
-  plot(three_param_irt_mirt(), type = "infoSE")
+  plt <- plot(three_param_irt_mirt(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
+
 })
 
-output$threeparamirttif_mirt <- renderPlot({
-  threeparamirttifInput_mirt()
+output$threeparamirttif_mirt <- renderPlotly({
+  g <- threeparamirttifInput_mirt()
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_threeparamirttif_mirt <- downloadHandler(
@@ -661,9 +1771,11 @@ output$DP_threeparamirttif_mirt <- downloadHandler(
     paste("fig_3PLTestInformationFunction.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(threeparamirttifInput_mirt())
-    dev.off()
+    ggsave(file, plot = threeparamirttifInput_mirt() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -677,15 +1789,19 @@ threeparamirtcoefInput_mirt <- reactive({
   parvec <- extract.mirt(fit, 'parvec')
   vcov <- vcov(fit)
 
-  se_tab <- c()
-  for (item in seq(1, 3*nrow(par_tab), 3)){
-    pick <- c(item, item + 1, item + 2)
-    ad <- parvec[pick]
-    v <- vcov[pick, pick]
+  if (all(is.na(vcov))){
+    se_tab <- matrix(NA, nrow = nrow(par_tab), ncol = ncol(par_tab))
+  } else {
+    se_tab <- c()
+    for (item in seq(1, 3*nrow(par_tab), 3)){
+      pick <- c(item, item + 1, item + 2)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
 
-    SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3), ad, v)
-    names(SEs) <- c('a', 'b', 'c')
-    se_tab <- rbind(se_tab, SEs)
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3), ad, v)
+      names(SEs) <- c('a', 'b', 'c')
+      se_tab <- rbind(se_tab, SEs)
+    }
   }
 
   tab <- cbind(par_tab, se_tab)[, c(1, 4, 2, 5, 3, 6)]
@@ -693,15 +1809,15 @@ threeparamirtcoefInput_mirt <- reactive({
   if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
     cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
     tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "SX2-value", "df", "p-value")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "SX2-value", "df", "p-value")
   } else {
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)")
   }
   rownames(tab) <- item_names()
 
   n <- length(item_names())
   tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
-  colnames(tab.comp) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)",
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
                           "SX2-value", "df", "p-value")
   rownames(tab.comp) <- item_names()
 
@@ -716,11 +1832,107 @@ output$threeparamirtcoef_mirt <- renderTable({
 },
 include.rownames = T)
 
+threeparamirtcoefInput_mirt_tab <- reactive({
+  fit <- three_param_irt_mirt()
+
+  par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b", "g")]
+
+  parvec <- extract.mirt(fit, 'parvec')
+  vcov <- vcov(fit)
+
+  if (all(is.na(vcov))){
+    se_tab <- matrix(NA, nrow = nrow(par_tab), ncol = ncol(par_tab))
+  } else {
+    se_tab <- c()
+    for (item in seq(1, 3*nrow(par_tab), 3)){
+      pick <- c(item, item + 1, item + 2)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
+
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3), ad, v)
+      names(SEs) <- c('a', 'b', 'c')
+      se_tab <- rbind(se_tab, SEs)
+    }
+  }
+
+  tab <- cbind(par_tab, se_tab)[, c(1, 4, 2, 5, 3, 6)]
+
+  if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
+    cat("ERROR : ", conditionMessage(e), "\n")}, finally = ""))){
+    tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "SX2-value", "df", "p-value")
+  } else {
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)")
+  }
+  rownames(tab) <- item_names()
+
+  n <- length(item_names())
+  tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
+                          "SX2-value", "df", "p-value")
+  rownames(tab.comp) <- item_names()
+
+  tab <- round(tab, 3)
+  tab.comp[, colnames(tab.comp) %in% colnames(tab)] <- tab
+
+  tab.comp[input$threePLSliderChar,]
+})
+
+output$threeparamirtcoef_mirt_tab <- renderTable({
+  threeparamirtcoefInput_mirt_tab()
+},
+include.rownames = T)
+
+# ** Download table ######
+output$download_3pl_table <- downloadHandler(
+  filename = function() {
+    paste("3PL_table",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- threeparamirtcoefInput_mirt()
+    write.csv(data,file)
+  }
+)
+
+# * Abilities estimates parameters * #
+threePlAbilities <- reactive({
+
+  ts <- as.vector(total_score())
+  sts <- as.vector(z_score())
+  fs <- as.vector(fscores(three_param_irt_mirt()))
+  fs.Err <- as.vector(fscores(three_param_irt_mirt(), full.scores.SE = TRUE)[, 2])
+  tab <- data.frame(cbind(ts, sts, fs, fs.Err))
+  colnames(tab) <- c('Total scores', 'Z-score', 'F-scores', 'SE of F-score')
+  n <- nrow(tab)
+  nam <- vector('character', length = n)
+  for (i in 1:n) {
+    nam[i] <- paste('Respondent', i)
+  }
+  rownames(tab) <- c(nam)
+
+  tab
+})
+
+output$three_PL_abilities <- renderTable({
+  head(threePlAbilities(), 6)
+}, include.rownames = TRUE)
+
+# ** Download abilities ######
+output$download_threePL_abilities <- downloadHandler(
+  filename = function() {
+    paste("3PL_abilities",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- threePlAbilities()
+    write.csv(data,file, col.names = TRUE)
+  }
+)
+
 # *** Factor scores plot ######
 threeparamirtFactorCorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(three_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -735,7 +1947,7 @@ output$threeparamirtFactorCor_mirt <- renderText({
 threeparamirtFactorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(three_param_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -762,9 +1974,10 @@ output$DP_threeparamirtFactor_mirt <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = threeparamirtFactorInput_mirt() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -773,31 +1986,69 @@ output$DP_threeparamirtFactor_mirt <- downloadHandler(
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 irt_4PL_model <- reactive({
-  data <- correct_answ()
+  data <- binary()
   fit <- mirt(data, model = 1, itemtype = "4PL",
               constrain = NULL,
-              SE = T, technical = list(NCYCLES = 4000),
+              SE = T, technical = list(NCYCLES = input$ncycles),
               verbose = F)
+})
+
+# Updating number of items in slider input, in ITEMS tab #
+observe({
+  updateSliderInput(session, 'fourPLSliderChar', max = length(item_names()))
 })
 
 output$irt_4PL_model_converged <- renderUI({
   fit <- irt_4PL_model()
   txt <- ifelse(fit@OptimInfo$converged,
-         "",
-         "<font color = 'orange'>
-          Estimation process terminated without convergence.
-          Estimates are not reliable.
-          </font>")
+                "",
+                "<font color = 'orange'>
+                Estimation process terminated without convergence.
+                Estimates are not reliable.
+                </font>")
   HTML(txt)
 })
 
 # *** ICC ######
 irt_4PL_icc_Input <- reactive({
-  plot(irt_4PL_model(), type = "trace", facet_items = F)
+  plt <- plot(irt_4PL_model(), type = 'trace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Probability', 'Item')
+
+  g <- ggplot(data= df, aes(x = Ability, y = Probability, color = Item )) +
+    geom_line() +
+    ylab('Probability of correct answer') +
+    theme_app()
 })
 
-output$irt_4PL_icc <- renderPlot({
-  irt_4PL_icc_Input()
+output$irt_4PL_icc <- renderPlotly({
+  p <- ggplotly(irt_4PL_icc_Input())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_4PL_icc <- downloadHandler(
@@ -805,19 +2056,105 @@ output$DB_irt_4PL_icc <- downloadHandler(
     paste("fig_IRT_4PL_icc.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(irt_4PL_icc_Input())
-    dev.off()
+    ggsave(file, plot = irt_4PL_icc_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+# *** CC items ####
+irt_4PL_icc_Input_tab <- reactive({
+  plt <- plot(irt_4PL_model(), type = 'trace', which.item = input$fourPLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c("Ability", "Probability")
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability)) +
+    geom_line(color = cols[input$fourPLSliderChar]) +
+    ylab("Probability of correct answer") +
+    ggtitle(item_names()[input$fourPLSliderChar]) +
+    theme_app()
+})
+
+output$irt_4PL_icc_item_tab <- renderPlotly({
+  p <- ggplotly(irt_4PL_icc_Input_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DB_irt_4PL_icc_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_IRT_4PL_icc.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = irt_4PL_icc_Input_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 irt_4PL_iic_Input <- reactive({
-  plot(irt_4PL_model(), type = "infotrace", facet_items = F)
+  plt <- plot(irt_4PL_model(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+  colnames(df) <- c('Ability', 'Information', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information, color = Item )) +
+    geom_line() +
+    ylab('Information') +
+    theme_app()
 })
 
-output$irt_4PL_iic <- renderPlot({
-  irt_4PL_iic_Input()
+output$irt_4PL_iic <- renderPlotly({
+  p <- ggplotly(irt_4PL_iic_Input())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_4PL_iic <- downloadHandler(
@@ -825,19 +2162,98 @@ output$DB_irt_4PL_iic <- downloadHandler(
     paste("fig_IRT_4PL_iic.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
+    ggsave(file, plot = irt_4PL_iic_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
     print(irt_4PL_iic_Input())
     dev.off()
+  }
+)
+# *** IIC items ####
+irt_4PL_iic_Input_tab <- reactive({
+  plt <- plot(irt_4PL_model(), type = 'infotrace', which.item = input$fourPLSliderChar, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(n)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+  colnames(df) <- c('Ability', 'Information')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$fourPLSliderChar]) +
+    ylab("Information") +
+    ggtitle(item_names()[input$fourPLSliderChar]) +
+    theme_app()
+})
+
+output$irt_4PL_iic_item_tab <- renderPlotly({
+  p <- ggplotly(irt_4PL_iic_Input_tab())
+
+  for (j in 1:length(p$x$data)) {
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+
+output$DB_irt_4PL_iic_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_IRT_4PL_iic.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = irt_4PL_iic_Input_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 irt_4PL_tif_Input <- reactive({
-  plot(irt_4PL_model(), type = "infoSE")
+  plt <- plot(irt_4PL_model(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
 })
 
-output$irt_4PL_tif <- renderPlot({
-  irt_4PL_tif_Input()
+output$irt_4PL_tif <- renderPlotly({
+  g <- irt_4PL_tif_Input()
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_4PL_tif <- downloadHandler(
@@ -845,9 +2261,11 @@ output$DB_irt_4PL_tif <- downloadHandler(
     paste("fig_IRT_4PL_tif.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(irt_4PL_tif_Input())
-    dev.off()
+    ggsave(file, plot = irt_4PL_tif_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -860,15 +2278,19 @@ irt_4PL_coef_Input <- reactive({
   parvec <- extract.mirt(fit, 'parvec')
   vcov <- vcov(fit)
 
-  se_tab <- c()
-  for (item in seq(1, 4*nrow(par_tab), 4)){
-    pick <- c(item, item + 1, item + 2, item + 3)
-    ad <- parvec[pick]
-    v <- vcov[pick, pick]
+  if (all(is.na(vcov))){
+    se_tab <- matrix(NA, nrow = nrow(par_tab), ncol = ncol(par_tab))
+  } else {
+    se_tab <- c()
+    for (item in seq(1, 4*nrow(par_tab), 4)){
+      pick <- c(item, item + 1, item + 2, item + 3)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
 
-    SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3, ~ x4), ad, v)
-    names(SEs) <- c('a', 'b', 'c', 'd')
-    se_tab <- rbind(se_tab, SEs)
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3, ~ x4), ad, v)
+      names(SEs) <- c('a', 'b', 'c', 'd')
+      se_tab <- rbind(se_tab, SEs)
+    }
   }
 
   tab <- cbind(par_tab, se_tab)[, c(1, 5, 2, 6, 3, 7, 4, 8)]
@@ -876,15 +2298,15 @@ irt_4PL_coef_Input <- reactive({
   if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
     cat("ERROR: ", conditionMessage(e), "\n")}, finally = ""))){
     tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)", "SX2-value", "df", "p-value")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)", "SX2-value", "df", "p-value")
   } else {
-    colnames(tab) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)")
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)")
   }
   rownames(tab) <- item_names()
 
   n <- length(item_names())
   tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
-  colnames(tab.comp) <- c("a", "SD(a)", "b", "SD(b)", "c", "SD(c)", "d", "SD(d)",
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
                           "SX2-value", "df", "p-value")
   rownames(tab.comp) <- item_names()
 
@@ -899,11 +2321,108 @@ output$irt_4PL_coef <- renderTable({
 },
 include.rownames = T)
 
+irt_4PL_coef_Input_tab <- reactive({
+  fit <- irt_4PL_model()
+
+  par_tab <- coef(fit, IRTpars = T, simplify = T)$items[, c("a", "b", "g", "u")]
+
+  parvec <- extract.mirt(fit, 'parvec')
+  vcov <- vcov(fit)
+
+  if (all(is.na(vcov))){
+    se_tab <- matrix(NA, nrow = nrow(par_tab), ncol = ncol(par_tab))
+  } else {
+    se_tab <- c()
+    for (item in seq(1, 4*nrow(par_tab), 4)){
+      pick <- c(item, item + 1, item + 2, item + 3)
+      ad <- parvec[pick]
+      v <- vcov[pick, pick]
+
+      SEs <- deltamethod(list(~ x1, ~ -x2/x1, ~ x3, ~ x4), ad, v)
+      names(SEs) <- c('a', 'b', 'c', 'd')
+      se_tab <- rbind(se_tab, SEs)
+    }
+  }
+
+
+  tab <- cbind(par_tab, se_tab)[, c(1, 5, 2, 6, 3, 7, 4, 8)]
+
+  if(!is.null(tryCatch(round(itemfit(fit)[, 2:4], 3), error = function(e) {
+    cat("ERROR: ", conditionMessage(e), "\n")}, finally = ""))){
+    tab <- data.frame(tab, round(itemfit(fit)[, 2:4], 3))
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)", "SX2-value", "df", "p-value")
+  } else {
+    colnames(tab) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)")
+  }
+  rownames(tab) <- item_names()
+
+  n <- length(item_names())
+  tab.comp <- data.frame(rep(1, n), "-", 0, "-", 0, "-", 1, "-", "-", "-", "-")
+  colnames(tab.comp) <- c("a", "SE(a)", "b", "SE(b)", "c", "SE(c)", "d", "SE(d)",
+                          "SX2-value", "df", "p-value")
+  rownames(tab.comp) <- item_names()
+
+  tab <- round(tab, 3)
+  tab.comp[, colnames(tab.comp) %in% colnames(tab)] <- tab
+
+  tab.comp[input$fourPLSliderChar,]
+})
+
+output$irt_4PL_coef_tab <- renderTable({
+  irt_4PL_coef_Input_tab()
+},
+include.rownames = T)
+
+# ** Download table ######
+output$download_4pl_table <- downloadHandler(
+  filename = function() {
+    paste("4PL_table",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- irt_4PL_coef_Input()
+    write.csv(data,file)
+  }
+)
+
+# * Abilities estimates parameters * #
+fourPlAbilities <- reactive({
+
+  ts <- as.vector(total_score())
+  sts <- as.vector(z_score())
+  fs <- as.vector(fscores(irt_4PL_model()))
+  fs.Err <- as.vector(fscores(irt_4PL_model(), full.scores.SE = TRUE)[, 2])
+  tab <- data.frame(cbind(ts,sts,fs,fs.Err))
+  colnames(tab) <- c('Total scores', 'Z-score', 'F-scores', 'SE of F-score')
+  n <- nrow(tab)
+  nam <- vector('character', length = n)
+  for (i in 1:n) {
+    nam[i] <- paste('Respondent', i)
+  }
+  rownames(tab) <- c(nam)
+
+  tab
+})
+
+output$four_PL_abilities <- renderTable({
+  head(fourPlAbilities(), 6)
+}, include.rownames = TRUE)
+
+# ** Download abilities ######
+output$download_fourPL_abilities <- downloadHandler(
+  filename = function() {
+    paste("4PL_abilities", ".csv", sep = "")
+  },
+  content = function(file) {
+    data <- fourPlAbilities()
+    write.csv(data, file, col.names = TRUE)
+  }
+)
+
 # *** Factor scores plot ######
 irt_4PL_factorscores_correlation_Input <- reactive({
 
   fs <- as.vector(fscores(irt_4PL_model()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -920,7 +2439,7 @@ output$irt_4PL_factorscores_correlation <- renderText({
 irt_4PL_factorscores_plot_Input <- reactive({
 
   fs <- as.vector(fscores(irt_4PL_model()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -947,9 +2466,10 @@ output$DB_irt_4PL_factorscores_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = irt_4PL_factorscores_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -973,12 +2493,13 @@ irtcomparisonInput <- reactive({
               anova(models[[3]], models[[4]], verbose = F))
 
   df <- round(df[c(1, 2, 4, 6), ], 3)
+  df <- df[, c("AIC", "AICc", "BIC", "SABIC", "logLik", "X2", "df", "p")]
   nam <- c("1PL", "2PL", "3PL", "4PL")
 
-  if (all(df[, 8] > 0.05)){
+  if (all(df[, "p"] > 0.05)){
     hv <- "1PL"
   } else {
-    p <- which(df[, 8] < 0.05)
+    p <- which(df[, "p"] < 0.05)
     hv <- nam[p[length(p)]]
   }
 
@@ -987,9 +2508,7 @@ irtcomparisonInput <- reactive({
                 rep("", 3),
                 hv))
 
-
   rownames(df) <- c(nam, "BEST")
-  df <- df[, c(1, 2, 4, 3, 5:8)]
   df
 })
 
@@ -1002,16 +2521,20 @@ include.rownames = T)
 # * BOCKS NOMINAL MODEL ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+# ** UPDATING MAXIMUM VALUE IN INPUT SLIDER, IN ITEMS TAB ** #
+observe({
+  updateSliderInput(session, 'bockSlider', max = length(item_names()))
+})
+
 adj_data_bock <- reactive({
-  a <- test_answers()
-  k <- as.factor(test_key())
+  a <- nominal()
+  k <- as.factor(key())
 
   m <- ncol(a)
   lev <- unlist(lapply(1:m, function(i) levels(factor(unlist(a[, i, with = F])))))
   lev <- c(lev, levels(k))
   lev <- unique(lev)
   lev_num <- as.numeric(as.factor(lev))
-
 
   lev_k_num <- sapply(1:length(levels(k)),
                       function(i) lev_num[levels(k)[i] == lev])
@@ -1030,14 +2553,14 @@ adj_data_bock <- reactive({
     a[, i] <- as.numeric(paste(unlist(a[, i])))
   }
 
-  list(data = data.table(a), key = k)
+  list(data = data.table(a), key = k,
+       lev_a_num = lev_a_num)
 })
 
 
 bock_irt_mirt <- reactive({
   data <- adj_data_bock()$data
   key <- adj_data_bock()$key
-
 
   sv <- mirt(data, 1, 'nominal', pars = 'values', verbose = F, SE = T)
 
@@ -1067,55 +2590,279 @@ bock_irt_mirt <- reactive({
 
 # *** CC ######
 bock_CC_Input <- reactive({
-  plot(bock_irt_mirt(), type = "trace", facet_items = F)
+  plt <- plot(bock_irt_mirt(), type = 'trace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+
+  df$names <- factor(names, levels = paste("Item", 1:m))
+
+  df <- df[order(df$x), ]
+  # 200 je delka sekvence -6 az 6
+  df$line <- paste0("line", (rep(1:(n/200), 200)))
+
+  colnames(df) <- c('Ability', 'Probability', 'Item', 'line')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability, color = Item, group = line)) +
+    geom_line() +
+    ylab('Probability of answer') +
+    theme_app()
+
 })
-output$bock_CC <- renderPlot({
-  bock_CC_Input()
+output$bock_CC <- renderPlotly({
+  p <- ggplotly(bock_CC_Input())
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 output$DP_bock_CC <- downloadHandler(
   filename =  function() {
     paste("fig_BockItemCharacteristicCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(bock_CC_Input())
-    dev.off()
+    ggsave(file, plot = bock_CC_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+
+# *** CC items ######
+bock_CC_Input_tab <- reactive({
+  plt <- plot(bock_irt_mirt(), type = 'trace', which.item = input$bockSlider)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  k <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(k)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+
+  df <- df[order(df$x), ]
+  colnames(df) <- c("Ability", "Probability")
+
+  # 200 je delka sekvence -6 az 6
+  df$Option <- as.factor(paste0("line", (rep(1:(n/200), 200))))
+  levels(df$Option) <- levels(as.data.frame(nominal())[, input$bockSlider])
+
+  g <- ggplot(data = df, aes(x = Ability, y = Probability, group = Option, linetype = Option)) +
+    geom_line(color = cols[input$bockSlider]) +
+    ylab("Probability of answer") +
+    ggtitle(item_names()[input$bockSlider]) +
+    theme_app()
+})
+
+output$bock_CC_tab <- renderPlotly({
+  p <- ggplotly(bock_CC_Input_tab())
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    txt0 <- unique(sub("^.+<br />", "", p$x$data[[j]]$text))
+    pos <- gregexpr(txt0,  p$x$data[[j]]$text)[[1]][2] - 6
+    text <- substring(p$x$data[[j]]$text, 1, pos - 1)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+output$DP_bock_CC_tab <- downloadHandler(
+  filename =  function() {
+    paste("fig_BockItemCharacteristicCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = bock_CC_Input_tab() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** IIC ######
 bock_IIC_Input <- reactive({
-  plot(bock_irt_mirt(), type = "infotrace", facet_items = F)
+  plt <- plot(bock_irt_mirt(), type = 'infotrace', facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  n <- length(vals[[1]]$subscripts)
+  m <- length(item_names())
+  k <- n/m
+  names <- list()
+
+  for(j in 1:m){
+    names[[j]] <- rep(paste('Item', j), k)
+  }
+
+  names <- unlist(names)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <-as.numeric(df$y)
+  df$names <- factor(names, levels = paste("Item", 1:m))
+
+
+  df <- df[order(df$x), ]
+
+  colnames(df) <- c('Ability', 'Information', 'Item')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information , color = Item)) +
+    geom_line() +
+    ylab('Information') +
+    theme_app()
 })
-output$bock_IIC <- renderPlot({
-  bock_IIC_Input()
+output$bock_IIC <- renderPlotly({
+  p <- ggplotly(bock_IIC_Input())
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
 output$DP_bock_IIC <- downloadHandler(
+  filename =  function() {
+    paste("fig_BockItemInformationCurve.png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = bock_IIC_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+
+# *** IIC items ####
+bock_IIC_Input_tab <- reactive({
+  plt <- plot(bock_irt_mirt(), type = 'infotrace', which.item = input$bockSlider, facet_items = F)
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  k <- ncol(binary())
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  cols <- gg_color_hue(k)
+
+  df <- data.frame(cbind(x, y))
+  df$x <- as.numeric(df$x)
+  df$y <- as.numeric(df$y)
+
+  colnames(df) <- c('Ability', 'Information')
+
+  g <- ggplot(data = df, aes(x = Ability, y = Information)) +
+    geom_line(color = cols[input$bockSlider]) +
+    ylab("Information") +
+    ggtitle(item_names()[input$bockSlider]) +
+    theme_app()
+})
+output$bock_IIC_tab <- renderPlotly({
+  p <- ggplotly(bock_IIC_Input_tab())
+
+  # changing plotly description
+  for (j in 1:length(p$x$data)){
+    text <- gsub("Item: ", "", p$x$data[[j]]$text)
+    p$x$data[[j]]$text <- text
+  }
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
+})
+output$DP_bock_IIC_tab <- downloadHandler(
   filename =  function() {
     paste("fig_BockItemInformationCurves.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(bock_IIC_Input())
-    dev.off()
+    ggsave(file, plot = bock_IIC_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # *** TIF ######
 bock_TIF_Input <- reactive({
-  plot(bock_irt_mirt(), type = "infoSE")
+  plt <- plot(bock_irt_mirt(), type = "infoSE")
+
+  vals <- plt$panel.args
+  x <- vals[[1]]$x
+  y <- vals[[1]]$y
+  df <- data.frame(cbind(Ability = x, Information = y))
+
+  df$SE <- 1/sqrt(df$Information)
+
+  ggplot(data = df, aes(x = Ability)) +
+    geom_line(aes(y = Information, col = "info")) +
+    geom_line(aes(y = SE, col = "se")) +
+    scale_color_manual("", values = c("blue", "pink"), labels = c("Information", "SE")) +
+    scale_y_continuous("Information",
+                       sec.axis = sec_axis(~., name = "SE")) +
+    theme(axis.title.y = element_text(color = 'pink')) +
+    theme_app()
 })
-output$bock_TIF <- renderPlot({
-  bock_TIF_Input()
+
+output$bock_TIF <- renderPlotly({
+  g <- bock_TIF_Input()
+  p <- ggplotly(g)
+
+  p$x$data[[1]]$text <- gsub("<br />colour: info", "", p$x$data[[1]]$text)
+  p$x$data[[2]]$text <- gsub("<br />colour: se", "", p$x$data[[2]]$text)
+
+  p$elementId <- NULL
+
+  p %>% plotly::config(displayModeBar = F)
 })
+
 output$DP_bock_TIF <- downloadHandler(
   filename =  function() {
     paste("fig_BockTestInformationFunction.png", sep = "")
   },
   content = function(file) {
-    png(file, height = 800, width = 1200, res = 100)
-    print(bock_TIF_Input())
-    dev.off()
+    ggsave(file, plot = bock_TIF_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -1127,7 +2874,6 @@ output$bock_coef_warning <- renderText({
   m <- length(coeftab) - 1
 
   dims <- sapply(coeftab, dim)[, -(m+1)]
-  print(length(unique(dims[2, ])))
   if (length(unique(dims[2, ])) == 1){
     hide("bock_coef_warning")
   } else {
@@ -1143,7 +2889,6 @@ bock_coef_Input <- reactive({
   coeftab <- coef(fit, printSE = T)
   m <- length(coeftab) - 1
 
-  print(coeftab)
   dims <- sapply(coeftab, dim)[, -(m+1)]
   if (length(unique(dims[2, ])) == 1){
     partab <- t(sapply(1:m, function(i) coeftab[[i]][1, ]))
@@ -1176,11 +2921,49 @@ output$bock_coef <- renderTable({
 include.rownames = T,
 include.colnames = T)
 
+bock_coef_Input_tab <- reactive({
+  fit <- bock_irt_mirt()
+
+  coeftab <- coef(fit, printSE = T)
+  m <- length(coeftab) - 1
+
+  dims <- sapply(coeftab, dim)[, -(m+1)]
+  if (length(unique(dims[2, ])) == 1){
+    partab <- t(sapply(1:m, function(i) coeftab[[i]][1, ]))
+    if (unique(dims[1, ]) == 1){
+      setab <- matrix(NA, nrow = m, ncol = ncol(partab))
+    } else {
+      setab <- t(sapply(1:m, function(i) coeftab[[i]][2, ]))
+    }
+
+    n <- ncol(partab)
+    tab <- c()
+    for (i in 1:n){
+      tab <- cbind(tab, partab[, i], setab[, i])
+    }
+    namPAR <- colnames(partab)
+    namSE <- paste("SE(", colnames(partab), ")", sep = "")
+
+    colnames(tab) <- c(sapply(1:n, function(i) c(namPAR[i], namSE[i])))
+    rownames(tab) <- item_names()
+  } else {
+    tab <- NULL
+  }
+
+  tab[input$bockSlider,]
+})
+
+output$bock_coef_tab <- renderTable({
+  t(bock_coef_Input_tab())
+},
+include.rownames = T,
+include.colnames = T)
+
 # *** Factor scores plot ######
 bock_factor_Input <- reactive({
 
   fs <- as.vector(fscores(bock_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   df <- data.frame(fs, sts)
 
@@ -1205,9 +2988,10 @@ output$DP_bock_factor <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = bock_factor_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -1215,7 +2999,7 @@ output$DP_bock_factor <- downloadHandler(
 bockFactorCorInput_mirt <- reactive({
 
   fs <- as.vector(fscores(bock_irt_mirt()))
-  sts <- as.vector(scale(apply(correct_answ(), 1, sum)))
+  sts <- z_score()
 
   whok <- !(is.na(fs) | is.na(sts))
 
@@ -1325,19 +3109,23 @@ output$ccIRT_plot <- renderPlotly({
   g <- ccIRT_plot_Input()
 
   p <- ggplotly(g)
+  theta0 <- input$ccIRTSlider_theta
 
+  # item 1, probabilities
   text <- gsub("~", "", p$x$data[[1]]$text)
   text <- gsub("value", "Probability", text)
   text <- gsub("theta", "Ability", text)
   text <- gsub("variable: X1", "", text)
   p$x$data[[1]]$text <- text
 
+  # item 2, probabilities
   text <- gsub("~", "", p$x$data[[2]]$text)
   text <- gsub("value", "Probability", text)
   text <- gsub("theta", "Ability", text)
   text <- gsub("variable: X2", "", text)
   p$x$data[[2]]$text <- text
 
+  # item 1 and selected theta
   text <- gsub("~", "", p$x$data[[3]]$text)
   text <- gsub("ccirt\\(theta0, a = a1, b = b1, c = c1, d = d1\\)", "Probability", text)
   text <- gsub("-4: -4<br />", "", text)
@@ -1365,20 +3153,20 @@ output$ccIRT_plot <- renderPlotly({
   p$x$data[[4]]$text <- text
 
   text <- gsub("~", "", p$x$data[[5]]$text)
-  text <- gsub("max\\(ccirt\\(theta0, a = a1, b = b1, c = c1, d = d1\\), ccirt\\(theta0, a = a2, b = b2, c = c2, d = d2\\)\\)", "Probability", text)
+  text <- gsub("max\\(ccirt\\(theta0, a = a1, b = b1, c = c1, d = d1\\), ccirt\\(theta0, \n    a = a2, b = b2, c = c2, d = d2\\)\\)", "Probability", text)
   text <- gsub("theta0", "Ability", text)
   text <- gsub("<br />0: 0", "", text)
   text <- gsub("theta0", "Ability", text)
   text <- gsub("value", "Probability", text)
   text <- gsub("<br />variable: gray", "", text)
+  text <- gsub(paste0("<br />y: ", theta0), "", text)
   pos <- gregexpr('Ability', text)[[1]][2]
   text <- substring(text, 1, pos-1)
   p$x$data[[5]]$text <- text
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_ccIRT <- downloadHandler(
@@ -1386,13 +3174,13 @@ output$DB_ccIRT <- downloadHandler(
     paste("fig_CustomItemCharacteristicCurve.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = ccIRT_plot_Input() +
-             theme(text = element_text(size = 10)) +
+    ggsave(file, plot = ccIRT_plot_Input() +
              theme(legend.position = c(0.97, 0.03),
-                   legend.justification = c(0.97, 0.03)),
+                   legend.justification = c(0.97, 0.03)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -1456,8 +3244,7 @@ output$iccIRT_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_iccIRT <- downloadHandler(
@@ -1465,13 +3252,13 @@ output$DB_iccIRT <- downloadHandler(
     paste("fig_CustomItemInformationCurve.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = iccIRT_plot_Input() +
-             theme(text = element_text(size = 10)) +
+    ggsave(file, plot = iccIRT_plot_Input() +
              theme(legend.position = c(0.97, 0.97),
-                   legend.justification = c(0.97, 0.97)),
+                   legend.justification = c(0.97, 0.97)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 # *** EXERCISES ####
@@ -1813,32 +3600,32 @@ output$irt_training_grm_sliders <- renderUI({
     tags$div(class = "js-irs-red",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b1", "b1 - difficulty",
-                         value = -1.5, min = -4, max = 4, step = 0.01)),
+                         value = -1.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-yellow",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b2", "b2 - difficulty",
-                         value = -1, min = -4, max = 4, step = 0.01)),
+                         value = -1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-green",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b3", "b3 - difficulty",
-                         value = -0.5, min = -4, max = 4, step = 0.01)),
+                         value = -0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-blue",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b4", "b4 - difficulty",
-                         value = 0, min = -4, max = 4, step = 0.01)),
+                         value = 0, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-purple",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b5", "b5 - difficulty",
-                         value = 0.5, min = -4, max = 4, step = 0.01)),
+                         value = 0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-orange",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_grm_b6", "b6 - difficulty",
-                         value = 1, min = -4, max = 4, step = 0.01)),
+                         value = 1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", "")
   )
 
@@ -1903,8 +3690,7 @@ output$irt_training_grm_plot_cummulative <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_grm_plot_cummulative <- downloadHandler(
@@ -1912,13 +3698,13 @@ output$DB_irt_training_grm_plot_cummulative <- downloadHandler(
     paste("fig_GRM_cummulative.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_grm_plot_cummulative_Input() +
-             theme(text = element_text(size = 10)) +
+    ggsave(file, plot = irt_training_grm_plot_cummulative_Input() +
              theme(legend.position = c(0.97, 0.7),
-                   legend.justification = c(0.97, 0.97)),
+                   legend.justification = c(0.97, 0.97)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -1983,8 +3769,7 @@ output$irt_training_grm_plot_category <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_grm_plot_category <- downloadHandler(
@@ -1992,13 +3777,13 @@ output$DB_irt_training_grm_plot_category <- downloadHandler(
     paste("fig_GRM_category.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_grm_plot_category_Input() +
-             theme(text = element_text(size = 10)) +
+    ggsave(file, plot = irt_training_grm_plot_category_Input() +
              theme(legend.position = c(0.97, 0.7),
-                   legend.justification = c(0.97, 0.97)),
+                   legend.justification = c(0.97, 0.97)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -2057,8 +3842,7 @@ output$irt_training_grm_plot_expected <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_grm_plot_expected <- downloadHandler(
@@ -2066,11 +3850,11 @@ output$DB_irt_training_grm_plot_expected <- downloadHandler(
     paste("fig_GRM_expected.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_grm_plot_expected_Input() +
-             theme(text = element_text(size = 10)),
+    ggsave(file, plot = irt_training_grm_plot_expected_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 # *** GENERALIZED PARTIAL CREDIT MODEL ####
@@ -2082,32 +3866,32 @@ output$irt_training_gpcm_sliders <- renderUI({
     tags$div(class = "js-irs-red",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d1", "d1 - threshold",
-                    value = -1.5, min = -4, max = 4, step = 0.01)),
+                         value = -1.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-yellow",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d2", "d2 - threshold",
-                    value = -1, min = -4, max = 4, step = 0.01)),
+                         value = -1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-green",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d3", "d3 - threshold",
-                    value = -0.5, min = -4, max = 4, step = 0.01)),
+                         value = -0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-blue",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d4", "d4 - threshold",
-                    value = 0, min = -4, max = 4, step = 0.01)),
+                         value = 0, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-purple",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d5", "d5 - threshold",
-                    value = 0.5, min = -4, max = 4, step = 0.01)),
+                         value = 0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-orange",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_gpcm_d6", "d6 - threshold",
-                    value = 1, min = -4, max = 4, step = 0.01)),
+                         value = 1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", "")
   )
 
@@ -2182,8 +3966,7 @@ output$irt_training_gpcm_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_gpcm_plot <- downloadHandler(
@@ -2191,11 +3974,13 @@ output$DB_irt_training_gpcm_plot <- downloadHandler(
     paste("fig_GPCM_category.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_gpcm_plot_Input() +
-             theme(text = element_text(size = 10)),
+    ggsave(file, plot = irt_training_gpcm_plot_Input() +
+             theme(legend.position = c(0.97, 0.7),
+                   legend.justification = c(0.97, 0.97)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -2262,8 +4047,7 @@ output$irt_training_gpcm_plot_expected <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_gpcm_plot_expected <- downloadHandler(
@@ -2271,11 +4055,11 @@ output$DB_irt_training_gpcm_plot_expected <- downloadHandler(
     paste("fig_GPCM_expected.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_gpcm_plot_expected_Input() +
-             theme(text = element_text(size = 10)),
+    ggsave(file, plot = irt_training_gpcm_plot_expected_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 # *** NOMINAL RESPONSE MODEL ####
@@ -2287,62 +4071,62 @@ output$irt_training_nrm_sliders <- renderUI({
     tags$div(class = "js-irs-red",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a1", "a1 - discrimination",
-                    value = 2.5, min = 0, max = 4, step = 0.01)),
+                         value = 2.5, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-red",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d1", "d1 - threshold",
-                    value = -1.5, min = -4, max = 4, step = 0.01)),
+                         value = -1.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-yellow",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a2", "a2 - discrimination",
-                    value = 2, min = 0, max = 4, step = 0.01)),
+                         value = 2, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-yellow",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d2", "d2 - threshold",
-                    value = -1, min = -4, max = 4, step = 0.01)),
+                         value = -1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-green",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a3", "a3 - discrimination",
-                    value = 1, min = 0, max = 4, step = 0.01)),
+                         value = 1, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-green",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d3", "d3 - threshold",
-                    value = -0.5, min = -4, max = 4, step = 0.01)),
+                         value = -0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-blue",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a4", "a4 - discrimination",
-                    value = 1.5, min = 0, max = 4, step = 0.01)),
+                         value = 1.5, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-blue",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d4", "d4 - threshold",
-                    value = 0, min = -4, max = 4, step = 0.01)),
+                         value = 0, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-purple",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a5", "a5 - discrimination",
-                    value = 0.5, min = 0, max = 4, step = 0.01)),
+                         value = 0.5, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-purple",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d5", "d5 - threshold",
-                    value = 0.5, min = -4, max = 4, step = 0.01)),
+                         value = 0.5, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-orange",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_a6", "a6 - discrimination",
-                    value = 1.3, min = 0, max = 4, step = 0.01)),
+                         value = 1.3, min = 0, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", ""),
     tags$div(class = "js-irs-orange",
              style = "display: inline-block; vertical-align: middle; width: 18%;",
              sliderInput("irt_training_nrm_d6", "d6 - threshold",
-                    value = 1, min = -4, max = 4, step = 0.01)),
+                         value = 1, min = -4, max = 4, step = 0.1)),
     div(style = "display: inline-block; vertical-align: middle; width: 2.6%;", "")
   )
 
@@ -2425,8 +4209,7 @@ output$irt_training_nrm_plot <- renderPlotly({
 
   p$elementId <- NULL
 
-  # p %>% config(displayModeBar = F)
-  p
+  p %>%  plotly::config(displayModeBar = F)
 })
 
 output$DB_irt_training_nrm_plot <- downloadHandler(
@@ -2434,13 +4217,13 @@ output$DB_irt_training_nrm_plot <- downloadHandler(
     paste("fig_NRM_category.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = irt_training_nrm_plot_Input() +
-             theme(text = element_text(size = 10)) +
+    ggsave(file, plot = irt_training_nrm_plot_Input() +
              theme(legend.position = c(0.97, 0.7),
-                   legend.justification = c(0.97, 0.97)),
+                   legend.justification = c(0.97, 0.97)) +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 

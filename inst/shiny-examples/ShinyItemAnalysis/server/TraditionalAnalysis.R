@@ -38,24 +38,26 @@ output$DDplot_text <- renderUI({
 
 # ** Difficulty/Discrimination plot ######
 DDplot_Input <- reactive({
-
-  correct <- correct_answ()
+  correct <- binary()
   DDplot(correct, item.names = item_numbers(),
          k = input$DDplotNumGroupsSlider,
-         l = input$DDplotRangeSlider[[1]], u = input$DDplotRangeSlider[[2]])
+         l = input$DDplotRangeSlider[[1]], u = input$DDplotRangeSlider[[2]],
+         discrim = input$DDplotDiscriminationSelect)
 })
 
 # ** Difficulty/Discrimination plot for report######
 DDplot_Input_report<-reactive({
-  correct <- correct_answ()
+  correct <- binary()
   if (input$customizeCheck) {
     DDplot(correct, item.names = item_numbers(),
            k = input$DDplotNumGroupsSlider_report,
-           l = input$DDplotRangeSlider_report[[1]], u = input$DDplotRangeSlider_report[[2]])
+           l = input$DDplotRangeSlider_report[[1]], u = input$DDplotRangeSlider_report[[2]],
+           discrim = input$DDplotDiscriminationSelect_report)
   } else {
     DDplot(correct, item.names = item_numbers(),
            k = input$DDplotNumGroupsSlider,
-           l = input$DDplotRangeSlider[[1]], u = input$DDplotRangeSlider[[2]])
+           l = input$DDplotRangeSlider[[1]], u = input$DDplotRangeSlider[[2]],
+           discrim = input$DDplotDiscriminationSelect)
   }
 })
 
@@ -70,16 +72,17 @@ output$DB_DDplot <- downloadHandler(
     paste("fig_DDplot.png", sep = "")
   },
   content = function(file) {
-    ggsave(file,
-           plot = DDplot_Input() + theme(text = element_text(size = 10)),
+    ggsave(file, plot = DDplot_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # ** Cronbach's alpha table ######
 cronbachalpha_table_Input <- reactive({
-  correct <- correct_answ()
+  correct <- binary()
   tab <- c(psych::alpha(correct)$total[1], psych::alpha(correct)$total[8])
 
   tab <- as.data.table(tab)
@@ -125,9 +128,9 @@ output$itemanalysis_table_text <- renderUI({
 
 # ** Traditional item analysis table ######
 itemanalysis_table_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
-  correct <- correct_answ()
+  a <- nominal()
+  k <- key()
+  correct <- binary()
 
   num.groups <- input$DDplotNumGroupsSlider
   range1 <- input$DDplotRangeSlider[[1]]
@@ -151,6 +154,18 @@ output$itemanalysis_table <- renderTable({
 },
 include.rownames = FALSE)
 
+
+# ** Download traditional item analysis table ######
+output$download_itemanal_table <- downloadHandler(
+  filename = function() {
+    paste("Item_Analysis",".csv",sep = "")
+  },
+  content = function(file) {
+    data <- itemanalysis_table_Input()
+    write.csv(data,file)
+  }
+)
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * DISTRACTORS ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -172,8 +187,8 @@ output$distractor_text <- renderUI({
 
 # ** Distractors plot ######
 distractor_plot_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
+  a <- nominal()
+  k <- key()
   i <- input$distractorSlider
 
   multiple.answers <- c(input$type_combinations_distractor == "Combinations")
@@ -194,16 +209,18 @@ output$DB_distractor_plot <- downloadHandler(
     paste("fig_DistractorPlot_", item_names()[input$distractorSlider], ".png", sep = "")
   },
   content = function(file) {
-    ggsave(file, plot = distractor_plot_Input() + theme(text = element_text(size = 10)),
+    ggsave(file, plot = distractor_plot_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 # ** Report distractors plot ######
 report_distractor_plot <- reactive({
-  a <- test_answers()
+  a <- nominal()
   colnames(a) <- item_names()
-  k <- test_key()
+  k <- key()
 
   if (!input$customizeCheck) {
     multiple.answers_report <- c(input$type_combinations_distractor == "Combinations")
@@ -232,8 +249,8 @@ report_distractor_plot <- reactive({
 
 # ** Distractor table with counts ######
 distractor_table_counts_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
+  a <- nominal()
+  k <- key()
   num.group <- input$gr
   item <- input$distractorSlider
 
@@ -251,8 +268,8 @@ output$distractor_table_counts <- renderTable({
 
 # ** Distractor table with proportions ######
 distractor_table_proportions_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
+  a <- nominal()
+  k <- key()
   num.group <- input$gr
   item <- input$distractorSlider
 
@@ -269,8 +286,8 @@ output$distractor_table_proportions <- renderTable({
 
 # ** Item response patterns barplot ######
 distractor_barplot_item_response_patterns_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
+  a <- nominal()
+  k <- key()
   num.group <- 1
   item <- input$distractorSlider
 
@@ -299,17 +316,18 @@ output$DB_distractor_barplot_item_response_patterns <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = distractor_barplot_item_response_patterns_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # ** Distractors histograms by group ######
 distractor_histogram_Input <- reactive({
-  a <- test_answers()
-  k <- test_key()
-  sc <- scored_test()
+  a <- nominal()
+  k <- key()
+  sc <- total_score()
 
   df <- data.table(sc,
                    gr = cut(sc, quantile(sc, seq(0, 1, by = 1/input$gr), na.rm = T),
@@ -343,16 +361,18 @@ output$DB_distractor_histogram <- downloadHandler(
     paste("fig_HistrogramByDistractorGroups.png", sep = "")
   },
   content = function(file) {
-    ggsave(file, plot = distractor_histogram_Input() + theme(text = element_text(size = 10)),
+    ggsave(file, plot = distractor_histogram_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 
 # ** Distractor analysis table by group ######
 distractor_table_total_score_by_group_Input <- reactive({
-  sc <- scored_test()
+  sc <- total_score()
   num.group <- input$gr
 
   score.level <- quantile(sc, seq(0, 1, by = 1/num.group), na.rm = T)
@@ -374,3 +394,4 @@ output$distractor_table_total_score_by_group <- renderTable({
 },
 include.colnames = TRUE,
 include.rownames = TRUE)
+

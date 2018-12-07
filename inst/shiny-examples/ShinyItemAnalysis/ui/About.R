@@ -20,10 +20,10 @@ About <- tabPanel("About",
                           tags$li("Item analysis by item response theory models in ", strong("IRT models"), "section"),
                           tags$li("Differential item functioning (DIF) and differential distractor functioning (DDF)
                                   methods in ", strong("DIF/Fairness"), "section")),
-                  p("All graphical outputs can be downloaded via download button. Moreover, you can automatically
-                    generate HTML or PDF report in", strong("Reports"), "section. All offered analysis
-                    are complemented by selected R code which is ready to be copy pasted into your R console, hence
-                    the similar analysis can be run and modified in R."),
+                  p("All graphical outputs and selected tables can be downloaded via download button. Moreover, you can automatically
+                    generate HTML or PDF report in", strong("Reports"), "section. All offered analyses
+                    are complemented by selected R code which is ready to be copy-pasted into your R console, hence
+                    a similar analysis can be run and modified in R."),
                   tags$hr(),
                   #------------------------------------------------------------------------------------#
                   # Availability ####
@@ -31,7 +31,7 @@ About <- tabPanel("About",
                   fluidRow(
                     column(6,
                            h4("Availability"),
-                           p("Application can be downloaded as R package from ",
+                           p("Application can be downloaded as an R package from ",
                              a("CRAN.", href = "https://CRAN.R-project.org/package=ShinyItemAnalysis", target = "_blank"),
                              br(),
                              "It is also available online at ",
@@ -57,13 +57,13 @@ About <- tabPanel("About",
                     column(6, h4("Versions"),
                            p("Current",
                              a("CRAN", href = "https://CRAN.R-project.org/package=ShinyItemAnalysis", target = "_blank"),
-                             "version is 1.2.8.",
+                             "version is 1.2.9.",
                              br(),
                              "Version available",
-                             a("online", href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/", target = "_blank"), "is 1.2.8.",
+                             a("online", href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/", target = "_blank"), "is 1.2.9.",
                              br(),
                              "The newest development version available on ",
-                             a("GitHub", href = "https://github.com/patriciamar/ShinyItemAnalysis", target = "_blank"), "is 1.2.8.",
+                             a("GitHub", href = "https://github.com/patriciamar/ShinyItemAnalysis", target = "_blank"), "is 1.2.9.",
                              br(),
                              "See also older versions: ",
                              a("0.1.0, ", href = "https://shiny.cs.cas.cz/ShinyItemAnalysisV01/", target = "_blank"),
@@ -129,7 +129,7 @@ About <- tabPanel("About",
                   div(class = "cite-box",
                     "Martinkova P., Drabinova A., Leder O., & Houdek J. (2018).", br(), "
                     ShinyItemAnalysis: Test and item analysis via shiny.", br(), "
-                    R package version 1.2.6. ", br(), "
+                    R package version 1.2.9. ", br(), "
                     https://CRAN.R-project.org/package=ShinyItemAnalysis"),
                   p("In Czech written papers you can also use "),
                   div(class = "cite-box",

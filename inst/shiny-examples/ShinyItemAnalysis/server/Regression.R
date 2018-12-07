@@ -9,16 +9,16 @@
 # ** Model of logistic regression ######
 logreg_model <- reactive ({
   item <- input$logregSlider
-  data <- correct_answ()
-  total_score <- scored_test()
+  data <- binary()
+  total_score <- total_score()
 
   model <- glm(unlist(data[, item, with = F]) ~ total_score, family = binomial)
 })
 
 # ** Plot with estimated logistic curve ######
 logreg_plot_Input <- reactive({
-  total_score <- scored_test()
-  data <- correct_answ()
+  total_score <- total_score()
+  data <- binary()
   fit <- logreg_model()
   item <- input$logregSlider
 
@@ -59,9 +59,10 @@ output$DB_logreg_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = logreg_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -101,18 +102,18 @@ output$logreg_interpretation <- renderUI({
 
 # ** Model of logistic regression on Z-scores ######
 z_logreg_model <- reactive({
-  zscore <- c(scale(scored_test()))
+  zscore <- z_score()
   item <- input$zlogregSlider
-  data <- correct_answ()
+  data <- binary()
 
   model <- glm(unlist(data[, item, with = F]) ~ zscore, family = "binomial")
 })
 
 # ** Plot of logistic regression on Z-scores ######
 z_logreg_plot_Input <- reactive({
-  zscore <- c(scale(scored_test()))
+  zscore <- z_score()
   item <- input$zlogregSlider
-  data <- correct_answ()
+  data <- binary()
   fit <- z_logreg_model()
 
   fun <- function(x, b0, b1) {exp(b0 + b1 * x) / (1 + exp(b0 + b1 * x))}
@@ -151,9 +152,10 @@ output$DB_z_logreg_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = z_logreg_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -194,18 +196,18 @@ output$z_logreg_interpretation <- renderUI({
 
 # ** Model for logistic regression on Z scores with IRT param. ######
 z_logreg_irt_model <- reactive({
-  zscore <- c(scale(scored_test()))
+  zscore <- z_score()
   item <- input$zlogreg_irtSlider
-  data <- correct_answ()
+  data <- binary()
 
   model <- glm(unlist(data[, item, with = F]) ~ zscore, family = "binomial")
 })
 
 # ** Plot with estimated logistic curve on Z scores with IRT param. ######
 z_logreg_irt_plot_Input <- reactive({
-  zscore <- scale(scored_test())
+  zscore <- z_score()
   item <- input$zlogreg_irtSlider
-  data <- correct_answ()
+  data <- binary()
   fit <- z_logreg_irt_model()
 
   fun <- function(x, b0, b1) {exp(b0 + b1 * x) / (1 + exp(b0 + b1 * x))}
@@ -244,9 +246,10 @@ output$DB_z_logreg_irt_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = z_logreg_irt_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -303,8 +306,8 @@ output$z_logreg_irt_interpretation <- renderUI({
 
 # ** Model of nonlinear curve ######
 nlr_3P_model <- reactive({
-  data <- correct_answ()
-  zscore <- scale(scored_test())
+  data <- binary()
+  zscore <- z_score()
   i <- input$slider_nlr_3P_item
 
   start <- startNLR(data, group = c(rep(0, nrow(data)/2), rep(1, nrow(data)/2)),
@@ -320,9 +323,9 @@ nlr_3P_model <- reactive({
 
 # ** Plot of estimated nonlinear curve ######
 nlr_3P_plot_Input <- reactive({
-  zscore <- scale(scored_test())
+  zscore <- z_score()
   item <- input$slider_nlr_3P_item
-  data <- correct_answ()
+  data <- binary()
   fit <- nlr_3P_model()
 
   fun <- function(x, a, b, c){c + (1 - c) / (1 + exp(-a * (x - b)))}
@@ -362,9 +365,10 @@ output$DB_nlr_3P_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = nlr_3P_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -404,8 +408,8 @@ output$nlr_3P_interpretation <- renderUI({
 
 # ** Model of nonlinear curve ######
 nlr_4P_model <- reactive({
-  data <- correct_answ()
-  zscore <- scale(scored_test())
+  data <- binary()
+  zscore <- z_score()
   i <- input$slider_nlr_4P_item
 
   start <- startNLR(data, group = c(rep(0, nrow(data)/2), rep(1, nrow(data)/2)),
@@ -421,9 +425,9 @@ nlr_4P_model <- reactive({
 
 # ** Plot of estimated nonlinear curve ######
 nlr_4P_plot_Input <- reactive({
-  zscore <- scale(scored_test())
+  zscore <- z_score()
   item <- input$slider_nlr_4P_item
-  data <- correct_answ()
+  data <- binary()
   fit <- nlr_4P_model()
 
   fun <- function(x, a, b, c, d){c + (d - c) / (1 + exp(-a * (x - b)))}
@@ -464,9 +468,10 @@ output$DB_nlr_4P_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = nlr_4P_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
@@ -496,7 +501,7 @@ output$nlr_4P_interpretation <- renderUI({
                   with the ", ifelse(a < 0, "decrease", "increase"), " in the log odds of answering the item correctly vs. not correctly
                   in the amount of <b>", abs(a), "</b>. ")
   txt2 <- paste0("Probability of guessing is <b>", c, "</b>. ")
-  txt3 <- paste0("Probability of inattention is <b>", 1-d, "</b>. ")
+  txt3 <- paste0("Probability of inattention is <b>", round(1-d,2), "</b>. ")
   HTML(paste0(txt0, txt1, txt2, txt3))
 })
 
@@ -505,8 +510,8 @@ output$nlr_4P_interpretation <- renderUI({
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 output$regr_comp_table <- DT::renderDataTable({
-  data <- correct_answ()
-  zscore <- c(scale(scored_test()))
+  data <- binary()
+  zscore <- z_score()
 
   m <- ncol(data)
 
@@ -614,10 +619,10 @@ output$regr_comp_table <- DT::renderDataTable({
 
 # ** Model for multinomial regression ######
 multi_model <- reactive({
-  zscore <- c(scale(scored_test()))
-  key <- t(as.data.table(test_key()))
+  zscore <- z_score()
+  key <- t(as.data.table(key()))
   item <- input$multiSlider
-  data <- test_answers()
+  data <- nominal()
 
   dfhw <- data.table(data[, item, with = F], zscore)
   dfhw <- dfhw[complete.cases(dfhw), ]
@@ -630,9 +635,9 @@ multi_model <- reactive({
 
 # ** Plot with estimated curves of multinomial regression ######
 multi_plot_Input <- reactive({
-  key <- t(as.data.table(test_key()))
-  data <- test_answers()
-  zscore <- c(scale(scored_test()))
+  key <- t(as.data.table(key()))
+  data <- nominal()
+  zscore <- z_score()
   item <- input$multiSlider
 
   fitM <- multi_model()
@@ -687,9 +692,9 @@ multi_plot_Input <- reactive({
 # ** Reports: Plot with estimated curves of multinomial regression ######
 multiplotReportInput <- reactive({
   graflist <- list()
-  key <- unlist(test_key())
-  data <- test_answers()
-  zscore <- c(scale(scored_test()))
+  key <- unlist(key())
+  data <- nominal()
+  zscore <- z_score()
 
   data <- sapply(1:ncol(data), function(i) as.factor(unlist(data[, i, with = F])))
 
@@ -758,15 +763,16 @@ output$DB_multi_plot <- downloadHandler(
   },
   content = function(file) {
     ggsave(file, plot = multi_plot_Input() +
-             theme(text = element_text(size = 10)),
+             theme(text = element_text(size = setting_figures$text_size)),
            device = "png",
-           height = 4, width = 8, dpi = 300)
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
   }
 )
 
 # ** Equation of multinomial regression ######
 output$multi_equation <- renderUI ({
-  cor_option <- test_key()[input$multiSlider]
+  cor_option <- key()[input$multiSlider]
   withMathJax(
     sprintf(
       '$$\\mathrm{P}(Y = i|Z, b_{i0}, b_{i1}) = \\frac{e^{\\left( b_{i0} + b_{i1} Z\\right)}}{1 + \\sum_j e^{\\left( b_{j0} + b_{j1} Z\\right)}}, \\\\
@@ -781,8 +787,8 @@ output$multi_equation <- renderUI ({
 output$multi_table <- renderTable({
   fit <- multi_model()
 
-  key <- t(as.data.table(test_key()))
-  data <- test_answers()
+  key <- t(as.data.table(key()))
+  data <- nominal()
   item <- input$multiSlider
 
   dfhw <- na.omit(data.table(data[, item, with = FALSE]))
@@ -829,7 +835,7 @@ output$multi_interpretation <- renderUI({
         answering the item "
         ,"<b>", row.names(koef)[i], "</b>", "vs.", "<b>",
 
-        test_key()[input$multiSlider],
+        key()[input$multiSlider],
 
         "</b>","in the amount of ",
         "<b>", abs(round(koef[i, 2], 2)), "</b>", '<br/>')

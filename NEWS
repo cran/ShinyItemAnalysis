@@ -5,6 +5,159 @@
         ***************************************************************
 
 -------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.9. (2018-12-06) -
+-------------------------------------------------------
+
+BUG FIXING
+  o IRT/Training/Dichotomous models - plots are correctly plotted.
+  o Download buttons in IRT/4PL works now.
+
+MAJOR UPDATES
+  o TIF were converted into plotly.
+  o Section Validity/FA is not accessible for now.
+
+MINOR UPDATES
+  o Selected R code for IRT/Bock's model was updated.
+  o Wording in IRT models was updated.
+  o Wording in Reports was updated.
+  o Legend for plots of IRT models was modified in Reports.
+  o Ability estimates summary table is now round in Reports.
+  o Some typos were fixed in Reports.
+  o Colours of IRT summary plots correspond to model for Items.
+
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-7. (2018-12-05) -
+-------------------------------------------------------
+
+MAJOR UPDATES
+  o IRT section of shiny app was updated and now provides
+    new and more shiny figures in plotly
+  o PDF and HTML reports were updated and now allow
+    - different types of correlation in corrplots
+    - different types of discrimination indices in DDplots
+    - summary table for ability estimates in IRT section
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-6. (2018-12-03) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Dendrogram is now correctly rendered.
+
+MAJOR UPDATES
+  o Function ItemAnalysis() was added.
+  o IRT section now allows download of ability estimates
+
+MINOR UPDATES
+  o Help pages for functions were updated.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-5. (2018-11-29) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Key for ordinal data for binarization is now correctly used. Values
+    greater or equal to value of the key are set to 1.
+  o When NULL data is uploaded, default dataset GMAT is in use.
+
+MAJOR UPDATES
+  o Scree plot was moved into the new tab 'Factor analysis'.
+  o Dendrogram was added into 'Correlation structure' tab.
+  o Option for global cut-score for ordinal data was added.
+  o R package ggdendro is now used.
+  o Removal of items with only 0s or 1s now works.
+  o Removal of observation with NA group now works.
+
+MINOR UPDATES
+  o Text in Data section was updated.
+  o List of references was updated.
+  o Selected R code in 'Correlation structure' tab was updated.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-4. (2018-11-23) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Bug in IRT models/Training/Dichotomous models text of theta in
+    plotly was fixed.
+
+MAJOR UPDATES
+  o Reorganization of data upload and renaming data variables.
+      test_answers() -> nominal()
+      correct_answers() -> binary()
+      scored_test() -> total_score()
+      test_key() -> key()
+      DIF_groups() -> group()
+      criterion_variable -> criterion()
+
+    And creating new variables:
+      ordinal() - ordinal data
+      maximal() - maximal values for ordinal data
+      minimal() - minimal values for ordinal data
+      z_score() - standardized total score, no need to use scale(total_score())
+                  in each function
+
+MINOR UPDATES
+  o Updating text in Data section.
+  o Editing boxes for data upload in Data section.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-3. (2018-11-20) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Bug in Regression/Nonlinear 4P IRT Z (rounding in interpretation)
+    was fixed.
+  o Bug in IRT models/Training/Dichotomous models text of theta in
+    plotly was fixed.
+  o Bug in IRT models/Training in plotly a ModeBar was fixed.
+
+MAJOR UPDATES
+  o Data upload now allows also ordinal data, min/max values can be
+    specified.
+  o Validity/Correlation structure now allows selection between
+    Pearson/Spearman/Polychoric correlation, Polychoric is default
+    for binary data
+  o DDplot now allows also ordinal items and offers different types
+    of discrimination indices to be displayed
+  o Download of tables (as .csv files) is now provided for
+    standard scores, correlation matrix, traditional item analysis,
+    and for parameter estimates in IRT models.
+
+MINOR UPDATES
+  o Data upload now better points to "Upload data" button.
+  o Precision was re-set for IRT models/Training tab. Now = 0.1.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-2. (2018-11-05) -
+-------------------------------------------------------
+
+MAJOR UPDATES
+  o gDiscrim() function has been extended to calculate Upper-Lower
+    Index (ULI) also for ordinal items
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.8-1. (2018-10-01) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Bug in IRT dichotomous models comparison is fixed.
+    (Reported by Jean-Luc Kop)
+  o Bug in IRT dichotomous models (3PL and 4PL) was fixed.
+    Tables of parameters are rendered even in case that EM cycles
+    terminated without convergence. In such a case SD of parameters
+    are set to NA.
+  o Bug in plotDIFLogistic() function was fixed. Function now returns
+    also item.name argument.
+  o Bug in plotDIFirt() function was fixed. Function now returns also
+    item.name argument.
+
+MAJOR UPDATES
+  o Global setting for figure downloads was created. This can be changed
+    in Setting section.
+
+-------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.2.8 (2018-09-27) -
 -------------------------------------------------------
 

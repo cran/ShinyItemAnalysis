@@ -40,8 +40,8 @@
 #'
 #'  # loading data based on GMAT
 #' data(GMAT, package = "difNLR")
-#' data  <- GMAT[, colnames(GMAT) != "group"]
-#' group <- GMAT[, "group"]
+#' data  <- GMAT[, 1:20]
+#' group <- GMAT[, 21]
 #'
 #' # Characteristic curve by logistic regression model
 #' plotDIFLogistic(data, group, item = 1)
@@ -153,7 +153,7 @@ plotDIFLogistic <- function(data, group, type = "both", item, item.name,
           legend.position = c(0.01, 0.98),
           legend.justification = c(0, 1),
           legend.key.width = unit(1, "cm"),
-          legend.box = "horizontal")
+          legend.box = "horizontal") +
     ggtitle(item.name)
 
   plot_CC

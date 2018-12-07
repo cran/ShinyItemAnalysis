@@ -50,7 +50,8 @@
 #' @examples
 #' \dontrun{
 #' # loading libraries
-#' library(difNLR, difR)
+#' library(difR)
+#' library(ltm)
 #'
 #'  # loading data based on GMAT2
 #' data(GMAT2, package = "difNLR")
@@ -188,8 +189,8 @@ plotDIFirt <- function(parameters, test = "Lord", item = "all", item.name, same.
             legend.position = c(0.01, 0.98),
             legend.justification = c(0, 1),
             legend.key.width = unit(1, "cm"),
-            legend.box = "horizontal")
-    ggtitle(item.names[i])
+            legend.box = "horizontal") +
+      ggtitle(item.names[i])
 
 
   if (test == "Raju"){
