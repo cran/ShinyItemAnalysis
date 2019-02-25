@@ -7,24 +7,27 @@
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # ** Summary of Total Scores for Groups ######
-resultsgroupInput<-reactive({
+resultsgroupInput <- reactive({
   sc_one  <- total_score()[group() == 1]
   sc_zero <- total_score()[group() == 0]
-  tab <- t(data.frame(round(c(min(sc_zero, na.rm = T),
-                              max(sc_zero, na.rm = T),
-                              mean(sc_zero, na.rm = T),
-                              median(sc_zero, na.rm = T),
-                              sd(sc_zero, na.rm = T),
-                              skewness(sc_zero, na.rm = T),
-                              kurtosis(sc_zero, na.rm = T)), 2),
-                      round(c(min(sc_one, na.rm = T),
-                              max(sc_one, na.rm = T),
-                              mean(sc_one, na.rm = T),
-                              median(sc_one, na.rm = T),
-                              sd(sc_one, na.rm = T),
-                              skewness(sc_one, na.rm = T),
-                              kurtosis(sc_one, na.rm = T)), 2)))
-  colnames(tab) <- c("Min", "Max", "Mean", "Median", "SD", "Skewness", "Kurtosis")
+  tab <- data.frame(rbind(round(c(length(sc_one),
+                                  min(sc_zero, na.rm = T),
+                                  max(sc_zero, na.rm = T),
+                                  mean(sc_zero, na.rm = T),
+                                  median(sc_zero, na.rm = T),
+                                  sd(sc_zero, na.rm = T),
+                                  skewness(sc_zero, na.rm = T),
+                                  kurtosis(sc_zero, na.rm = T)), 2),
+                          round(c(length(sc_zero),
+                                  min(sc_one, na.rm = T),
+                                  max(sc_one, na.rm = T),
+                                  mean(sc_one, na.rm = T),
+                                  median(sc_one, na.rm = T),
+                                  sd(sc_one, na.rm = T),
+                                  skewness(sc_one, na.rm = T),
+                                  kurtosis(sc_one, na.rm = T)), 2)))
+  colnames(tab) <- c("N", "Min", "Max", "Mean", "Median", "SD", "Skewness", "Kurtosis")
+  tab$N <- as.integer(tab$N)
   rownames(tab) <- c("Reference group (0)", "Focal group (1)")
   tab
 })
@@ -38,16 +41,15 @@ include.colnames = T)
 
 # ** Histogram of total score for group = 1 (focal) ######
 histbyscoregroup1Input <- reactive({
-
-  a <- binary()
+  data <- binary()
   sc  <- total_score()[group() == 1]
-
-
   bin <- as.numeric(input$inSlider2group)
+  max.val <- max(prop.table(table(total_score()[group() == 0])),
+                 prop.table(table(total_score()[group() == 1])))
 
-  df <- data.frame(sc,
+  df <- data.table(score = sc,
                    gr = cut(sc,
-                            breaks = unique(c(0, bin - 1, bin, ncol(a))),
+                            breaks = unique(c(0, bin - 1, bin, ncol(data))),
                             include.lowest = T))
 
   if (bin < min(sc, na.rm = T)){
@@ -60,21 +62,65 @@ histbyscoregroup1Input <- reactive({
     }
   }
 
-  g <- ggplot(df, aes(x = sc)) +
-    geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
+  g <- ggplot(df, aes(x = score)) +
+    geom_histogram(aes(fill = gr, y = ..count../sum(..count..)), binwidth = 1, color = "black") +
     scale_fill_manual("", breaks = df$gr, values = col) +
     labs(x = "Total score",
-         y = "Number of respondents") +
-    scale_y_continuous(expand = c(0, 0),
-                       limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
-    scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-    theme_app() +
-    ggtitle("Histogram of total scores for focal group")
+         y = "Proportion of respondents") +
+    scale_x_continuous(limits = c(-0.5, ncol(data) + 0.5)) +
+    scale_y_continuous(limits = c(0, max.val)) +
+    ggtitle("Focal group") +
+    theme_app()
   g
 })
 
-output$histbyscoregroup1 <- renderPlot ({
-  histbyscoregroup1Input()
+output$histbyscoregroup1 <- renderPlotly ({
+  sc <- total_score()[group() == 1]
+  bin <- as.numeric(input$inSlider2group)
+  data <- binary()
+
+  if (min(sc) <= bin & bin <= max(sc)){
+    breaks <- unique(c(min(sc) - 1, bin - 1, bin, max(sc)))
+  } else {
+    breaks <- c(0, ncol(data))
+  }
+
+  df <- data.table(score = sc,
+                   gr = cut(sc,
+                            breaks = breaks,
+                            include.lowest = T))
+
+  g <- histbyscoregroup1Input()
+  p <- ggplotly(g)
+  k <- length(levels(df$gr))
+  m <- length(p$x$data[[1]]$text)
+  ints <- breaks
+
+
+  for(i in 1:k){
+    t <- subset(df, df$gr == levels(df$gr)[i])
+    t <- t[order(t$score)]
+
+    t <- as.data.frame(table(t$score))
+    lbnd <- ints[i] + 1
+    hbnd <- ints[i + 1] + 1
+
+    c <- 1
+    for (j in lbnd:hbnd) {
+      text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
+      text <- sub("/", "", text)
+      text <- sub("countsum\\(count\\)", "Proportion", text)
+      p$x$data[[i]]$text[j] <- paste(text, "<br />",
+                                     "Number of respodents:",
+                                     ifelse(c <= nrow(t) &
+                                              t$Var1[c] %in% p$x$data[[i]]$x[lbnd:hbnd] &
+                                              t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
+                                     "<br /> Score:", p$x$data[[i]]$x[j])
+      c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+    }
+  }
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_histbyscoregroup1 <- downloadHandler(
@@ -92,15 +138,15 @@ output$DP_histbyscoregroup1 <- downloadHandler(
 
 # ** Histogram of total score for group = 0 (reference) ######
 histbyscoregroup0Input <- reactive ({
-
-  a <- binary()
+  data <- binary()
   sc  <- total_score()[group() == 0]
-
   bin <- as.numeric(input$inSlider2group)
+  max.val <- max(prop.table(table(total_score()[group() == 0])),
+                 prop.table(table(total_score()[group() == 1])))
 
-  df <- data.frame(sc,
+  df <- data.table(score = sc,
                    gr = cut(sc,
-                            breaks = unique(c(0, bin - 1, bin, ncol(a))),
+                            breaks = unique(c(0, bin - 1, bin, ncol(data))),
                             include.lowest = T))
 
   if (bin < min(sc, na.rm = T)){
@@ -113,21 +159,65 @@ histbyscoregroup0Input <- reactive ({
     }
   }
 
-  g <- ggplot(df, aes(x = sc)) +
-    geom_histogram(aes(fill = gr), binwidth = 1, color = "black") +
+  g <- ggplot(df, aes(x = score)) +
+    geom_histogram(aes(fill = gr, y = ..count../sum(..count..)), binwidth = 1, color = "black") +
     scale_fill_manual("", breaks = df$gr, values = col) +
     labs(x = "Total score",
-         y = "Number of respondents") +
-    scale_y_continuous(expand = c(0, 0),
-                       limits = c(0, max(table(sc)) + 0.01 * nrow(a))) +
-    scale_x_continuous(limits = c(-0.5, ncol(a) + 0.5)) +
-    theme_app() +
-    ggtitle("Histogram of total scores for reference group")
+         y = "Proportion of respondents") +
+    scale_x_continuous(limits = c(-0.5, ncol(data) + 0.5)) +
+    scale_y_continuous(limits = c(0, max.val)) +
+    ggtitle("Reference group") +
+    theme_app()
   g
 })
 
-output$histbyscoregroup0 <- renderPlot ({
-  histbyscoregroup0Input()
+output$histbyscoregroup0 <- renderPlotly ({
+  sc <- total_score()[group() == 0]
+  bin <- as.numeric(input$inSlider2group)
+  data <- binary()
+
+  if (min(sc) <= bin & bin <= max(sc)){
+    breaks <- unique(c(min(sc) - 1, bin - 1, bin, max(sc)))
+  } else {
+    breaks <- c(0, ncol(data))
+  }
+
+  df <- data.table(score = sc,
+                   gr = cut(sc,
+                            breaks = breaks,
+                            include.lowest = T))
+
+  g <- histbyscoregroup0Input()
+  p <- ggplotly(g)
+  k <- length(levels(df$gr))
+  m <- length(p$x$data[[1]]$text)
+  ints <- breaks
+
+
+  for(i in 1:k){
+    t <- subset(df, df$gr == levels(df$gr)[i])
+    t <- t[order(t$score)]
+
+    t <- as.data.frame(table(t$score))
+    lbnd <- ints[i] + 1
+    hbnd <- ints[i + 1] + 1
+
+    c <- 1
+    for (j in lbnd:hbnd) {
+      text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
+      text <- sub("/", "", text)
+      text <- sub("countsum\\(count\\)", "Proportion", text)
+      p$x$data[[i]]$text[j] <- paste(text, "<br />",
+                                     "Number of respodents:",
+                                     ifelse(c <= nrow(t) &
+                                              t$Var1[c] %in% p$x$data[[i]]$x[lbnd:hbnd] &
+                                              t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
+                                     "<br /> Score:", p$x$data[[i]]$x[j])
+      c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+    }
+  }
+
+  p %>% plotly::config(displayModeBar = F)
 })
 
 output$DP_histbyscoregroup0 <- downloadHandler(
@@ -142,6 +232,28 @@ output$DP_histbyscoregroup0 <- downloadHandler(
            dpi = setting_figures$dpi)
   }
 )
+
+# ** t-test to compare total scores ######
+DIF_scores_ttest_Input <- reactive ({
+  sc0 <- total_score()[group() == 0]
+  sc1 <- total_score()[group() == 1]
+
+  ttest <- t.test(sc0, sc1)
+
+  tab <- c(paste0(sprintf("%.2f", mean(sc0, na.rm = T) - mean(sc1, na.rm = T)), " (",
+                  sprintf("%.2f", ttest$conf.int[1]), ", ",
+                  sprintf("%.2f", ttest$conf.int[2]), ")"),
+           sprintf("%.2f", ttest$statistic),
+           sprintf("%.2f", ttest$parameter),
+           ifelse(ttest$p.value < 0.001, "< 0.001", sprintf("%.3f", ttest$p.value)))
+  tab <- t(as.data.frame(tab))
+  colnames(tab) <- c("Diff. (CI)", "t-value", "df", "p-value")
+  tab
+})
+
+output$DIF_scores_ttest <- renderTable ({
+  DIF_scores_ttest_Input()
+})
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * DELTA PLOT ######
@@ -467,11 +579,12 @@ output$print_DIF_logistic <- renderPrint({
 plot_DIF_logisticInput <- reactive({
   group <- unlist(group())
   data <- data.frame(binary())
+  item <- input$diflogSlider
 
-  type <- input$type_plot_DIF_logistic
   g <- plotDIFLogistic(data, group,
                        type = input$type_plot_DIF_logistic,
-                       item =  input$diflogSlider,
+                       item = item,
+                       item.name = item_names()[item],
                        IRT = F,
                        p.adjust.method = input$correction_method_logItems,
                        purify = input$puri_LR_plot)
@@ -484,7 +597,7 @@ output$plot_DIF_logistic <- renderPlot({
 
 output$DP_plot_DIF_logistic <- downloadHandler(
   filename =  function() {
-    paste("fig_DifLogisticRegression_",item_names()[input$diflogSlider],".png", sep = "")
+    paste("fig_DifLogisticRegression_", item_names()[input$diflogSlider], ".png", sep = "")
   },
   content = function(file) {
     ggsave(file, plot = plot_DIF_logisticInput() +
@@ -539,10 +652,11 @@ DIF_logistic_plotReport <- reactive({
       g <- plotDIFLogistic(data, group,
                            type = type_report,
                            item =  mod$DIFitems[i],
+                           item.name = item_names()[mod$DIFitems[i]],
                            IRT = F,
                            p.adjust.method = p.adjust.method_report,
                            purify = purify_report)
-      g = g + ggtitle(paste0("DIF logistic plot for item ", item_numbers()[mod$DIFitems[i]])) +
+      g = g + ggtitle(paste0("DIF logistic plot for ", item_names()[mod$DIFitems[i]])) +
         theme(text = element_text(size = 12),
               plot.title = element_text(size = 12, face = "bold"))
       graflist[[i]] <- g

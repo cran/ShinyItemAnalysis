@@ -646,10 +646,12 @@ function(input, output, session) {
         # datasets
         a = nominal(),
         k = key(),
+        itemNames = item_names(),
         # total scores
         incProgress(0.05),
         results = t(totalscores_table_Input()),
         histogram_totalscores = totalscores_histogram_Input(),
+        cutScore = input$slider_totalscores_histogram,
         # standard scores
         standardscores_table = scores_tables_Input(),
         incProgress(0.05),
@@ -670,7 +672,7 @@ function(input, output, session) {
         DDplotRange2 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[2]], input$DDplotRangeSlider[[2]]),
         DDplotNumGroups = ifelse(input$customizeCheck, input$DDplotNumGroupsSlider_report, input$DDplotNumGroupsSlider),
         DDplotDiscType = ifelse(input$customizeCheck, input$DDplotDiscriminationSelect_report, input$DDplotDiscriminationSelect),
-        itemexam = itemanalysis_table_Input(),
+        itemexam = itemanalysis_table_report_Input(),
         incProgress(0.05),
         # distractors
         hist_distractor_by_group = distractor_histogram_Input(),
@@ -695,8 +697,10 @@ function(input, output, session) {
         ### histograms by group
         histCheck = input$histCheck,
         resultsgroup = {if (groupPresent()) {if (input$histCheck) {resultsgroupInput()}}},
+        cutScoregroup = input$inSlider2group,
         histbyscoregroup0 = {if (groupPresent()) {if (input$histCheck) {histbyscoregroup0Input()}}},
         histbyscoregroup1 = {if (groupPresent()) {if (input$histCheck) {histbyscoregroup1Input()}}},
+        DIF_scores_ttest = {if (groupPresent()) {if (input$histCheck) {DIF_scores_ttest_Input()}}},
         ### delta plot
         deltaplotCheck = input$deltaplotCheck,
         deltaplot = {if (groupPresent()) {if (input$deltaplotCheck) {deltaplotInput_report()}}},
@@ -716,7 +720,9 @@ function(input, output, session) {
     output$download_report_button <- renderUI({
 
       if(is.null(input$generate)){return(NULL)}
-      downloadButton("report", "Download report")
+      downloadButton(outputId = "report",
+                     label = "Download report",
+                     class = "btn btn-primary")
 
     })
 
@@ -733,9 +739,11 @@ function(input, output, session) {
         # datasets
         a = nominal(),
         k = key(),
+        itemNames = item_names(),
         # total scores
         results = t(totalscores_table_Input()),
         histogram_totalscores = totalscores_histogram_Input(),
+        cutScore = input$slider_totalscores_histogram,
         # standard scores
         standardscores_table = scores_tables_Input(),
         # validity section
@@ -754,7 +762,7 @@ function(input, output, session) {
         DDplotRange2 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[2]], input$DDplotRangeSlider[[2]]),
         DDplotNumGroups = ifelse(input$customizeCheck, input$DDplotNumGroupsSlider_report, input$DDplotNumGroupsSlider),
         DDplotDiscType = ifelse(input$customizeCheck, input$DDplotDiscriminationSelect_report, input$DDplotDiscriminationSelect),
-        itemexam = itemanalysis_table_Input(),
+        itemexam = itemanalysis_table_report_Input(),
         # distractors
         hist_distractor_by_group = distractor_histogram_Input(),
         graf = report_distractor_plot(),
@@ -775,8 +783,10 @@ function(input, output, session) {
         ### histograms by groups
         histCheck = input$histCheck,
         resultsgroup = {if (groupPresent()) {if (input$histCheck) {resultsgroupInput()}}},
+        cutScoregroup = input$inSlider2group,
         histbyscoregroup0 = {if (groupPresent()) {if (input$histCheck) {histbyscoregroup0Input()}}},
         histbyscoregroup1 = {if (groupPresent()) {if (input$histCheck) {histbyscoregroup1Input()}}},
+        DIF_scores_ttest = {if (groupPresent()) {if (input$histCheck) {DIF_scores_ttest_Input()}}},
         ### delta plot
         deltaplotCheck = input$deltaplotCheck,
         DIF_deltaplot = {if (groupPresent()) {if (input$deltaplotCheck) {deltaplotInput_report()}}},

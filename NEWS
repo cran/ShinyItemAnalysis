@@ -5,6 +5,64 @@
         ***************************************************************
 
 -------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.0. (2019-02-25) -
+-------------------------------------------------------
+
+** This is CRAN version, it includes version 1.2.9.-1.-3. **
+
+Besides, following updates are included:
+
+MINOR UPDATES
+  o Reference to a new paper on ShinyItemAnalysis in The R journal was added.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.9-3. (2019-01-30) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Histograms for total scores now handle cut-scores out of range of
+    observed values
+  o Bug in reports when using delta plot with purification was fixed.
+  o Cut-scores for histograms are properly displayed in reports.
+  o Year in reports was updated.
+
+MAJOR UPDATES
+  o Sections About, References and Settings are displayed only with icon
+    and are right-aligned.
+  o Margins and padding were updated.
+  o t-test was added for comparison of total scores between groups
+    into DIF section and into reports.
+  o Histograms for total scores are now displayed in plotly mode.
+
+MINOR UPDATES
+  o Some math mode was fixed in IRT section.
+  o Some typos were fixed.
+  o Selected R code was updated in DIF/Total scores.
+  o Animate function for sliders was slowed down.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.9-2. (2019-01-11) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Generalized ULI index is now correctly displayed in traditional
+    item analysis table in reports.
+  o Item names are now correctly displayed in reports.
+  o Item names are now correctly displayed in DDF section.
+  o Function plotDIFLogistic() now handles user-specified matching
+    criterion.
+
+MINOR UPDATES
+  o Legend of DDplot was modified.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.2.9-1. (2018-12-10) -
+-------------------------------------------------------
+
+MINOR UPDATES
+  o Wording in PDF/HTML reports was edited.
+
+-------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.2.9. (2018-12-06) -
 -------------------------------------------------------
 

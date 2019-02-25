@@ -55,6 +55,11 @@ ui = tagList(
                        display: table-row;
                        width: 80%;
                        }"),
+            tags$head(tags$style(HTML("
+                                      .navbar-nav {
+                                      float: none !important;
+                                      clear : both;
+                                      }"))),
             # JS
             tags$script(type = "text/javascript",
                         src = "busy.js"),
@@ -63,7 +68,9 @@ ui = tagList(
             tags$script(type = "text/javascript",
                         src = "report_downloading_message.js"),
             tags$script(type = "text/javascript",
-                        src = "collapsible_menu_click.js")
+                        src = "collapsible_menu_click.js"),
+            tags$script(type = "text/javascript",
+                        src = "tabs_icons_right.js")
             ),
   div(class = "busy",
       p("Loading"),
@@ -95,7 +102,7 @@ ui = tagList(
                     ShinyItemAnalysis
                     </div>
                     <div class = "footer-subtitle">
-                    Test and item analysis | Version 1.2.9
+                    Test and item analysis | Version 1.3.0
                     </div>
                     <span style = "float:right">
                     <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/" id = "tooltipweb" target="_blank">
@@ -116,7 +123,7 @@ ui = tagList(
                     </script>
                     <br>
                     <div class = "footer-copyright">
-                    &copy; 2018  ShinyItemAnalysis
+                    &copy; 2019  ShinyItemAnalysis
                     </div>'),
                HTML('<div class = "footer-counter">'),
                textOutput('counter', inline = T),
@@ -131,7 +138,7 @@ ui = tagList(
              #%%%%%%%%%%%%%%%%%%%%%
              # ABOUT ##############
              #%%%%%%%%%%%%%%%%%%%%%
-             About,
+             #About,
              #%%%%%%%%%%%%%%%%%%%%%
              # DATA ###############
              #%%%%%%%%%%%%%%%%%%%%%
@@ -165,7 +172,7 @@ ui = tagList(
                                  p('For selected cut-score, blue part of histogram shows respondents with total score
                                    above the cut-score, grey column shows respondents with total score equal
                                    to the cut-score and red part of histogram shows respondents below the cut-score.'),
-                                 plotOutput('totalscores_histogram'),
+                                 plotlyOutput('totalscores_histogram'),
                                  downloadButton(outputId = "DB_totalscores_histogram", label = "Download figure"),
                                  br(),
                                  br(),
@@ -385,62 +392,61 @@ ui = tagList(
                                    clusters are drawn. The values of correlation heatmap may be displayed and also downloaded."),
                                  fluidRow(div(style = "display: inline-block; vertical-align: top; width: 5%;"),
                                           column(3, selectInput(inputId = "type_of_corr",
-                                                               label    = "Choose correlation",
-                                                               choices  = c("Pearson"    = "pearson",
-                                                                            "Spearman"   = "spearman",
-                                                                            "Polychoric" = "polychoric"),
-                                                               selected = 'polychoric',
-                                                               width    =  '100%')),
+                                                                label    = "Choose correlation",
+                                                                choices  = c("Pearson"    = "pearson",
+                                                                             "Spearman"   = "spearman",
+                                                                             "Polychoric" = "polychoric"),
+                                                                selected = 'polychoric')),
                                           column(3, div(class = "input-box",
-                                                       selectInput(inputId = 'corr_plot_clustmethod',
-                                                                   label = 'Clustering method',
-                                                                   choices = list("None" = "none",
-                                                                                  "Ward's"  = "ward.D",
-                                                                                  "Ward's n. 2" = "ward.D2",
-                                                                                  "Single" = "single",
-                                                                                  "Complete" = "complete",
-                                                                                  "Average" = "average",
-                                                                                  "McQuitty" = "mcquitty",
-                                                                                  "Median" = "median",
-                                                                                  "Centroid" = "centroid"),
-                                                                   selected = "none"))),
+                                                        selectInput(inputId = 'corr_plot_clustmethod',
+                                                                    label = 'Clustering method',
+                                                                    choices = list("None" = "none",
+                                                                                   "Ward's"  = "ward.D",
+                                                                                   "Ward's n. 2" = "ward.D2",
+                                                                                   "Single" = "single",
+                                                                                   "Complete" = "complete",
+                                                                                   "Average" = "average",
+                                                                                   "McQuitty" = "mcquitty",
+                                                                                   "Median" = "median",
+                                                                                   "Centroid" = "centroid"),
+                                                                    selected = "none"))),
                                           column(3, div(class = "input-box",
-                                                       numericInput(inputId = 'corr_plot_clust',
-                                                                    label = 'Number of clusters',
-                                                                    value = 1,
-                                                                    min = 1,
-                                                                    max = 1))),
+                                                        numericInput(inputId = 'corr_plot_clust',
+                                                                     label = 'Number of clusters',
+                                                                     value = 1,
+                                                                     min = 1,
+                                                                     max = 1))),
                                           column(3, actionButton(inputId = 'show_corr',
                                                                  label = 'Display correlation values',
                                                                  class = 'btn btn-primary'))),
                                  conditionalPanel(condition = "input.type_of_corr == 'pearson'",
-                                                   p(HTML('<b>Pearson correlation coefficient</b>'), 'describes linear correlation between
-                                                     two random variables X and Y. It is given by formula'),
-                                                   withMathJax(),
-                                                   ('$$\\rho = \\frac{cov(X,Y)}{\\sqrt{var(X)}\\sqrt{var(Y)}}.$$'),
-                                                   p('Sample Pearson corelation coefficient may be calculated as'),
-                                                   withMathJax(),
-                                                   ('$$ r = \\frac{\\sum_{i = 1}^{n}(x_{i} - \\bar{x})(y_{i} - \\bar{y})}{\\sqrt{\\sum_{i = 1}^{n}(x_{i} - \\bar{x})^2}\\sqrt{\\sum_{i = 1}^{n}(y_{i} - \\bar{y})^2}}$$'),
-                                                   p('Pearson correlation coefficient has a value between -1 and +1. Sample correlation of -1 and +1 correspond to all data points lying exactly on a line
+                                                  p(HTML('<b>Pearson correlation coefficient</b>'), 'describes linear correlation between
+                                                    two random variables X and Y. It is given by formula'),
+                                                  withMathJax(),
+                                                  ('$$\\rho = \\frac{cov(X,Y)}{\\sqrt{var(X)}\\sqrt{var(Y)}}.$$'),
+                                                  p('Sample Pearson corelation coefficient may be calculated as'),
+                                                  withMathJax(),
+                                                  ('$$ r = \\frac{\\sum_{i = 1}^{n}(x_{i} - \\bar{x})(y_{i} - \\bar{y})}{\\sqrt{\\sum_{i = 1}^{n}(x_{i} - \\bar{x})^2}\\sqrt{\\sum_{i = 1}^{n}(y_{i} - \\bar{y})^2}}$$'),
+                                                  p('Pearson correlation coefficient has a value between -1 and +1. Sample correlation of -1 and +1 correspond to all data points lying exactly on a line
                                                     (decreasing in case of negative linear correlation -1 and increasing for +1). If coefficient is
-                                                     equal to 0 it implies no linear correlation between the variables.')),
+                                                    equal to 0 it implies no linear correlation between the variables.')),
                                  conditionalPanel(condition = "input.type_of_corr == 'polychoric'",
-                                                   p(HTML("<b>Polychoric/tetrachoric correlation</b>"), "between two ordinal/binary variables is calculated from their contingency table,
-                                                     under the assumption that the ordinal variables dissect continuous latent variables that are bivariate normal.")),
+                                                  p(HTML("<b>Polychoric/tetrachoric correlation</b>"), "between two ordinal/binary variables is calculated from their contingency table,
+                                                    under the assumption that the ordinal variables dissect continuous latent variables that are bivariate normal.")),
                                  conditionalPanel(condition = "input.type_of_corr == 'spearman'",
-                                                   p(HTML("<b>Spearman's rank correlation coefficient</b>"), 'describes strength and direction of monotonic relationship between random variables X
-                                                     and Y, i.e. dependence between the rankings of two variables. It is given by formula'),
-                                                   withMathJax(),
-                                                   ('$$\\rho = \\frac{cov(rg_{X},rg_{Y})}{\\sqrt{var(rg_{X})}\\sqrt{var(rg_{Y})}},$$'),
-                                                   p('where rgX and rgY are transformed random variables X and Y into ranks, i.e Spearman correlation coefficient is the Pearson correlation coefficient between the ranked variables.'),
-                                                   p('Sample Spearman correlation is calculated by converting X and Y to ranks (average ranks are used in case of ties) and by applying Pearson correlation formula. If both X and Y have',HTML('<i>n</i>'),'unique ranks, i.e. there are no ties, then sample correlation coefficient is given by formula'),
-                                                   withMathJax(),
-                                                   ('$$ r = 1 - \\frac{6\\sum_{i = 1}^{n}d_i^{2}}{n(n-1)}$$'),
-                                                   p('where d = rgX - rgY is the difference between two ranks and ',HTML('<i>n</i>'), 'is size of X and Y.
-                                                     Spearman rank correlation coefficient has value between -1 and 1, where 1  means perfect increasing relationship
-                                                     between variables and -1 means decreasing relationship between the two variables.
-                                                     In case of no repeated values, Spearman correlation of +1 or -1 means all data points lying exactly on some monotone line.
-                                                     If coefficient is equal to 0, it means, there is no tendency for Y to either increase or decrease with X increasing.')),
+                                                  p(HTML("<b>Spearman's rank correlation coefficient</b>"), 'describes strength and direction of monotonic relationship between random variables X
+                                                    and Y, i.e. dependence between the rankings of two variables. It is given by formula'),
+                                                  withMathJax(),
+                                                  ('$$\\rho = \\frac{cov(rg_{X},rg_{Y})}{\\sqrt{var(rg_{X})}\\sqrt{var(rg_{Y})}},$$'),
+                                                  p('where rgX and rgY are transformed random variables X and Y into ranks, i.e Spearman correlation coefficient is the Pearson correlation coefficient between the ranked variables.'),
+                                                  p('Sample Spearman correlation is calculated by converting X and Y to ranks (average ranks are used in case of ties) and by applying Pearson correlation formula. If both X and Y have',HTML('<i>n</i>'),'unique ranks, i.e. there are no ties, then sample correlation coefficient is given by formula'),
+                                                  withMathJax(),
+                                                  ('$$ r = 1 - \\frac{6\\sum_{i = 1}^{n}d_i^{2}}{n(n-1)}$$'),
+                                                  p('where d = rgX - rgY is the difference between two ranks and ',HTML('<i>n</i>'), 'is size of X and Y.
+                                                    Spearman rank correlation coefficient has value between -1 and 1, where 1  means perfect increasing relationship
+                                                    between variables and -1 means decreasing relationship between the two variables.
+                                                    In case of no repeated values, Spearman correlation of +1 or -1 means all data points lying exactly on some monotone line.
+                                                    If coefficient is equal to 0, it means, there is no tendency for Y to either increase or decrease with X increasing.')),
                                  p(HTML("<b>Clustering methods.</b>"),
                                    "Ward's method aims at finding compact clusters based on minimizing the within-cluster
                                    sum of squares.
@@ -544,7 +550,7 @@ ui = tagList(
                                                                       value = 1,
                                                                       max = 10,
                                                                       step = 1,
-                                                                      animate = TRUE))),
+                                                                      animate = animationOptions(interval = 1200)))),
                                             plotOutput('validity_distractor_plot'),
                                             downloadButton(outputId = "DB_validity_distractor_plot", label = "Download figure"),
                                             h4('Correlation of criterion variable and scored item'),
@@ -578,11 +584,11 @@ ui = tagList(
                                    very easy or very difficult items. Discrimination can be customized (see also Martinkova, Stepanek, et al.
                                    (2017)) by changing number of groups and by changing which groups should be compared: '),
                                  fluidPage(selectInput("DDplotDiscriminationSelect", "Discrimination type:",
-                                                           c("ULI" = "ULI",
-                                                             "RIT" = "RIT",
-                                                             "RIR" = "RIR",
-                                                             "none" = "none"),
-                                                           selected = "ULI"),
+                                                       c("ULI" = "ULI",
+                                                         "RIT" = "RIT",
+                                                         "RIR" = "RIR",
+                                                         "none" = "none"),
+                                                       selected = "ULI"),
                                            conditionalPanel(condition = "input.DDplotDiscriminationSelect=='ULI'",
                                                             div(class = "input-slider",
                                                                 sliderInput(inputId = 'DDplotNumGroupsSlider',
@@ -598,8 +604,8 @@ ui = tagList(
                                                                             max = 3,
                                                                             step = 1,
                                                                             value = c(1, 3)))
-                                                            )
-                                           ),
+                                           )
+                                 ),
                                  htmlOutput("DDplot_text"),
                                  br(),
                                  plotOutput('DDplot'),
@@ -618,7 +624,7 @@ ui = tagList(
                                                 label    = "Download table"),
                                  br(),
                                  h4("Selected R code"),
-                                 div(code(HTML("library(difNLR)&nbsp;<br>library(psych)&nbsp;<br>library(psychometric)&nbsp;<br>library(ShinyItemAnalysis)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br><br>#&nbsp;difficulty&nbsp;and&nbsp;discrimination&nbsp;plot&nbsp;<br>DDplot(data,&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)&nbsp;<br><br>#&nbsp;Cronbach&nbsp;alpha&nbsp;<br>psych::alpha(data)&nbsp;<br><br>#&nbsp;traditional&nbsp;item&nbsp;analysis&nbsp;table&nbsp;<br>tab&nbsp;<-&nbsp;round(data.frame(item.exam(data,&nbsp;discr&nbsp;=&nbsp;TRUE)[,&nbsp;c(4,&nbsp;1,&nbsp;5,&nbsp;2,&nbsp;3)],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;psych::alpha(data)$alpha.drop[,&nbsp;1],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gDiscrim(data,&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)),&nbsp;2)&nbsp;<br>colnames(tab)&nbsp;<-&nbsp;c(\"Difficulty\",&nbsp;\"SD\",&nbsp;\"Dsicrimination&nbsp;ULI\",&nbsp;\"Discrimination&nbsp;RIT\",&nbsp;\"Discrimination&nbsp;RIR\",&nbsp;\"Alpha&nbsp;Drop\",&nbsp;\"Customized&nbsp;Discrimination\")&nbsp;<br>tab"))),
+                                 div(code(HTML("library(difNLR)&nbsp;<br>library(psych)&nbsp;<br>library(psychometric)&nbsp;<br>library(ShinyItemAnalysis)&nbsp;<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)&nbsp;<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]&nbsp;<br><br>#&nbsp;difficulty&nbsp;and&nbsp;discrimination&nbsp;plot&nbsp;<br>DDplot(data,&nbsp;discrim&nbsp;=&nbsp;'ULI',&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)&nbsp;<br><br>#&nbsp;Cronbach&nbsp;alpha&nbsp;<br>psych::alpha(data)&nbsp;<br><br>#&nbsp;traditional&nbsp;item&nbsp;analysis&nbsp;table&nbsp;<br>tab&nbsp;<-&nbsp;round(data.frame(item.exam(data,&nbsp;discr&nbsp;=&nbsp;TRUE)[,&nbsp;c(4,&nbsp;1,&nbsp;5,&nbsp;2,&nbsp;3)],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;psych::alpha(data)$alpha.drop[,&nbsp;1],&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gDiscrim(data,&nbsp;k&nbsp;=&nbsp;3,&nbsp;l&nbsp;=&nbsp;1,&nbsp;u&nbsp;=&nbsp;3)),&nbsp;2)&nbsp;<br>colnames(tab)&nbsp;<-&nbsp;c(\"Difficulty\",&nbsp;\"SD\",&nbsp;\"Dsicrimination&nbsp;ULI\",&nbsp;\"Discrimination&nbsp;RIT\",&nbsp;\"Discrimination&nbsp;RIR\",&nbsp;\"Alpha&nbsp;Drop\",&nbsp;\"Customized&nbsp;Discrimination\")&nbsp;<br>tab"))),
                                  br()
                                  ),
                         # * DISTRACTORS ####
@@ -650,7 +656,7 @@ ui = tagList(
                                                            max = 10,
                                                            value = 1,
                                                            step = 1,
-                                                           animate = TRUE))),
+                                                           animate = animationOptions(interval = 1200)))),
                                  plotOutput('distractor_plot'),
                                  downloadButton("DB_distractor_plot", label = "Download figure"),
                                  br(),
@@ -696,7 +702,7 @@ ui = tagList(
                                    total score.'),
                                  sliderInput("logregSlider", "Item",
                                              min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
+                                             step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('logreg_plot'),
                                  downloadButton("DB_logreg_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -727,7 +733,7 @@ ui = tagList(
                                    level of standardized total score.'),
                                  sliderInput("zlogregSlider", "Item",
                                              min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
+                                             step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('z_logreg_plot'),
                                  downloadButton("DB_z_logreg_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -757,7 +763,7 @@ ui = tagList(
                                    level of standardized total score.'),
                                  sliderInput("zlogreg_irtSlider", "Item",
                                              min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
+                                             step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('z_logreg_irt_plot'),
                                  downloadButton("DB_z_logreg_irt_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -787,7 +793,7 @@ ui = tagList(
                                    total score. Their size is determined by count of respondents who achieved given
                                    level of standardized total score.'),
                                  sliderInput(inputId = "slider_nlr_3P_item", label = "Item",
-                                             min = 1, value = 1, max = 10, step = 1, animate = TRUE),
+                                             min = 1, value = 1, max = 10, step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('nlr_3P_plot'),
                                  downloadButton("DB_nlr_3P_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -816,7 +822,7 @@ ui = tagList(
                                    total score. Their size is determined by count of respondents who achieved given
                                    level of standardized total score.'),
                                  sliderInput(inputId = "slider_nlr_4P_item", label = "Item",
-                                             min = 1, value = 1, max = 10, step = 1, animate = TRUE),
+                                             min = 1, value = 1, max = 10, step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('nlr_4P_plot'),
                                  downloadButton("DB_nlr_4P_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -875,7 +881,7 @@ ui = tagList(
                                    level of standardized total score and who selected given option.'),
                                  sliderInput("multiSlider", "Item",
                                              min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
+                                             step = 1, animate = animationOptions(interval = 1200)),
                                  plotOutput('multi_plot'),
                                  downloadButton("DB_multi_plot", label = "Download figure"),
                                  h4("Equation"),
@@ -926,41 +932,32 @@ ui = tagList(
                                  h3("Total scores"),
                                  p('DIF is not about total scores! Two groups may have the same distribution of total scores, yet,
                                    some item may function differently for two groups. Also, one of the groups may have signifficantly
-                                   lower total score, yet, it may happen that there is no DIF item!',
+                                   lower total score, yet, it may happen that there is no DIF item ',
                                    a('(Martinkova et al., 2017). ',
                                      href = "https://www.lifescied.org/doi/10.1187/cbe.16-10-0307",
                                      target = "_blank")),
                                  h4("Summary of total scores for groups"),
                                  tableOutput('resultsgroup'),
                                  h4("Histograms of total scores for groups"),
-                                 sliderInput("inSlider2group", "Cut-score", min = 1, value = 1, max = 10,
-                                             step = 1, animate = TRUE),
+                                 sliderInput("inSlider2group", "Cut-score", min = 0, value = 1, max = 10,
+                                             step = 1, animate = animationOptions(interval = 1200)),
                                  p('For selected cut-score, blue part of histogram shows respondents with total score
-                                   above the cut-score, grey column shows respondents with Total Score equal
+                                   above the cut-score, grey column shows respondents with total score equal
                                    to cut-score and red part of histogram shows respondents below the cut-score.'),
-                                 splitLayout(cellWidths = c("50%", "50%"), plotOutput('histbyscoregroup0'),plotOutput('histbyscoregroup1')),
+                                 splitLayout(cellWidths = c("50%", "50%"), plotlyOutput('histbyscoregroup0'), plotlyOutput('histbyscoregroup1')),
                                  splitLayout(cellWidths = c("50%", "50%"), downloadButton("DP_histbyscoregroup0", label = "Download figure"),
                                              downloadButton("DP_histbyscoregroup1", label = "Download figure")),
                                  br(),
+                                 h4("Comparison of total scores"),
+                                 p("Test for difference in total scores between reference and focal group is based od Welch two sample
+                                   t-test. ", br(),
+                                   strong("Explanation: "), strong("Diff. (CI)"), "- difference in means of total scores with 95% confidence interval, ",
+                                   strong("t-value"), "- test statistic, ", strong("df"), "- degrees of freedom, ",
+                                   strong("p-value"), "- if it is lower than 0.05, it means significant difference in total scores. "),
+                                 tableOutput("DIF_scores_ttest"),
+                                 br(),
                                  h4("Selected R code"),
-                                 div(code('library(difNLR)'),
-                                     br(),
-                                     code('data <- GMAT[, 1:20]'),
-                                     br(),
-                                     code('group <- GMAT[, "group"]'),
-                                     br(),
-                                     br(),
-                                     code('# Summary table'),
-                                     br(),
-                                     code('sc_zero <- apply(data[group == 0, ], 1, sum); summary(sc_zero) # total scores of reference group'),
-                                     br(),
-                                     code('sc_one  <- apply(data[group == 1, ], 1, sum); summary(sc_one)  # total scores of focal group'),
-                                     br(),
-                                     code('# Histograms'),
-                                     br(),
-                                     code('hist(sc_zero, breaks = 0:20)'),
-                                     br(),
-                                     code('hist(sc_one, breaks = 0:20)')),
+                                 div(code(HTML("library(difNLR)<br>library(ggplot2)<br>library(moments)<br><br>#&nbsp;loading&nbsp;data<br>data(GMAT)<br>data&nbsp;<-&nbsp;GMAT[,&nbsp;1:20]<br>group&nbsp;<-&nbsp;GMAT[,&nbsp;\"group\"]<br><br>#&nbsp;total&nbsp;score&nbsp;calculation&nbsp;wrt&nbsp;group<br>score0&nbsp;<-&nbsp;apply(data,&nbsp;1,&nbsp;sum)[group&nbsp;==&nbsp;0]<br>score1&nbsp;<-&nbsp;apply(data,&nbsp;1,&nbsp;sum)[group&nbsp;==&nbsp;1]<br><br>#&nbsp;summary&nbsp;of&nbsp;total&nbsp;score&nbsp;<br>rbind(c(length(score0),&nbsp;min(score0),&nbsp;max(score0),&nbsp;mean(score0),&nbsp;median(score0),&nbsp;sd(score0),&nbsp;skewness(score0),&nbsp;kurtosis(score0)),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c(length(score1),&nbsp;min(score1),&nbsp;max(score1),&nbsp;mean(score1),&nbsp;median(score1),&nbsp;sd(score1),&nbsp;skewness(score1),&nbsp;kurtosis(score1)))<br><br>#&nbsp;colors&nbsp;by&nbsp;cut-score&nbsp;wrt&nbsp;group<br>cut&nbsp;<-&nbsp;12&nbsp;#&nbsp;cut-score&nbsp;<br>color0&nbsp;<-&nbsp;c(rep(\"red\",&nbsp;cut&nbsp;-&nbsp;min(score0)),&nbsp;\"gray\",&nbsp;rep(\"blue\",&nbsp;max(score0)&nbsp;-&nbsp;cut))<br>color1&nbsp;<-&nbsp;c(rep(\"red\",&nbsp;cut&nbsp;-&nbsp;min(score1)),&nbsp;\"gray\",&nbsp;rep(\"blue\",&nbsp;max(score1)&nbsp;-&nbsp;cut))<br><br>#&nbsp;histogram&nbsp;for&nbsp;reference&nbsp;group<br>ggplot(data&nbsp;=&nbsp;data.frame(score0),&nbsp;aes(score0))&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_histogram(binwidth&nbsp;=&nbsp;1,&nbsp;fill&nbsp;=&nbsp;color0,&nbsp;col&nbsp;=&nbsp;\"black\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;xlab(\"Total&nbsp;score\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;ylab(\"Number&nbsp;of&nbsp;respondents\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;ggtitle(\"Reference&nbsp;group\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme_app()<br><br>#&nbsp;histogram&nbsp;for&nbsp;focal&nbsp;group<br>ggplot(data&nbsp;=&nbsp;data.frame(score1),&nbsp;aes(score1))&nbsp;+&nbsp;<br>&nbsp;&nbsp;geom_histogram(binwidth&nbsp;=&nbsp;1,&nbsp;fill&nbsp;=&nbsp;color1,&nbsp;col&nbsp;=&nbsp;\"black\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;xlab(\"Total&nbsp;score\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;ylab(\"Number&nbsp;of&nbsp;respondents\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;ggtitle(\"Focal&nbsp;group\")&nbsp;+&nbsp;<br>&nbsp;&nbsp;theme_app()<br><br>#&nbsp;t-test&nbsp;to&nbsp;compare&nbsp;total&nbsp;scores<br>t.test(score0,&nbsp;score1)"))),
                                  br()
                                  ),
                         # * DELTA PLOTS ####
@@ -1082,7 +1079,7 @@ ui = tagList(
                                             fluidPage(div(style = "display: inline-block; vertical-align: top; width: 20%; ",
                                                           sliderInput("difMHSlider_item",
                                                                       "Item",
-                                                                      animate = TRUE,
+                                                                      animate = animationOptions(interval = 1200),
                                                                       min = 1,
                                                                       max = 10,
                                                                       value = 1,
@@ -1244,7 +1241,7 @@ ui = tagList(
                                                                       value = 1,
                                                                       max = 10,
                                                                       step = 1,
-                                                                      animate = TRUE))),
+                                                                      animate = animationOptions(interval = 1600)))),
                                             p('Points represent proportion of correct answer with respect to total score.
                                               Their size is determined by count of respondents who achieved given level of
                                               total score with respect to the group membership.'),
@@ -1392,7 +1389,7 @@ ui = tagList(
                         #                                               value = 1,
                         #                                               max = 10,
                         #                                               step = 1,
-                        #                                               animate = TRUE))),
+                        #                                               animate = animationOptions(interval = 1200)))),
                         #                     p('Points represent proportion of correct answer with respect to standardized
                         #                       total score. Their size is determined by count of respondents who achieved
                         #                       given level of standardized total score with respect to the group membership.'),
@@ -1601,7 +1598,7 @@ ui = tagList(
                                                                         value = 1,
                                                                         max = 10,
                                                                         step = 1,
-                                                                        animate = TRUE))),
+                                                                        animate = animationOptions(interval = 1600)))),
                                             p('Points represent proportion of correct answer with respect to standardized
                                               total score. Their size is determined by count of respondents who achieved
                                               given level of standardized total score with respect to the group membership.'),
@@ -1741,7 +1738,7 @@ ui = tagList(
                                                                       value = 1,
                                                                       max = 10,
                                                                       step = 1,
-                                                                      animate = TRUE))),
+                                                                      animate = animationOptions(interval = 1600)))),
                                             p('NOTE: Plots and tables are based on larger DIF IRT model. '),
                                             plotOutput('plot_DIF_IRT_Lord'),
                                             downloadButton("DP_plot_DIF_IRT_Lord", label = "Download figure"),
@@ -1943,7 +1940,7 @@ ui = tagList(
                                                                       value = 1,
                                                                       max = 10,
                                                                       step = 1,
-                                                                      animate = TRUE))),
+                                                                      animate = animationOptions(interval = 1600)))),
                                             p('NOTE: Plots and tables are based on larger DIF IRT model. '),
                                             plotOutput('plot_DIF_IRT_Raju'),
                                             downloadButton("DP_plot_DIF_IRT_Raju", label = "Download figure"),
@@ -2162,7 +2159,7 @@ ui = tagList(
                                                                       value = 1,
                                                                       max = 10,
                                                                       step = 1,
-                                                                      animate = TRUE))),
+                                                                      animate = animationOptions(interval = 1600)))),
                                             p('Points represent proportion of selected answer with respect to standardized
                                               total score. Their size is determined by count of respondents who achieved
                                               given level of standardized total score and who selected given option with
@@ -2214,176 +2211,223 @@ ui = tagList(
                         will be taken from sections of the application. You may also include your name into the report, as well as the name
                         of analyzed dataset. "),
                       fluidRow(
-                        column(2, radioButtons("report_format", "Format of report", c("HTML" = "html", "PDF" = "pdf"))),
-                        column(2, checkboxInput("customizeCheck", "Customize settings", FALSE)),
-                        column(2, textInput("reportAuthor", "Author")),
-                        column(2, textInput("reportDataName", "Dataset"))
+                        column(2, radioButtons(inputId = "report_format",
+                                               label = "Format of report",
+                                               choices = c("HTML" = "html", "PDF" = "pdf"))),
+                        column(2, checkboxInput(inputId = "customizeCheck",
+                                                label = "Customize settings",
+                                                value = FALSE)),
+                        column(2, textInput(inputId = "reportAuthor",
+                                            label = "Author")),
+                        column(2, textInput(inputId = "reportDataName",
+                                            label = "Dataset"))
                       ),
                       h4("Content of report"),
                       p("Reports by default contain summary of total scores, table of standard scores, item analysis,
                         distractor plots for each item and multinomial regression plots for each item. Other analyses
                         can be selected below. "),
+                      tags$hr(),
                       fluidRow(
-                        column(8,
+                        column(9,
                                p(strong("Validity")),
-                               checkboxInput("corr_report", "Correlation structure", FALSE),
+                               checkboxInput(inputId = "corr_report",
+                                             label = "Correlation structure",
+                                             value = FALSE),
                                conditionalPanel(condition = "input.customizeCheck",
                                                 conditionalPanel(condition = "input.corr_report",
-                                                                 div(style = "display: inline-block; vertical-align: top; width: 20%;",
-                                                                     numericInput('corr_plot_clust_report',
-                                                                                  label = 'Number of clusters',
-                                                                                  value = 1,
-                                                                                  min = 1,
-                                                                                  max = 1)),
-                                                                 div(style = "display: inline-block; vertical-align: top; width: 20%;",
-                                                                     selectInput('corr_plot_clustmethod_report',
-                                                                                 label = 'Clustering method',
-                                                                                 choices = list("None" = "none",
-                                                                                                "Ward's"  = "ward.D",
-                                                                                                "Ward's n. 2" = "ward.D2",
-                                                                                                "Single" = "single",
-                                                                                                "Complete" = "complete",
-                                                                                                "Average" = "average",
-                                                                                                "McQuitty" = "mcquitty",
-                                                                                                "Median" = "median",
-                                                                                                "Centroid" = "centroid"))),
-                                                                 div(style = "display: inline-block; vertical-align: top; width: 20%;",
-                                                                     selectInput('corr_plot_type_of_corr_report',
-                                                                                 label = 'Choose correlation',
-                                                                                 choices = c("Polychoric" = "polychoric",
-                                                                                             "Pearson" = "pearson",
-                                                                                             "Spearman"  = "spearman"),
-                                                                                 selected = "Polychoric" )))),
-                               checkboxInput("predict_report", "Predictive validity", FALSE)
+                                                                 fluidPage(column(3,
+                                                                                  numericInput(inputId = 'corr_plot_clust_report',
+                                                                                               label = 'Number of clusters',
+                                                                                               value = 1,
+                                                                                               min = 1,
+                                                                                               max = 1)),
+                                                                           column(3,
+                                                                                  selectInput(inputId = 'corr_plot_clustmethod_report',
+                                                                                              label = 'Clustering method',
+                                                                                              choices = list("None" = "none",
+                                                                                                             "Ward's"  = "ward.D",
+                                                                                                             "Ward's n. 2" = "ward.D2",
+                                                                                                             "Single" = "single",
+                                                                                                             "Complete" = "complete",
+                                                                                                             "Average" = "average",
+                                                                                                             "McQuitty" = "mcquitty",
+                                                                                                             "Median" = "median",
+                                                                                                             "Centroid" = "centroid"))),
+                                                                           column(3,
+                                                                                  selectInput(inputId = 'corr_plot_type_of_corr_report',
+                                                                                              label = 'Choose correlation',
+                                                                                              choices = c("Polychoric" = "polychoric",
+                                                                                                          "Pearson" = "pearson",
+                                                                                                          "Spearman"  = "spearman"),
+                                                                                              selected = "Polychoric" ))))),
+                               checkboxInput(inputId = "predict_report",
+                                             label = "Predictive validity",
+                                             value = FALSE)
                         )
                       ),
-                      fluidRow(
-                        conditionalPanel(condition = "input.customizeCheck",
-                                         column(6,
-                                                p(strong("Difficulty/discrimination plot")),
-                                                selectInput("DDplotDiscriminationSelect_report", "Discrimination type:",
-                                                            c("ULI" = "ULI",
-                                                              "RIT" = "RIT",
-                                                              "RIR" = "RIR",
-                                                              "none" = "none"),
-                                                            selected = "RIT"),
-                                                conditionalPanel(condition = "input.DDplotDiscriminationSelect_report == 'ULI'",
-                                                                 splitLayout(sliderInput('DDplotNumGroupsSlider_report','Number of groups:',
-                                                                                         min   = 1,
-                                                                                         max   = 5,
-                                                                                         value = 3),
-                                                                             sliderInput("DDplotRangeSlider_report", "Which two groups to compare:",
-                                                                                         min = 1,
-                                                                                         max = 3,
-                                                                                         step = 1,
-                                                                                         value = c(1, 3)))
-                                                                 )
-                                                            ))
+                      tags$hr(),
+                      conditionalPanel(condition = "input.customizeCheck",
+                                       fluidRow(column(9,
+                                                       p(strong("Difficulty/discrimination plot")),
+                                                       column(3,
+                                                              selectInput(inputId = "DDplotDiscriminationSelect_report",
+                                                                          label = "Discrimination type:",
+                                                                          choices = c("ULI" = "ULI",
+                                                                                      "RIT" = "RIT",
+                                                                                      "RIR" = "RIR",
+                                                                                      "none" = "none"),
+                                                                          selected = "ULI")),
+                                                       conditionalPanel(condition = "input.DDplotDiscriminationSelect_report == 'ULI'",
+                                                                        column(3,
+                                                                               sliderInput(inputId = 'DDplotNumGroupsSlider_report',
+                                                                                           label = 'Number of groups:',
+                                                                                           min = 1,
+                                                                                           max = 5,
+                                                                                           value = 3)),
+                                                                        column(3,
+                                                                               sliderInput(inputId = "DDplotRangeSlider_report",
+                                                                                           label = "Which two groups to compare:",
+                                                                                           min = 1,
+                                                                                           max = 3,
+                                                                                           step = 1,
+                                                                                           value = c(1, 3))))
+                                       )),
+                                       tags$hr()
                       ),
+                      conditionalPanel(condition = "input.customizeCheck",
+                                       fluidRow(column(9,
+                                                       p(strong("Distractors plots")),
+                                                       column(3,
+                                                              radioButtons(inputId = 'type_combinations_distractor_report',
+                                                                           label = 'Type',
+                                                                           choices = list("Combinations", "Distractors"))),
+                                                       column(3,
+                                                              sliderInput(inputId = 'distractorGroupSlider',
+                                                                          label = 'Number of groups:',
+                                                                          min = 1,
+                                                                          max = 5,
+                                                                          value = 3)))),
+                                       tags$hr()),
+
                       fluidRow(
-                        conditionalPanel(condition = "input.customizeCheck",
-                                         column(6,
-                                                p(strong("Distractors plots")),
-                                                splitLayout(radioButtons('type_combinations_distractor_report',
-                                                                         'Type',
-                                                                         list("Combinations", "Distractors")),
-                                                            sliderInput('distractorGroupSlider','Number of groups:',
-                                                                        min   = 1,
-                                                                        max   = 5,
-                                                                        value = 3))))
-                      ),
-                      fluidRow(
-                        column(4,
-                               radioButtons("irt_type_report", "IRT model selection",
-                                            c("None" = "none",
-                                              "Rasch" = "rasch",
-                                              "1PL" = "1pl",
-                                              "2PL" = "2pl",
-                                              "3PL" = "3pl",
-                                              "4PL" = "4pl"),
+                        column(2,
+                               radioButtons(inputId = "irt_type_report",
+                                            label = "IRT model selection",
+                                            choices = c("None" = "none",
+                                                        "Rasch" = "rasch",
+                                                        "1PL" = "1pl",
+                                                        "2PL" = "2pl",
+                                                        "3PL" = "3pl",
+                                                        "4PL" = "4pl"),
                                             selected = "1pl")
                         )
                       ),
-
+                      tags$hr(),
                       fluidRow(
                         column(3,
                                p(strong("DIF method selection")),
-                               checkboxInput("histCheck", "None - histograms by group only", FALSE),
-                               checkboxInput("deltaplotCheck", "Delta plot", FALSE),
-                               checkboxInput("logregCheck", "Logistic regression", FALSE),
-                               checkboxInput("multiCheck", "Multinomial regression", FALSE)
+                               checkboxInput(inputId = "histCheck",
+                                             label = "None - histograms by group only",
+                                             value = FALSE),
+                               checkboxInput(inputId = "deltaplotCheck",
+                                             label = "Delta plot",
+                                             value = FALSE),
+                               checkboxInput(inputId = "logregCheck",
+                                             label = "Logistic regression",
+                                             value = FALSE),
+                               checkboxInput(inputId = "multiCheck",
+                                             label = "Multinomial regression",
+                                             value = FALSE)
                         ),
                         conditionalPanel(condition = "input.customizeCheck",
                                          conditionalPanel(condition = "input.deltaplotCheck",
-                                                          column(2, p(strong("Delta plot settings")),
-                                                                 radioButtons('type_threshold_report', 'Threshold',
-                                                                              list("Fixed", "Normal")
-                                                                 ),
-                                                                 checkboxInput('puri_DP_report', 'Item purification', FALSE),
+                                                          column(2,
+                                                                 p(strong("Delta plot settings")),
+                                                                 radioButtons(inputId = 'type_threshold_report',
+                                                                              label = 'Threshold',
+                                                                              choices = list("Fixed", "Normal")),
+                                                                 checkboxInput(inputId = 'puri_DP_report',
+                                                                               label = 'Item purification',
+                                                                               value = FALSE),
                                                                  conditionalPanel(
                                                                    condition = "input.puri_DP_report",
-                                                                   selectInput("puri_DP_type_report", "Purification method",
-                                                                               c("IPP1" = "IPP1",
-                                                                                 "IPP2" = "IPP2",
-                                                                                 "IPP3" = "IPP3"
-                                                                               ),
+                                                                   selectInput(inputId = "puri_DP_type_report",
+                                                                               label = "Purification method",
+                                                                               choices = c("IPP1" = "IPP1",
+                                                                                           "IPP2" = "IPP2",
+                                                                                           "IPP3" = "IPP3"),
                                                                                selected = "IPP1")
                                                                  )
                                                           )
                                          ),
                                          conditionalPanel(condition = "input.logregCheck",
-                                                          column(2, p(strong("Logistic regression settings")),
-                                                                 radioButtons('type_print_DIF_logistic_report', 'Type',
-                                                                              c("H0: Any DIF vs. H1: No DIF" = 'both',
-                                                                                "H0: Uniform DIF vs. H1: No DIF" = 'udif',
-                                                                                "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'
-                                                                              ),
-                                                                              'both'
-                                                                 ),
-                                                                 selectInput("correction_method_log_report", "Correction method",
-                                                                             c("BH" = "BH",
-                                                                               "Holm" = "holm",
-                                                                               "Hochberg" = "hochberg",
-                                                                               "Hommel" = "hommel",
-                                                                               "BY" = "BY",
-                                                                               "FDR" = "fdr",
-                                                                               "none" = "none"
-                                                                             ),
-                                                                             selected = "none"),
-                                                                 checkboxInput('puri_LR_report', 'Item purification', FALSE)
+                                                          column(3, p(strong("Logistic regression settings")),
+                                                                 radioButtons(inputId = 'type_print_DIF_logistic_report',
+                                                                              label = 'Type',
+                                                                              choices = c("H0: Any DIF vs. H1: No DIF" = 'both',
+                                                                                          "H0: Uniform DIF vs. H1: No DIF" = 'udif',
+                                                                                          "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'),
+                                                                              selected = 'both'),
+                                                                 selectInput(inputId = "correction_method_log_report",
+                                                                             label = "Correction method",
+                                                                             choices = c("BH" = "BH",
+                                                                                         "Holm" = "holm",
+                                                                                         "Hochberg" = "hochberg",
+                                                                                         "Hommel" = "hommel",
+                                                                                         "BY" = "BY",
+                                                                                         "FDR" = "fdr",
+                                                                                         "none" = "none"),
+                                                                             selected = "none",
+                                                                             width = "80%"),
+                                                                 checkboxInput(inputId = 'puri_LR_report',
+                                                                               label = 'Item purification',
+                                                                               value = FALSE)
                                                           )
                                          ),
                                          conditionalPanel(condition = "input.multiCheck",
-                                                          column(2, p(strong("Multinomial regression settings")),
-                                                                 radioButtons('type_DDF_report', 'Type',
-                                                                              c("H0: Any DIF vs. H1: No DIF" = 'both',
-                                                                                "H0: Uniform DIF vs. H1: No DIF" = 'udif',
-                                                                                "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'
-                                                                              ),
-                                                                              'both'
-                                                                 ),
-                                                                 selectInput("correction_method_DDF_report", "Correction method",
-                                                                             c("BH" = "BH",
-                                                                               "Holm" = "holm",
-                                                                               "Hochberg" = "hochberg",
-                                                                               "Hommel" = "hommel",
-                                                                               "BY" = "BY",
-                                                                               "FDR" = "fdr",
-                                                                               "none" = "none"),
-                                                                             selected = "none"),
-                                                                 checkboxInput('puri_DDF_report', 'Item purification', FALSE)
+                                                          column(3, p(strong("Multinomial regression settings")),
+                                                                 radioButtons(inputId = 'type_DDF_report',
+                                                                              label = 'Type',
+                                                                              choices = c("H0: Any DIF vs. H1: No DIF" = 'both',
+                                                                                          "H0: Uniform DIF vs. H1: No DIF" = 'udif',
+                                                                                          "H0: Non-Uniform DIF vs. H1: Uniform DIF" = 'nudif'),
+                                                                              selected = 'both'),
+                                                                 selectInput(inputId = "correction_method_DDF_report",
+                                                                             label = "Correction method",
+                                                                             choices = c("BH" = "BH",
+                                                                                         "Holm" = "holm",
+                                                                                         "Hochberg" = "hochberg",
+                                                                                         "Hommel" = "hommel",
+                                                                                         "BY" = "BY",
+                                                                                         "FDR" = "fdr",
+                                                                                         "none" = "none"),
+                                                                             selected = "none",
+                                                                             width = "80%"),
+                                                                 checkboxInput(inputId = 'puri_DDF_report',
+                                                                               label = 'Item purification',
+                                                                               value = FALSE)
                                                           )
                                          )
                         )
                       ),
+                      tags$hr(),
+                      radioButtons(inputId = "include_session",
+                                   label = "Include session info",
+                                   choices = c("Yes" = "yes", "No" = "no"),
+                                   selected = "no",
+                                   inline = TRUE),
+                      tags$hr(),
                       p(strong("Recommendation: "), "Report generation can be faster and more reliable when you first check
                         sections of intended contents. For example, if you wish to include a ", strong("3PL IRT"),
                         " model, you can first visit ", strong("IRT models"), "section and ", strong("3PL"), " subsection."),
-                      #p(strong("Warning: "), "Download of reports takes some time. Please, be patient."),
+                      br(),
                       fluidRow(
                         column(width = 5,
                                splitLayout(cellWidths = c("45%", "55%"),
-                                           actionButton("generate", "Generate report"),
+                                           actionButton(inputId = "generate",
+                                                        label = "Generate report",
+                                                        class = "btn btn-primary",
+                                                        icon = icon("bar-chart-o")),
                                            uiOutput("download_report_button")
                                )
                         )
@@ -2394,9 +2438,15 @@ ui = tagList(
                       ),
 
              #%%%%%%%%%%%%%%%%%%%%%
+             # ABOUT ##############
+             #%%%%%%%%%%%%%%%%%%%%%
+             About,
+
+             #%%%%%%%%%%%%%%%%%%%%%
              # REFERENCES #########
              #%%%%%%%%%%%%%%%%%%%%%
-             tabPanel("References",
+             tabPanel("",
+                      icon = icon("fas fa-book"),
                       #------------------------------------------------------------------------------------#
                       # Packages ####
                       #------------------------------------------------------------------------------------#
@@ -2616,10 +2666,10 @@ ui = tagList(
                            </li>
 
                            <li><code>ShinyItemAnalysis</code>
-                           Martinkova, P., Drabinova, A., Leder, O. & Houdek, J. (2018).
-                           ShinyItemAnalysis: Test and item analysis via shiny.
-                           R package version 1.2.9.
-                           <a href = "https://CRAN.R-project.org/package=ShinyItemAnalysis", target = "_blank">See online.</a>
+                           Martinkova, P., & Drabinova, A. (2018).
+                           ShinyItemAnalysis for teaching psychometrics and to enforce routine analysis of educational tests.
+                           The R Journal, 10(2), 503-515.
+                           <a href = "https://journal.r-project.org/archive/2018/RJ-2018-074/", target = "_blank">See online.</a>
                            </li>
 
                            <li><code>shinyjs</code>
@@ -2861,11 +2911,11 @@ ui = tagList(
                       icon = icon("fas fa-cog"),
                       h4("IRT models setting"),
                       p("Set the number of cycles for IRT 1PL, 2PL, 3PL and 4PL models."),
-                      numericInput(inputId = "ncycles",
-                                   label = "Number of cycles",
-                                   value = 2000,
-                                   min = 1,
-                                   max = 999999),
+                      fluidPage(column(2, numericInput(inputId = "ncycles",
+                                                       label = "Number of cycles",
+                                                       value = 2000,
+                                                       min = 1,
+                                                       max = 999999))),
                       h4("Figure downloads"),
                       p("Here you can change setting for download of figures. "),
                       fluidPage(column(2, numericInput(inputId = "setting_figures_text_size",
@@ -2889,6 +2939,6 @@ ui = tagList(
                                                        min = 72,
                                                        max = 600))
                       ))
-             #     ))
                       ))
+
 
