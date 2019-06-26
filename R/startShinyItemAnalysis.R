@@ -11,20 +11,10 @@
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' martinkova@cs.cas.cz \cr
 #'
-#' Adela Drabinova \cr
+#' Adela Hladka \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' Faculty of Mathematics and Physics, Charles University \cr
-#' drabinova@cs.cas.cz \cr
-#'
-#' Ondrej Leder \cr
-#' Institute of Computer Science, The Czech Academy of Sciences \cr
-#' Faculty of Mathematics and Physics, Charles University \cr
-#' ondraleder@gmail.com  \cr
-#'
-#' Jakub Houdek \cr
-#' Institute of Computer Science, The Czech Academy of Sciences \cr
-#' The Faculty of Informatics and Statistics, University of Economics, Prague \cr
-#' houdek.james@gmail.com \cr
+#' hladka@cs.cas.cz \cr
 #'
 #' @examples
 #' \dontrun{
@@ -37,5 +27,5 @@ startShinyItemAnalysis <- function() {
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `ShinyItemAnalysis`.", call. = FALSE)
   }
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(appDir, display.mode = "normal", launch.browser = T)
 }

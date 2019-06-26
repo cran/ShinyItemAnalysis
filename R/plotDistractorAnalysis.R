@@ -14,16 +14,19 @@
 #' answers splitted into distractors. See \strong{Details}.
 #' @param matching numeric: numeric vector. If not provided, total score is calculated and
 #' distractor analysis is performed based on it.
+#' @param match.discrete logical: is \code{matching} discrete? Default value is \code{FALSE}. See details.
+#' @param cut.points numeric: numeric vector specifying cut points of \code{matching}. See details.
 #'
 #' @usage plotDistractorAnalysis(data, key, num.groups = 3, item = 1, item.name,
-#' multiple.answers = TRUE, matching = NULL)
+#' multiple.answers = TRUE, matching = NULL, match.discrete = FALSE, cut.points)
 #'
 #' @details
 #' This function is graphical representation of \code{\link{DistractorAnalysis}} function.
-#' The scores are calculatede using the item data and key. The respondents are then splitted into
-#' the \code{num.groups}-quantiles and the proportion of respondents in each quantile is
-#' reported with respect to their answers, using all reported combinations (default) or distractors.
-#' These proportions are plotted.
+#' In case, no \code{matching} is provided, the scores are calculated using the item data and key.
+#' The respondents are by default splitted into the \code{num.groups}-quantiles and the proportions
+#' of respondents in each quantile are displayed with respect to their answers. In case that \code{matching}
+#' is discrete (\code{match.discrete = TRUE}), \code{matching} is splitted based on its unique levels. Other
+#' cut points can be specified via \code{cut.points} argument.
 #'
 #' The \code{data} is a matrix or data frame whose rows represents unscored item response from a
 #' multiple-choice test and columns correspond to the items.
@@ -35,32 +38,27 @@
 #' are then plotted with correct combination.
 #'
 #' @author
-#' Adela Drabinova \cr
+#' Adela Hladka \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' Faculty of Mathematics and Physics, Charles University \cr
-#' drabinova@cs.cas.cz \cr
+#' hladka@cs.cas.cz \cr
 #'
 #' Patricia Martinkova \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' martinkova@cs.cas.cz \cr
 #'
-#' #' @seealso \code{\link{DistractorAnalysis}}
-#' #' @seealso \code{\link[CTT]{distractor.analysis}}
+#' @seealso \code{\link{DistractorAnalysis}}
+#' @seealso \code{\link[CTT]{distractor.analysis}}
 #'
 #' @examples
 #' \dontrun{
 #' # loading 100-item medical admission test data
 #' data(dataMedicaltest, dataMedicalkey)
-#' dataBin <- dataMedical[, 1:100]
 #' data <- dataMedicaltest[, 1:100]
+#' dataBin <- dataMedical[, 1:100]
 #' key <- unlist(dataMedicalkey)
 #'
-#' # Difficulty/Discriminaton plot for medical admission test
-#' DDplot(dataBin)
-#' # item 48 is very hard, thus does not discriminate well
-#' # item 57 discriminates well
-#' # item 32 does not discriminate well
-#'
+#' # distractor plot for items 48, 57 and 32 displaying distractors only
 #' plotDistractorAnalysis(data, key, item = 48, multiple.answers = F)
 #' # correct answer B does not function well
 #' plotDistractorAnalysis(data, key, item = 57, multiple.answers = F)
@@ -68,25 +66,37 @@
 #' plotDistractorAnalysis(data, key, item = 32, multiple.answers = F)
 #' # functions well, thus the whole item discriminates well
 #'
-#' # distractor analysis plot for item 48, 57 and 32, all combinations
+#' # distractor plot for items 48, 57 and 32 displaying all combinations
 #' plotDistractorAnalysis(data, key, item = 48)
 #' plotDistractorAnalysis(data, key, item = 57)
 #' plotDistractorAnalysis(data, key, item = 32)
 #'
-#' # distractor analysis plot for item 57, all combinations and 6 groups
-#' plotDistractorAnalysis(data, key, num.group = 6, item = 57)
+#' # distractor plot for item 57 with all combinations and 6 groups
+#' plotDistractorAnalysis(data, key, item = 57, num.group = 6)
+#'
+#'# distractor plot for item 57 using specified matching
+#' matching <- round(rowSums(dataBin), -1)
+#' plotDistractorAnalysis(data, key, item = 57, matching = matching)
+#'
+#' # distractor plot for item 57 using discrete matching
+#' plotDistractorAnalysis(data, key, item = 57, matching = matching, match.discrete = T)
+#'
+#' # distractor plot for item 57 using groups specified by cut.points
+#' plotDistractorAnalysis(data, key, item = 57, cut.points = seq(10, 100, 10))
 #' }
-#'
-#'
 #' @export
 
-
-plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, item.name, multiple.answers = TRUE, matching = NULL)
+plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, item.name, multiple.answers = TRUE,
+                                     matching = NULL, match.discrete = FALSE, cut.points)
 {
   key <- unlist(key)
+
   # distractor analysis
-  tabDA <- DistractorAnalysis(data = data, key = key, p.table = TRUE, num.groups = num.groups, matching = matching)
+  tabDA <- DistractorAnalysis(data = data, key = key, p.table = TRUE, num.groups = num.groups, matching = matching,
+                              match.discrete = match.discrete, cut.points = cut.points)
+
   x <- tabDA[[item]]
+
   # only rows where is possitive proportion of correct answers
   if (dim(x)[2] != 1){
     x <- x[!(apply(x, 1, function(y) all(y == 0))), ]
@@ -142,6 +152,9 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, item.n
   shape[CAall] <- 19
   xlab <- ifelse(is.null(matching), "Group by total score", "Group by criterion variable")
 
+  df$score.level <- as.factor(df$score.level)
+  num.groups <- length(unique(df$score.level))
+
   # plot
   ggplot(df, aes_string(x = "score.level",
                         y = "value",
@@ -164,5 +177,4 @@ plotDistractorAnalysis <-  function (data, key, num.groups = 3, item = 1, item.n
           legend.justification = c(0, 1),
           legend.key.width = unit(1, "cm")) +
     ggtitle(item.name)
-
 }

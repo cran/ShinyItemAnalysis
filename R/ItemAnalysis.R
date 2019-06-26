@@ -41,9 +41,10 @@
 #' @return
 #' \code{ItemAnalysis} function computes various traditional item analysis indices. Output
 #' is a \code{data.frame} with following columns:
-#'   \item{\code{Difficulty}}{item difficulty based on ratio of correct answers}
-#'   \item{\code{Scaled score}}{}
-#'   \item{\code{Sample SD}}{standard deviation of the item}
+#'   \item{\code{Difficulty}}{average score of the item divided by its range}
+#'   \item{\code{Average score}}{average score of the item}
+#'   \item{\code{SD}}{standard deviation of the item score}
+#'   \item{\code{SD bin}}{standard deviation of the item score for binarized data}
 #'   \item{\code{Correct answers}}{proportion of correct answers}
 #'   \item{\code{Min score}}{minimal score specified in \code{minscore}; if not provided, observed minimal score}
 #'   \item{\code{Max score}}{maximal score specified in \code{maxscore}; if not provided, observed maximal score}
@@ -55,9 +56,9 @@
 #'   \item{\code{RIT}}{correlation between item score and overall test score}
 #'   \item{\code{RIR}}{correlation between item score and overall test score}
 #'   \item{\code{Item criterion}}{correlation of item score with criterion}
-#'   \item{\code{Item reliability}}{item reliability index}
+#'   \item{\code{Item reliability}}{item reliability index calculated as \code{cor(item, test)*sqrt(((N-1)/N)*var(item))}, see Allen & Yen (1979), Ch.6.4}
 #'   \item{\code{Item reliability woi}}{item reliability index (scored without item)}
-#'   \item{\code{Item validity}}{item validity index}
+#'   \item{\code{Item validity}}{item validity index calculated as \code{cor(item, y)*sqrt(((N-1)/N)*var(item))}, see Allen & Yen (1979), Ch.6.4}
 #'   \item{\code{Item criterion}}{correlation between item and criterion \code{y}}
 #'   \item{\code{Alpha drop}}{Cronbach's alpha without given item}
 #' With \code{add.bin == TRUE}, indices based on binarized data set are also provided
@@ -72,16 +73,16 @@
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' Faculty of Mathematics and Physics, Charles University \cr
 #'
-#' Adela Drabinova \cr
+#' Adela Hladka \cr
 #' Institute of Computer Science, The Czech Academy of Sciences \cr
 #' Faculty of Mathematics and Physics, Charles University \cr
-#' drabinova@cs.cas.cz \cr
+#' hladka@cs.cas.cz \cr
 #'
 #' @references
 #' Martinkova, P., Stepanek, L., Drabinova, A., Houdek, J., Vejrazka, M., & Stuka, C. (2017).
 #' Semi-real-time analyses of item characteristics for medical school admission tests.
 #' In: Proceedings of the 2017 Federated Conference on Computer Science and Information Systems.
-#' http://dx.doi.org/10.15439/2017F380
+#' https://doi.org/10.15439/2017F380
 #'
 #' Allen, M. J. & Yen, W. M. (1979). Introduction to measurement theory. Monterey, CA: Brooks/Cole.
 #'
@@ -225,8 +226,8 @@ ItemAnalysis <- function (data, y = NULL,  k = 3, l = 1, u = 3, maxscore, minsco
     TOT.woi.bin <- TOTbin - (dataBin)
     rix.woi.bin <- diag(cor(dataBin, TOT.woi.bin, use = "complete"))
     rix.bin <- cor(dataBin, TOTbin, use = "complete")
-    rix.bin[(maxscoreB-minscoreB) < 1] <- 0
-    rix.woi.bin[(maxscoreB-minscoreB) < 1] <- 0
+    rix.bin[(maxscoreB - minscoreB) < 1] <- 0
+    rix.woi.bin[(maxscoreB - minscoreB) < 1] <- 0
   } else {
     rix.woi.bin <-NA
     rix.bin <- NA
@@ -292,7 +293,7 @@ ItemAnalysis <- function (data, y = NULL,  k = 3, l = 1, u = 3, maxscore, minsco
     alphaDrop.bin <- NA
   }
 
-  mat <- data.frame(Mean = mean, Scaled.Score = difc, Sample.SD = sx, Sample.SD.bin = sx.bin, CorrAnsw = correct,
+  mat <- data.frame(Difficulty = difc, Mean = mean, Sample.SD = sx, Sample.SD.bin = sx.bin, CorrAnsw = correct,
                     Min.score = minscore, Max.score = maxscore, Obt.min = obtainedmin, Obt.max = obtainedmax,
                     CutScore = cutscore, ULI.Ord = ULIord, ULI.bin = ULIbin, ULI.default = discrim, ULI.default.bin = discrimBin,
                     Item.total = rix,Item.total.bin = rix.bin,
@@ -301,15 +302,15 @@ ItemAnalysis <- function (data, y = NULL,  k = 3, l = 1, u = 3, maxscore, minsco
                     Item.Rel.woi = i.rel.woi, Item.Rel.woi.bin = i.rel.woi.bin, Item.Validity = i.val, Item.Validity.bin = i.val.bin,
                     Alpha.Drop = alphaDrop, Alpha.Drop.bin = alphaDrop.bin)
 
-  names(mat) <- c("Difficulty", "Scaled score", "Sample SD", "Sample SD bin", "Correct answers",
+  names(mat) <- c("Difficulty", "Average score", "SD", "SD bin", "Correct answers",
                   "Min score", "Max score", "Obtained min", "Obtained max", "Cut score", "ULI", "ULI binary",
                   "ULI default", "ULI default bin", "RIT", "RIT bin", "RIR", "RIR bin",
                   "Item criterion", "Item criterion bin", "Item reliability", "Item reliability bin", "Item reliability woi",
                   "Item reliability woi bin", "Item validity", "Item validity bin", "Alpha drop", "Alpha drop bin")
 
   if (add.bin == TRUE){
-  return(mat)
-    }
-  matOrd <- mat[, c(2:3, 6:11, 13, 15, 17, 19, 21, 23, 25, 27)]
+    return(mat)
+  }
+  matOrd <- mat[, c(1:3, 6:11, 13, 15, 17, 19, 21, 23, 25, 27)]
   return(matOrd)
 }

@@ -67,16 +67,17 @@ output$DB_logreg_plot <- downloadHandler(
 )
 
 # ** Table of estimated parameters of logistic curve ######
-output$logreg_table <- renderTable({
+output$coef_logreg_table <- renderTable({
 
   tab <- summary(logreg_model())$coef[1:2, 1:2]
-
-  colnames(tab) <- c("Estimate", "SD")
-  rownames(tab) <- c("b0", "b1")
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c("%%mathit{b}_{0}%%", "%%mathit{b}_{1}%%")
   tab
 },
 include.rownames = T,
 include.colnames = T)
+
+
 
 # ** Interpretation of estimated parameters of logistic curve ######
 output$logreg_interpretation <- renderUI({
@@ -95,6 +96,12 @@ output$logreg_interpretation <- renderUI({
   HTML(paste(txt1, txt2, txt3))
 })
 
+# ** Warning for missing values ####
+output$logreg_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * LOGISTIC Z ######
@@ -105,7 +112,6 @@ z_logreg_model <- reactive({
   zscore <- z_score()
   item <- input$zlogregSlider
   data <- binary()
-
   model <- glm(unlist(data[, item, with = F]) ~ zscore, family = "binomial")
 })
 
@@ -160,15 +166,17 @@ output$DB_z_logreg_plot <- downloadHandler(
 )
 
 # ** Table of estimated parameters of logistic regression on Z-scores ######
-output$z_logreg_table <- renderTable({
+output$coef_z_logreg <- renderTable({
 
   tab <- summary(z_logreg_model())$coef[1:2, 1:2]
-  colnames(tab) <- c("Estimate", "SD")
-  rownames(tab) <- c("b0", "b1")
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c("%%mathit{b}_{0}%%", "%%mathit{b}_{1}%%")
   tab
 },
 include.rownames = T,
 include.colnames = T)
+
+
 
 # * Interpretation of estimated parameters of logistic regression on Z-scores ######
 output$z_logreg_interpretation <- renderUI({
@@ -185,9 +193,15 @@ output$z_logreg_interpretation <- renderUI({
       scores) is associated with the", txt0, " in the log
       odds of answering the item correctly
       vs. not correctly in the amount of"
-)
+    )
   txt3 <- paste ("<b>", abs(b1), "</b>")
   HTML(paste(txt1, txt2, txt3))
+})
+
+# ** Warning for missing values ####
+output$z_logreg_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
 })
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -254,7 +268,7 @@ output$DB_z_logreg_irt_plot <- downloadHandler(
 )
 
 # ** Table of estimated parameters of logistic curve on Z scores with IRT param. ######
-output$z_logreg_irt_table <- renderTable({
+output$coef_z_logreg_irt <- renderTable({
   fit <- z_logreg_irt_model()
   tab_coef_old <- coef(fit)
 
@@ -273,12 +287,13 @@ output$z_logreg_irt_table <- renderTable({
 
   tab_coef <- c(tab_coef_old[2], -tab_coef_old[1]/tab_coef_old[2])
   tab <- cbind(tab_coef, tab_sd)
-
-  colnames(tab) <- c("Estimate", "SD")
-  rownames(tab) <- c("a", "b")
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c("%%mathit{a}%%", "%%mathit{b}%%")
   tab
 },
 include.rownames = T)
+
+
 
 # ** Interpretation of estimated parameters of logistic curve on Z scores with IRT param. ######
 output$z_logreg_irt_interpretation <- renderUI({
@@ -295,9 +310,15 @@ output$z_logreg_irt_interpretation <- renderUI({
       scores) is associated with the", txt0, " in the log
       odds of answering the item correctly
       vs. not correctly in the amount of"
-)
+    )
   txt3 <- paste ("<b>", abs(b1), "</b>")
   HTML(paste(txt1, txt2, txt3))
+})
+
+# ** Warning for missing values ####
+output$z_logreg_irt_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
 })
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -308,16 +329,27 @@ output$z_logreg_irt_interpretation <- renderUI({
 nlr_3P_model <- reactive({
   data <- binary()
   zscore <- z_score()
-  i <- input$slider_nlr_3P_item
+  item <- input$slider_nlr_3P_item
+
+  if(any(is.na(zscore))) {
+    idx_NA <- which(is.na(zscore))
+    data <- data[-idx_NA, ]
+    zscore <- na.omit(zscore)
+  }
 
   start <- startNLR(data, group = c(rep(0, nrow(data)/2), rep(1, nrow(data)/2)),
                     model = "3PLcg", parameterization = "classic", simplify = T)[, 1:3]
 
   glr <- function(x, a, b, c){c + (1 - c) / (1 + exp(-a * (x - b)))}
 
-  fit <- nls(unlist(data[, i, with = F]) ~ glr(zscore, a, b, c),
-             algorithm = "port", start = start[i, ],
-             lower = c(-Inf, -Inf, 0), upper = c(Inf, Inf, 1))
+  fit <- tryCatch(nls(unlist(data[, item, with = F]) ~ glr(zscore, a, b, c),
+                            algorithm = "port", start = start[item, ],
+                            lower = c(-Inf, -Inf, 0), upper = c(Inf, Inf, 1)),
+                        error = function(e) e)
+
+  validate(need(class(fit) == "nls",
+                HTML(paste0('Error: Method cannot be fitted for item ', item, '. The error message returned: ', fit$message))))
+
   fit
 })
 
@@ -326,6 +358,7 @@ nlr_3P_plot_Input <- reactive({
   zscore <- z_score()
   item <- input$slider_nlr_3P_item
   data <- binary()
+
   fit <- nlr_3P_model()
 
   fun <- function(x, a, b, c){c + (1 - c) / (1 + exp(-a * (x - b)))}
@@ -351,6 +384,7 @@ nlr_3P_plot_Input <- reactive({
     theme(legend.position = c(0.01, 0.98),
           legend.justification = c(0, 1)) +
     ggtitle(item_names()[item])
+
 })
 
 # ** Output plot of estimated nonlinear curve ######
@@ -373,16 +407,18 @@ output$DB_nlr_3P_plot <- downloadHandler(
 )
 
 # Table of estimated parameters of nonlinear curve ######
-output$nlr_3P_table <- renderTable({
+output$coef_nlr_3P <- renderTable({
   fit <- nlr_3P_model()
 
   tab <- summary(fit)$parameters[, 1:2]
-  colnames(tab) <- c("Estimate", "SD")
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c("%%mathit{a}%%","%%mathit{b}%%","%%mathit{c}%%")
   tab
 },
 include.rownames = T,
 include.colnames = T
 )
+
 
 # ** Interpretation of estimated parameters of nonlinear curve ######
 output$nlr_3P_interpretation <- renderUI({
@@ -394,13 +430,18 @@ output$nlr_3P_interpretation <- renderUI({
 
   txt0 <- paste0("<b>", "Interpretation:", "</b>")
   txt1 <- paste0("A one-unit increase in the Z-score (one SD increase in original scores) is associated with the ",
-                  ifelse(a < 0, "decrease", "increase"), " in the log odds of answering the item correctly vs.
+                 ifelse(a < 0, "decrease", "increase"), " in the log odds of answering the item correctly vs.
                  not correctly in the amount of <b>", abs(a), "</b>. ")
   txt2 <- paste0("Probability of guessing is <b>", c, "</b>. ")
 
   HTML(paste0(txt0, txt1, txt2))
 })
 
+# ** Warning for missing values ####
+output$nlr_3P_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * NONLINEAR 4P IRT Z ######
@@ -410,16 +451,27 @@ output$nlr_3P_interpretation <- renderUI({
 nlr_4P_model <- reactive({
   data <- binary()
   zscore <- z_score()
-  i <- input$slider_nlr_4P_item
+  item <- input$slider_nlr_4P_item
+
+  if(any(is.na(zscore))) {
+    idx_NA <- which(is.na(zscore))
+    data <- data[-idx_NA, ]
+    zscore <- na.omit(zscore)
+  }
 
   start <- startNLR(data, group = c(rep(0, nrow(data)/2), rep(1, nrow(data)/2)),
                     model = "4PLcgdg", parameterization = "classic", simplify = T)[, 1:4]
 
   glr <- function(x, a, b, c, d){c + (d - c) / (1 + exp(-a * (x - b)))}
 
-  fit <- nls(unlist(data[, i, with = F]) ~ glr(zscore, a, b, c, d),
-             algorithm = "port", start = start[i, ],
-             lower = c(-Inf, -Inf, 0, 0), upper = c(Inf, Inf, 1, 1))
+  fit <- tryCatch(nls(unlist(data[, item, with = F]) ~ glr(zscore, a, b, c, d),
+                      algorithm = "port", start = start[item, ],
+                      lower = c(-Inf, -Inf, 0, 0), upper = c(Inf, Inf, 1, 1)),
+                  error = function(e) e)
+
+  validate(need(class(fit) == "nls",
+                HTML(paste0('Error: Method cannot be fitted for item ', item, '. The error message returned: ', fit$message))))
+
   fit
 })
 
@@ -476,16 +528,19 @@ output$DB_nlr_4P_plot <- downloadHandler(
 )
 
 # Table of estimated parameters of nonlinear curve ######
-output$nlr_4P_table <- renderTable({
+output$coef_nlr_4P <- renderTable({
   fit <- nlr_4P_model()
 
   tab <- summary(fit)$parameters[, 1:2]
-  colnames(tab) <- c("Estimate", "SD")
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c("%%mathit{a}%%","%%mathit{b}%%","%%mathit{c}%%","%%mathit{d}%%")
   tab
 },
 include.rownames = T,
 include.colnames = T
 )
+
+
 
 # ** Interpretation of estimated parameters of nonlinear curve ######
 output$nlr_4P_interpretation <- renderUI({
@@ -505,6 +560,12 @@ output$nlr_4P_interpretation <- renderUI({
   HTML(paste0(txt0, txt1, txt2, txt3))
 })
 
+# ** Warning for missing values ####
+output$nlr_4P_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * MODEL COMPARISON ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -516,6 +577,18 @@ output$regr_comp_table <- DT::renderDataTable({
   m <- ncol(data)
 
   glr <- function(x, a, b, c, d){c + (d - c) / (1 + exp(-a * (x - b)))}
+
+  # If zscore has NA values, those need to be ommited.
+  # While nls does that automatically, nevertheless the indices of those values
+  # would cause unlist(data[, i, with = F]) have higher dimension
+  # than output of function glr(zscore, a, b, c = 0, d = 1).
+  # Thus the following code is needed:
+
+  if(any(is.na(zscore))){
+    idx_NA <- which(is.na(zscore))
+    data <- data[-idx_NA, ]
+    zscore <- na.omit(zscore)
+  }
 
   start <- startNLR(data, group = c(rep(0, nrow(data)/2), rep(1, nrow(data)/2)),
                     model = "4PLcgdg",
@@ -542,38 +615,46 @@ output$regr_comp_table <- DT::renderDataTable({
                                                    cat("ERROR : ", conditionMessage(e), "\n")}))
 
 
-  whok <- !c(sapply(fit2PL, is.null) | sapply(fit3PL, is.null) | sapply(fit4PL, is.null))
+  whok2PL <- !sapply(fit2PL, is.null)
+  whok3PL <- !sapply(fit3PL, is.null)
+  whok4PL <- !sapply(fit4PL, is.null)
   AIC2PL <- AIC3PL <- AIC4PL <- BIC2PL <- BIC3PL <- BIC4PL <- rep(NA, m)
 
-  AIC2PL[whok] <- sapply(fit2PL[whok], AIC)
-  AIC3PL[whok] <- sapply(fit3PL[whok], AIC)
-  AIC4PL[whok] <- sapply(fit4PL[whok], AIC)
+  AIC2PL[whok2PL] <- sapply(fit2PL[whok2PL], AIC)
+  AIC3PL[whok3PL] <- sapply(fit3PL[whok3PL], AIC)
+  AIC4PL[whok4PL] <- sapply(fit4PL[whok4PL], AIC)
 
-  BIC2PL[whok] <- sapply(fit2PL[whok], BIC)
-  BIC3PL[whok] <- sapply(fit3PL[whok], BIC)
-  BIC4PL[whok] <- sapply(fit4PL[whok], BIC)
+  BIC2PL[whok2PL] <- sapply(fit2PL[whok2PL], BIC)
+  BIC3PL[whok3PL] <- sapply(fit3PL[whok3PL], BIC)
+  BIC4PL[whok4PL] <- sapply(fit4PL[whok4PL], BIC)
 
   bestAIC <- bestBIC <- rep(NA, m)
-  dfAIC <- cbind(AIC2PL[whok], AIC3PL[whok], AIC4PL[whok])
-  bestAIC[whok] <- paste0(apply(dfAIC, 1, function(x) which(x == min(x))[1]) + 1, "PL")
+  dfAIC <- cbind(AIC2PL, AIC3PL, AIC4PL)
+  bestAIC <- apply(dfAIC, 1, function(x) which(x == min(x, na.rm = T))[1])
+  bestAIC <- ifelse(is.na(bestAIC), bestAIC, paste0(bestAIC + 1, "PL"))
 
-  dfBIC <- cbind(BIC2PL[whok], BIC3PL[whok], BIC4PL[whok])
-  bestBIC[whok] <- paste0(apply(dfBIC, 1, function(x) which(x == min(x))[1]) + 1, "PL")
+  dfBIC <- cbind(BIC2PL, BIC3PL, BIC4PL)
+  bestBIC <- apply(dfBIC, 1, function(x) which(x == min(x, na.rm = T))[1])
+  bestBIC <- ifelse(is.na(bestBIC), bestBIC, paste0(bestBIC + 1, "PL"))
 
   LRstat23 <- LRpval23 <- rep(NA, m)
-  LRstat23[whok] <- -2 * (sapply(fit2PL[whok], logLik) - sapply(fit3PL[whok], logLik))
+  whok23PL <- c(whok2PL & whok3PL)
+  LRstat23[whok23PL] <- -2 * (sapply(fit2PL[whok23PL], logLik) - sapply(fit3PL[whok23PL], logLik))
   LRdf <- 1
-  LRpval23[whok] <- 1 - pchisq(LRstat23[whok], LRdf)
-  LRpval23 <- p.adjust(LRpval23, method = input$correction_method_regrmodels)
+  LRpval23[whok23PL] <- 1 - pchisq(LRstat23[whok23PL], LRdf)
+  LRpval23[whok23PL] <- p.adjust(LRpval23[whok23PL], method = input$correction_method_regrmodels)
 
   LRstat34 <- LRpval34 <- rep(NA, m)
-  LRstat34[whok] <- -2 * (sapply(fit3PL[whok], logLik) - sapply(fit4PL[whok], logLik))
+  whok34PL <- c(whok3PL & whok4PL)
+  LRstat34[whok34PL] <- -2 * (sapply(fit3PL[whok34PL], logLik) - sapply(fit4PL[whok34PL], logLik))
   LRdf <- 1
-  LRpval34[whok] <- 1 - pchisq(LRstat34[whok], LRdf)
-  LRpval34 <- p.adjust(LRpval34, method = input$correction_method_regrmodels)
+  LRpval34[whok34PL] <- 1 - pchisq(LRstat34[whok34PL], LRdf)
+  LRpval34[whok34PL] <- p.adjust(LRpval34[whok34PL], method = input$correction_method_regrmodels)
 
-  bestLR <- ifelse(LRpval34 < 0.05, "4PL",
-                   ifelse(LRpval23 < 0.05, "3PL", "2PL"))
+  bestLR <- rep(NA, m)
+
+  bestLR[whok34PL] <- ifelse(LRpval23[whok34PL] < 0.05, "4PL", "3PL")
+  bestLR[whok23PL] <- ifelse(LRpval23[whok23PL] != "4PL" & LRpval23[whok23PL] < 0.05, "3PL", "2PL")
 
   tab <- rbind(sprintf("%.2f", round(AIC2PL, 2)),
                sprintf("%.2f", round(AIC3PL, 2)),
@@ -614,141 +695,381 @@ output$regr_comp_table <- DT::renderDataTable({
 })
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# * CUMULATIVE LOGISTIC ######
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# ** Matching criterion for cumulative model ######
+cumreg_matching <- reactive({
+  if (input$cumreg_matching == "total"){
+    matching <- total_score()
+  } else {
+    matching <- z_score()
+  }
+  matching
+})
+
+# ** Update select input for different parametrization ######
+observe({
+  if (input$cumreg_parametrization == "irt")
+    updateSelectInput(session = session,
+                      inputId = "cumreg_matching",
+                      selected = "zscore")
+})
+
+# ** Model for cumulative logistic regression ######
+cumreg_model <- reactive({
+  matching <- cumreg_matching()
+  data <- as.data.frame(ordinal())
+  maxval <- sapply(data, function(x) max(x, na.rm = TRUE))
+
+  for (i in 1:ncol(data)){
+    data[, i] <- factor(data[, i], levels = 0:maxval[i])
+  }
+
+  fit.cum <- apply(data, 2,
+                   function(x) VGAM::vglm(x ~ matching,
+                                          family = cumulative(reverse = TRUE, parallel = TRUE)))
+  fit.cum
+})
+
+
+# ** Plot with cumulative curves ######
+cumreg_plot_cum_Input <- reactive({
+  item <- input$cumreg_slider_item
+  matching <- cumreg_matching()
+  fit.cum <- cumreg_model()
+  matching.name <- ifelse(input$cumreg_matching == "total", "Total score", "Standardized total score")
+
+  g <- plotCumulative(fit.cum[[item]], type = "cumulative", matching.name = matching.name)
+
+  g
+})
+
+# ** Output plot with estimated curves of cumulative regression ######
+output$cumreg_plot_cum <- renderPlot({
+  cumreg_plot_cum_Input()
+})
+
+# ** DB plot with estimated curves of cumulative regression ######
+output$DB_cumreg_plot_cum <- downloadHandler(
+  filename =  function() {
+    paste("fig_CumulativeRegressionCurve_cumulative_", item_names()[input$cumreg_slider_item], ".png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = cumreg_plot_cum_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+
+# ** Calculation of empirical cumulative probabilities ######
+cumreg_plot_cat_Input <- reactive({
+  item <- input$cumreg_slider_item
+  fit.cum <- cumreg_model()
+  matching.name <- ifelse(input$cumreg_matching == "total", "Total score", "Standardized total score")
+
+  g <- plotCumulative(fit.cum[[item]], type = "category", matching.name = matching.name)
+  g
+})
+
+# ** Output plot with estimated curves of cumulative regression ######
+output$cumreg_plot_cat <- renderPlot({
+  cumreg_plot_cat_Input()
+})
+
+# ** DB plot with estimated curves of cumulative regression ######
+output$DB_cumreg_plot_cat <- downloadHandler(
+  filename =  function() {
+    paste("fig_CumulativeRegressionCurve_category_", item_names()[input$cumreg_slider_item], ".png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = cumreg_plot_cat_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+
+# ** Equation ######
+output$cumreg_equation <- renderUI({
+  txt1 <- ifelse(input$cumreg_matching == "total", "X", "Z")
+
+  if (input$cumreg_parametrization == "classic"){
+    txt2 <- paste("b_{0k} + b_1", txt1)
+    txt3 <- paste(txt1, ", b_{0k},  b_1")
+  } else {
+    txt2 <- paste("a(", txt1, "- d_{0k})")
+    txt3 <- paste(txt1, ", a,  d_{0k}")
+  }
+
+  txt <- paste("$$P(Y \\geq k|", txt3, ") = \\frac{e^{", txt2, "}}{1 + e^{", txt2, "}}$$")
+
+  withMathJax(HTML(txt))
+})
+
+# ** Interpretation ######
+output$cumreg_interpretation <- renderUI({
+  if (input$cumreg_parametrization == "classic"){
+    par <- c("\\(b_{0k}\\)", "\\(b_1\\)")
+  } else {
+    par <- c("\\(d_{0k}\\)", "\\(a\\)")
+  }
+
+  txt <- paste("Parameters", par[1], "describe horizontal position of the fitted curves,
+               where \\(k = 0, 1, 2, ...\\) is number of obtained scores, parameter", par[2],
+               "describes their common slope. Category probabilities are then calculated as
+               differences of two subsequent cumulative probabilities. ")
+  withMathJax(HTML(txt))
+})
+
+# ** Table of parameters ######
+cumreg_coef_tab_Input <- reactive({
+  fit.cum <- cumreg_model()
+  item <- input$cumreg_slider_item
+  data <- as.data.frame(ordinal())
+
+  if (input$cumreg_parametrization == "classic"){
+    tab.coef <- coef(fit.cum[[item]])
+    tab.se <- sqrt(diag(vcov(fit.cum[[item]])))
+
+    tab <- data.frame(Estimate = tab.coef, SE = tab.se)
+    rownames(tab) <- c(paste0("%%mathit{b}_{0", sort(unique(data[, item]))[-1], "}%%"), "%%mathit{b}_{1}%%")
+  } else {
+    tab.coef.tmp <- coef(fit.cum[[item]])
+    c <- length(tab.coef.tmp)
+
+    tab.coef <- c(-tab.coef.tmp[-c]/tab.coef.tmp[c], tab.coef.tmp[c])
+
+    Sigma <- vcov(fit.cum[[item]])
+    c <- length(tab.coef)
+    D <- matrix(0, nrow = c, ncol = c)
+    diag(D)[-c] <- -1/tab.coef.tmp[c]
+    D[c, ] <- c(tab.coef.tmp[1:(c - 1)]/(tab.coef.tmp[c])^2, 1)
+
+    Sigma.new <- t(D) %*% Sigma %*% D
+
+    tab <- data.frame(Estimate = tab.coef, SE = sqrt(diag(Sigma.new)))
+    rownames(tab) <- c(paste0("%%mathit{d}_{0", sort(unique(data[, item]))[-1], "}%%"), "%%mathit{a}%%")
+  }
+
+  tab
+})
+
+output$cumreg_coef_tab <- renderTable({
+  cumreg_coef_tab_Input()
+},
+include.rownames = T,
+include.colnames = T)
+
+# ** Warning for missing values ####
+output$cumreg_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# * ADJACENT LOGISTIC ######
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# ** Matching criterion adjacent logistic regression ######
+adjreg_matching <- reactive({
+  if (input$adjreg_matching == "total"){
+    matching <- total_score()
+  } else {
+    matching <- z_score()
+  }
+  matching
+})
+
+# ** Update select input for different parametrization ######
+observe({
+  if (input$adjreg_parametrization == "irt")
+    updateSelectInput(session = session,
+                      inputId = "adjreg_matching",
+                      selected = "zscore")
+})
+
+# ** Model for adjacent regression ######
+adjreg_model <- reactive({
+  matching <- adjreg_matching()
+  data <- as.data.frame(ordinal())
+  maxval <- sapply(data, function(x) max(x, na.rm = TRUE))
+
+  for (i in 1:ncol(data)){
+    data[, i] <- factor(data[, i], levels = 0:maxval[i])
+  }
+
+  fit.adj <- apply(data, 2, function(x)
+    vglm(x ~ matching, family = acat(reverse = FALSE, parallel = TRUE)))
+  fit.adj
+})
+
+# ** Plot with category curves ######
+adjreg_plot_cat_Input <- reactive({
+  item <- input$adjreg_slider_item
+  matching <- adjreg_matching()
+  fit.adj <- adjreg_model()
+  matching.name <- ifelse(input$adjreg_matching == "total", "Total score", "Standardized total score")
+
+  g <- plotAdjacent(fit.adj[[item]], matching.name = matching.name)
+
+  g
+})
+
+# ** Output plot with estimated curves of adjacent regression ######
+output$adjreg_plot_cat <- renderPlot({
+  adjreg_plot_cat_Input()
+})
+
+# ** DB plot with estimated curves of adjacent regression ######
+output$DB_adjreg_plot_cat <- downloadHandler(
+  filename =  function() {
+    paste("fig_AdjacentRegressionCurve_category_", item_names()[input$adjreg_slider_item], ".png", sep = "")
+  },
+  content = function(file) {
+    ggsave(file, plot = adjreg_plot_cat_Input() +
+             theme(text = element_text(size = setting_figures$text_size)),
+           device = "png",
+           height = setting_figures$height, width = setting_figures$width,
+           dpi = setting_figures$dpi)
+  }
+)
+
+# ** Equation ######
+output$adjreg_equation <- renderUI({
+  txt1 <- ifelse(input$adjreg_matching == "total", "X", "Z")
+
+  if (input$adjreg_parametrization == "classic"){
+    txt2 <- paste("b_{0t} + b_1", txt1)
+    txt3 <- paste(txt1, ", b_1, b_{01}, ..., b_{0k}")
+  } else {
+    txt2 <- paste("a(", txt1, "- d_{0k})")
+    txt3 <- paste(txt1, ", a, d_{01}, ..., d_{0k}")
+  }
+
+  txt <- paste("$$P(Y = k|", txt3, ") = \\frac{e^{\\sum_{t = 0}^{k}", txt2, "}}{\\sum_{r = 0}^{K}e^{\\sum_{t = 0}^{r}", txt2, "}}$$")
+
+  withMathJax(HTML(txt))
+})
+
+# ** Interpretation ######
+output$adjreg_interpretation <- renderUI({
+  if (input$cumreg_parametrization == "classic"){
+    par <- c("\\(b_{0k}\\)", "\\(b_1\\)")
+  } else {
+    par <- c("\\(d_{0k}\\)", "\\(a\\)")
+  }
+
+  txt <- paste("Parameters", par[1], "describe horizontal position of the fitted curves,
+               where \\(k = 0, 1, 2, ...\\) is number of obtained scores, parameter", par[2],
+               "describes their common slope. Category probabilities are then calculated as
+               differences of two subsequent cumulative probabilities. ")
+  withMathJax(HTML(txt))
+})
+
+# ** Table of parameters ######
+adjreg_coef_tab_Input <- reactive({
+  fit.cum <- cumreg_model()
+  item <- input$cumreg_slider_item
+  data <- as.data.frame(ordinal())
+
+  if (input$cumreg_parametrization == "classic"){
+    tab.coef <- coef(fit.cum[[item]])
+    tab.se <- sqrt(diag(vcov(fit.cum[[item]])))
+
+    tab <- data.frame(Estimate = tab.coef, SE = tab.se)
+    rownames(tab) <- c(paste0("%%mathit{b}_{", sort(unique(data[, item]))[-1], "}%%"), "%%a%%")
+  } else {
+    tab.coef.tmp <- coef(fit.cum[[item]])
+    c <- length(tab.coef.tmp)
+
+    tab.coef <- c(-tab.coef.tmp[-c]/tab.coef.tmp[c], tab.coef.tmp[c])
+
+    Sigma <- vcov(fit.cum[[item]])
+    c <- length(tab.coef)
+    D <- matrix(0, nrow = c, ncol = c)
+    diag(D)[-c] <- -1/tab.coef.tmp[c]
+    D[c, ] <- c(tab.coef.tmp[1:(c - 1)]/(tab.coef.tmp[c])^2, 1)
+
+    Sigma.new <- t(D) %*% Sigma %*% D
+
+    tab <- data.frame(Estimate = tab.coef, SE = sqrt(diag(Sigma.new)))
+    rownames(tab) <- c(paste0("%%mathit{d}_{0", sort(unique(data[, item]))[-1], "}%%"), "%%mathit{a}%%")
+  }
+
+  tab
+})
+
+output$adjreg_coef_tab <- renderTable({
+  cumreg_coef_tab_Input()
+},
+include.rownames = T,
+include.colnames = T)
+
+# ** Warning for missing values ####
+output$adjreg_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * MULTINOMIAL ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+# ** Matching criterion for multinomial regression ######
+multi_matching <- reactive({
+  if (input$multi_matching == "total"){
+    matching <- total_score()
+  } else {
+    matching <- z_score()
+  }
+  matching
+})
+
 # ** Model for multinomial regression ######
 multi_model <- reactive({
-  zscore <- z_score()
+  matching <- multi_matching()
   key <- t(as.data.table(key()))
-  item <- input$multiSlider
+  item <- input$multi_slider_item
   data <- nominal()
 
-  dfhw <- data.table(data[, item, with = F], zscore)
+  dfhw <- data.table(data[, item, with = F], matching)
   dfhw <- dfhw[complete.cases(dfhw), ]
 
-  fitM <- multinom(relevel(as.factor(unlist(dfhw[, 1])),
-                           ref = paste(key[item])) ~ unlist(dfhw[, 2]),
-                   trace = F)
-  fitM
+  fit <- tryCatch(multinom(relevel(as.factor(unlist(dfhw[, 1])),
+                                    ref = paste(key[item])) ~ unlist(dfhw[, 2]),
+                            trace = F),
+                   error = function(e) e)
+
+  validate(need(class(fit) == "nnet",
+                HTML(paste0('Error: Method cannot be fitted for item ', item, '. The error message returned: ', fit$message))))
+
+  fit
 })
 
 # ** Plot with estimated curves of multinomial regression ######
 multi_plot_Input <- reactive({
-  key <- t(as.data.table(key()))
+  fit <- multi_model()
+
+  matching <- multi_matching()
+  item <- input$multi_slider_item
   data <- nominal()
-  zscore <- z_score()
-  item <- input$multiSlider
 
-  fitM <- multi_model()
+  dfhw <- data.table(data[, item, with = F], matching)
+  matching <- unlist(dfhw[complete.cases(dfhw), 2])
 
-  data <- sapply(1:ncol(data), function(i) as.factor(unlist(data[, i, with = F])))
+  matching_name <- ifelse(input$multi_matching == "total", "Total score", "Standardized total score")
 
-  dfhw <- data.table(data[, item], zscore)
-  dfhw <- dfhw[complete.cases(dfhw), ]
-
-  pp <- fitted(fitM)
-
-  temp <- as.factor(unlist(dfhw[, 1]))
-  temp <- relevel(temp, ref = paste(key[item]))
-
-  if(ncol(pp) == 1){
-    pp <- cbind(pp, 1 - pp)
-    colnames(pp) <- rev(levels(temp))
-  }
-
-  stotals <- rep(unlist(dfhw[, 2]),
-                 length(levels(temp)))
-
-  df <- cbind(melt(pp), stotals)
-  df$Var2 <- relevel(as.factor(df$Var2), ref = paste(key[item]))
-
-  df2 <- data.table(table(data[, item], zscore),
-                    y = data.table(prop.table(table(data[, item], zscore), 2))[, 3])
-  df2$zscore <- as.numeric(paste(df2$zscore))
-  df2$Var2 <- relevel(factor(df2$V2), ref = paste(key[item]))
-
-
-  ggplot() +
-    geom_line(data = df,
-              aes(x = stotals , y = value,
-                  colour = Var2, linetype = Var2), size = 1) +
-    geom_point(data = df2,
-               aes(x = zscore, y = y.N,
-                   colour = Var2, fill = Var2,
-                   size = N),
-               alpha = 0.5, shape = 21) +
-
-    ylim(0, 1) +
-    labs(x = "Standardized total score",
-         y = "Probability of answer") +
-    theme_app() +
-    theme(legend.box = "horizontal",
-          legend.position = c(0.01, 0.98),
-          legend.justification = c(0, 1)) +
+  g <- plotMultinomial(fit, matching, matching.name = matching_name) +
     ggtitle(item_names()[item])
-})
+  g
 
-# ** Reports: Plot with estimated curves of multinomial regression ######
-multiplotReportInput <- reactive({
-  graflist <- list()
-  key <- unlist(key())
-  data <- nominal()
-  zscore <- z_score()
-
-  data <- sapply(1:ncol(data), function(i) as.factor(unlist(data[, i, with = F])))
-
-  for (item in 1:length(key)) {
-    dfhw <- data.table(data[, item], zscore)
-    dfhw <- dfhw[complete.cases(dfhw), ]
-
-    fitM <- multinom(relevel(as.factor(unlist(dfhw[, 1])),
-                             ref = paste(key[item])) ~ unlist(dfhw[, 2]),
-                     trace = F)
-
-    pp <- fitted(fitM)
-    temp <- as.factor(unlist(dfhw[, 1]))
-    temp <- relevel(temp, ref = paste(key[item]))
-
-    if(ncol(pp) == 1){
-      pp <- cbind(pp, 1 - pp)
-      colnames(pp) <- rev(levels(temp))
-    }
-
-    stotals <- rep(unlist(dfhw[, 2]), length(levels(as.factor(unlist(dfhw[, 1, with = F])))))
-    df <- cbind(melt(pp), stotals)
-    df$Var2 <- relevel(as.factor(df$Var2), ref = paste(key[item]))
-    df2 <- data.table(table(data[, item], zscore),
-                      y = data.table(prop.table(table(data[, item], zscore), 2))[, 3])
-    df2$zscore <- as.numeric(paste(df2$zscore))
-    df2$Var2 <- relevel(factor(df2$V2), ref = paste(key[item]))
-
-    g <-  ggplot() +
-      geom_line(data = df,
-                aes(x = stotals , y = value,
-                    colour = Var2, linetype = Var2), size = 1) +
-      geom_point(data = df2,
-                 aes(x = zscore, y = y.N,
-                     colour = Var2, fill = Var2,
-                     size = N),
-                 alpha = 0.5, shape = 21) +
-      ylim(0, 1) +
-      labs(x = "Standardized total score",
-           y = "Probability of answer") +
-      guides(colour = guide_legend(order = 1),
-             linetype = guide_legend(order = 1),
-             fill = guide_legend(order = 1),
-             size = guide_legend(order = 2)) +
-      theme_app() +
-      theme(legend.box = "horizontal",
-            legend.position = c(0.01, 0.98),
-            legend.justification = c(0, 1))
-    g = g +
-      ggtitle(paste("Multinomial plot for item", item_numbers()[item]))
-    g = ggplotGrob(g)
-    graflist[[item]] = g
-  }
-  graflist
 })
 
 # ** Output plot with estimated curves of multinomial regression ######
@@ -759,7 +1080,7 @@ output$multi_plot <- renderPlot({
 # ** DB plot with estimated curves of multinomial regression ######
 output$DB_multi_plot <- downloadHandler(
   filename =  function() {
-    paste("fig_MultinomialRegressionCurve_", item_names()[input$multiSlider], ".png", sep = "")
+    paste("fig_MultinomialRegressionCurve_", item_names()[input$multi_slider_item], ".png", sep = "")
   },
   content = function(file) {
     ggsave(file, plot = multi_plot_Input() +
@@ -770,9 +1091,73 @@ output$DB_multi_plot <- downloadHandler(
   }
 )
 
+# ** Reports: Plot with estimated curves of multinomial regression ######
+multiplotReportInput <- reactive({
+
+  graflist <- list()
+  key <- unlist(key())
+  data <- nominal()
+  matching <- multi_matching()
+  matching_name <- ifelse(input$multi_matching == "total", "Total score", "Standardized total score")
+
+  data <- sapply(1:ncol(data), function(i) as.factor(unlist(data[, i, with = F])))
+
+  error_measages <- c()
+  for (item in 1:length(key)) {
+    dfhw <- data.table(data[, item], matching)
+    dfhw <- dfhw[complete.cases(dfhw), ]
+    matching <- unlist(dfhw[, 2])
+
+    fitM <- multinom(relevel(as.factor(unlist(dfhw[, 1])),
+                             ref = paste(key[item])) ~ unlist(dfhw[, 2]),
+                     trace = F)
+
+    test <- tryCatch(plotMultinomial(fitM, matching, matching.name = matching_name),
+                     error = function(x) print(x))
+
+    if (mode(test$message) == "character"){
+      graflist[[item]] <- NULL
+      error_measages[item] <- test$message
+    } else {
+      g <- plotMultinomial(fitM, matching, matching.name = matching_name)
+      g <- g + ggtitle(paste("Multinomial plot for item", item_numbers()[item]))
+      # g <- ggplotGrob(g)
+      graflist[[item]] <- g
+    }
+  }
+
+  null_idx_true <- which(sapply(graflist, is.null))
+  null_idx_false <- which(!sapply(graflist, is.null))
+
+  graflist
+})
+
+# ** Reports: Length of legend in multinomial plot ######
+report_distractor_plot_legend_length <- reactive({
+  data <- nominal()
+
+  legend_length <- max(sapply(data, function(x) length(unique(x))), na.rm = T)
+  legend_length
+})
+
+# AH: momentalne zakomentovavam, protoze stranka Reports hrozne dlouho nabiha
+# # ** Warning for report ######
+# output$report_multinomial_report <- renderUI({
+#   items <- multiplotReportInput()[[2]]
+#   messages <- unique(multiplotReportInput()[[3]])
+#   txt <- paste0("<font color = 'orange'>
+# 				Multinomial plot for items ", items, " is missing.
+#         Error message returned: ", strong(messages[2]),".
+# 				</font>")
+#   HTML(txt)
+# })
+
 # ** Equation of multinomial regression ######
 output$multi_equation <- renderUI ({
-  cor_option <- key()[input$multiSlider]
+
+  req(multi_model()[[2]])
+
+  cor_option <- key()[input$multi_slider_item]
   withMathJax(
     sprintf(
       '$$\\mathrm{P}(Y = i|Z, b_{i0}, b_{i1}) = \\frac{e^{\\left( b_{i0} + b_{i1} Z\\right)}}{1 + \\sum_j e^{\\left( b_{j0} + b_{j1} Z\\right)}}, \\\\
@@ -784,12 +1169,12 @@ output$multi_equation <- renderUI ({
 })
 
 # ** Table of parameters of curves of multinomial regression ######
-output$multi_table <- renderTable({
+output$coef_multi <- renderTable({
   fit <- multi_model()
 
   key <- t(as.data.table(key()))
   data <- nominal()
-  item <- input$multiSlider
+  item <- input$multi_slider_item
 
   dfhw <- na.omit(data.table(data[, item, with = FALSE]))
   temp <- as.factor(unlist(dfhw[, 1]))
@@ -803,43 +1188,45 @@ output$multi_table <- renderTable({
     rnam <- rev(levels(temp))[1]
   }
 
-  colnames(tab) <- c("Estimate", "SD")
-  rownames(tab) <- c(paste("b", rnam, "0", sep = ""),
-                     paste("b", rnam, "1", sep = ""))
+  colnames(tab) <- c("Estimate", "SE")
+  rownames(tab) <- c(paste("%%mathit{b}_{", rnam, "0}%%", sep = ""),
+                     paste("%%mathit{b}_{", rnam, "1}%%", sep = ""))
   tab
 },
 include.rownames = T)
 
+
 # ** Interpretation of parameters of curves of multinomial regression ######
 output$multi_interpretation <- renderUI({
-
   koef <- summary(multi_model())$coefficients
   txt  <- c()
+  matching_name <- ifelse(input$multi_matching == "total",
+                          "total score",
+                          "Z-score (one SD increase in original scores)")
 
   if(is.null(dim(koef))){
     m <- length(koef)
     txt0 <- ifelse(koef[2] < 0, "decrease", "increase")
-    txt <-  paste (
-      "A one-unit increase in the Z-score (one SD increase in original
-      scores)  is associated with the ", txt0, " in the log odds of
-      answering the item "
-      ,"<b> 0 </b>", "vs.", "<b> 1 </b>", " in the amount of ",
-      "<b>", abs(round(koef[2], 2)), "</b>", '<br/>')
+    txt <-  paste("A one-unit increase in the", matching_name, "is associated with the ",
+                  txt0, " in the log odds of answering the item " ,"<b> 0 </b>", "vs.",
+                  "<b> 1 </b>", " in the amount of ", "<b>", abs(round(koef[2], 2)), "</b>", '<br/>')
   } else {
     m <- nrow(koef)
     for (i in 1:m){
       txt0 <- ifelse(koef[i, 2] < 0, "decrease", "increase")
-      txt[i] <- paste (
-        "A one-unit increase in the Z-score (one SD increase in original
-        scores)  is associated with the ", txt0, " in the log odds of
-        answering the item "
-        ,"<b>", row.names(koef)[i], "</b>", "vs.", "<b>",
-
-        key()[input$multiSlider],
-
-        "</b>","in the amount of ",
-        "<b>", abs(round(koef[i, 2], 2)), "</b>", '<br/>')
+      txt[i] <- paste("A one-unit increase in the", matching_name, "is associated with the ",
+                      txt0, " in the log odds of answering the item " ,"<b>", row.names(koef)[i],
+                      "</b>", "vs.", "<b>", key()[input$multi_slider_item], "</b>","in the amount of ",
+                      "<b>", abs(round(koef[i, 2], 2)), "</b>", '<br/>')
     }
   }
   HTML(paste(txt))
 })
+
+# ** Warning for missing values ####
+output$multi_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+

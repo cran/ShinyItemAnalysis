@@ -39,21 +39,38 @@ digits = 2,
 include.rownames = T,
 include.colnames = T)
 
+# ** Update slider for histogram ####
+observe({
+  updateSliderInput(session = session, inputId = "inSlider2group",
+                    min = min(total_score(), na.rm = T) ,
+                    max = max(c(max(total_score(), na.rm = T), ncol(binary()))),
+                    value = round(median(total_score(), na.rm = T)))
+})
+
 # ** Histogram of total score for group = 1 (focal) ######
 histbyscoregroup1Input <- reactive({
   data <- binary()
   sc  <- total_score()[group() == 1]
+  sc_lim <- total_score()
   bin <- as.numeric(input$inSlider2group)
   max.val <- max(prop.table(table(total_score()[group() == 0])),
                  prop.table(table(total_score()[group() == 1])))
 
+  if (length(unique(c(min(sc, na.rm = T), bin - 1, bin, max(sc, na.rm = T)))) == 3 & bin != min(sc, na.rm = T)) {
+    breaks <- unique(c(min(sc, na.rm = T), bin - 1, bin,bin + 1, max(sc, na.rm = T)))
+  } else {
+    breaks <- unique(c(min(sc, na.rm = T), bin - 1, bin, max(sc, na.rm = T)))
+  }
+
   df <- data.table(score = sc,
                    gr = cut(sc,
-                            breaks = unique(c(0, bin - 1, bin, ncol(data))),
+                            breaks = breaks,
                             include.lowest = T))
 
   if (bin < min(sc, na.rm = T)){
-    col <- "blue"
+    col <- c("blue",'blue')
+  } else if (!(bin %in% unique(sc))) {
+    col <- c('red','blue')
   } else {
     if (bin == min(sc, na.rm = T)){
       col <- c("grey", "blue")
@@ -67,8 +84,8 @@ histbyscoregroup1Input <- reactive({
     scale_fill_manual("", breaks = df$gr, values = col) +
     labs(x = "Total score",
          y = "Proportion of respondents") +
-    scale_x_continuous(limits = c(-0.5, ncol(data) + 0.5)) +
-    scale_y_continuous(limits = c(0, max.val)) +
+    scale_x_continuous(limits = c(min(sc_lim, na.rm = T) - 0.5, max(sc_lim, na.rm = T) + 0.5)) +
+    #scale_y_continuous(limits = c(0, max.val)) +
     ggtitle("Focal group") +
     theme_app()
   g
@@ -76,11 +93,16 @@ histbyscoregroup1Input <- reactive({
 
 output$histbyscoregroup1 <- renderPlotly ({
   sc <- total_score()[group() == 1]
+
   bin <- as.numeric(input$inSlider2group)
   data <- binary()
 
-  if (min(sc) <= bin & bin <= max(sc)){
-    breaks <- unique(c(min(sc) - 1, bin - 1, bin, max(sc)))
+  if (min(sc, na.rm = TRUE) <= bin & bin <= max(sc, na.rm = TRUE)){
+    if (bin %in% unique(sc)) {
+      breaks <- unique(c(min(sc, na.rm = T), bin - 1,bin, max(sc, na.rm = T)))
+    } else {
+      breaks <- unique(c(min(sc, na.rm = T), bin - 1, max(sc, na.rm = T)))
+    }
   } else {
     breaks <- c(0, ncol(data))
   }
@@ -95,28 +117,30 @@ output$histbyscoregroup1 <- renderPlotly ({
   k <- length(levels(df$gr))
   m <- length(p$x$data[[1]]$text)
   ints <- breaks
-
-
+  l <- length(p$x$data)
   for(i in 1:k){
-    t <- subset(df, df$gr == levels(df$gr)[i])
-    t <- t[order(t$score)]
-
-    t <- as.data.frame(table(t$score))
-    lbnd <- ints[i] + 1
-    hbnd <- ints[i + 1] + 1
-
-    c <- 1
-    for (j in lbnd:hbnd) {
-      text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
-      text <- sub("/", "", text)
-      text <- sub("countsum\\(count\\)", "Proportion", text)
-      p$x$data[[i]]$text[j] <- paste(text, "<br />",
-                                     "Number of respodents:",
-                                     ifelse(c <= nrow(t) &
-                                              t$Var1[c] %in% p$x$data[[i]]$x[lbnd:hbnd] &
-                                              t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
-                                     "<br /> Score:", p$x$data[[i]]$x[j])
-      c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+    if (i <= l) {
+      t <- subset(df, df$gr == levels(df$gr)[i])
+      t <- t[order(t$score)]
+      t <- as.data.frame(table(t$score))
+      lbnd <- ifelse(i == 1, ints[i], ints[i] + 1)
+      hbnd <- ints[i+1]
+      idx <- which(p$x$data[[i]]$x %in% lbnd:hbnd)
+      c <- 1
+      for (j in idx) {
+        text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
+        text <- sub("/", "", text)
+        text <- sub("countsum\\(count\\)", "Proportion", text)
+        p$x$data[[i]]$text[j] <- paste(text, "<br />",
+                                       "Number of respodents:",
+                                       ifelse(c <= nrow(t) &
+                                                t$Var1[c] %in% lbnd:hbnd &
+                                                t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
+                                       "<br /> Score:", p$x$data[[i]]$x[j])
+        c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+      }
+    } else {
+      break
     }
   }
 
@@ -138,21 +162,31 @@ output$DP_histbyscoregroup1 <- downloadHandler(
 
 # ** Histogram of total score for group = 0 (reference) ######
 histbyscoregroup0Input <- reactive ({
+
   data <- binary()
   sc  <- total_score()[group() == 0]
+  sc_lim <- total_score()
   bin <- as.numeric(input$inSlider2group)
   max.val <- max(prop.table(table(total_score()[group() == 0])),
                  prop.table(table(total_score()[group() == 1])))
 
+  if (length(unique(c(min(sc, na.rm = T), bin - 1, bin, max(sc, na.rm = T)))) == 3 & bin != min(sc, na.rm = T)) {
+    breaks <- unique(c(min(sc, na.rm = T), bin - 1, bin,bin + 1, max(sc, na.rm = T)))
+  } else {
+    breaks <- unique(c(min(sc, na.rm = T), bin - 1, bin, max(sc, na.rm = T)))
+  }
+
   df <- data.table(score = sc,
                    gr = cut(sc,
-                            breaks = unique(c(0, bin - 1, bin, ncol(data))),
+                            breaks = breaks,
                             include.lowest = T))
 
-  if (bin < min(sc, na.rm = T)){
-    col <- "blue"
-  } else {
-    if (bin == min(sc, na.rm = T)){
+  if (bin < min(sc, na.rm = TRUE)){
+    col <- c("blue",'blue')
+  } else if (!(bin %in% unique(sc))) {
+    col <- c('red','blue')
+   } else {
+    if (bin == min(sc, na.rm = TRUE)){
       col <- c("grey", "blue")
     } else {
       col <- c("red", "grey", "blue")
@@ -164,20 +198,25 @@ histbyscoregroup0Input <- reactive ({
     scale_fill_manual("", breaks = df$gr, values = col) +
     labs(x = "Total score",
          y = "Proportion of respondents") +
-    scale_x_continuous(limits = c(-0.5, ncol(data) + 0.5)) +
-    scale_y_continuous(limits = c(0, max.val)) +
+    scale_x_continuous(limits = c(min(sc_lim, na.rm = T) - 0.5, max(sc_lim, na.rm = T) + 0.5)) +
+    #scale_y_continuous(limits = c(0, max.val)) +
     ggtitle("Reference group") +
     theme_app()
   g
 })
 
 output$histbyscoregroup0 <- renderPlotly ({
+
   sc <- total_score()[group() == 0]
   bin <- as.numeric(input$inSlider2group)
   data <- binary()
 
-  if (min(sc) <= bin & bin <= max(sc)){
-    breaks <- unique(c(min(sc) - 1, bin - 1, bin, max(sc)))
+  if (min(sc, na.rm = TRUE) <= bin & bin <= max(sc, na.rm = TRUE)){
+    if (bin %in% unique(sc)) {
+      breaks <- unique(c(min(sc, na.rm = T), bin - 1,bin, max(sc, na.rm = T)))
+    } else {
+      breaks <- unique(c(min(sc, na.rm = T), bin - 1, max(sc, na.rm = T)))
+    }
   } else {
     breaks <- c(0, ncol(data))
   }
@@ -192,28 +231,31 @@ output$histbyscoregroup0 <- renderPlotly ({
   k <- length(levels(df$gr))
   m <- length(p$x$data[[1]]$text)
   ints <- breaks
-
+  l <- length(p$x$data)
 
   for(i in 1:k){
-    t <- subset(df, df$gr == levels(df$gr)[i])
-    t <- t[order(t$score)]
-
-    t <- as.data.frame(table(t$score))
-    lbnd <- ints[i] + 1
-    hbnd <- ints[i + 1] + 1
-
-    c <- 1
-    for (j in lbnd:hbnd) {
-      text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
-      text <- sub("/", "", text)
-      text <- sub("countsum\\(count\\)", "Proportion", text)
-      p$x$data[[i]]$text[j] <- paste(text, "<br />",
-                                     "Number of respodents:",
-                                     ifelse(c <= nrow(t) &
-                                              t$Var1[c] %in% p$x$data[[i]]$x[lbnd:hbnd] &
-                                              t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
-                                     "<br /> Score:", p$x$data[[i]]$x[j])
-      c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+    if (i <= l) {
+      t <- subset(df, df$gr == levels(df$gr)[i])
+      t <- t[order(t$score)]
+      t <- as.data.frame(table(t$score))
+      lbnd <- ifelse(i == 1, ints[i], ints[i] + 1)
+      hbnd <- ints[i+1]
+      idx <- which(p$x$data[[i]]$x %in% lbnd:hbnd)
+      c <- 1
+      for (j in idx) {
+        text <- strsplit(p$x$data[[i]]$text[j], "<br />")[[1]][1]
+        text <- sub("/", "", text)
+        text <- sub("countsum\\(count\\)", "Proportion", text)
+        p$x$data[[i]]$text[j] <- paste(text, "<br />",
+                                       "Number of respodents:",
+                                       ifelse(c <= nrow(t) &
+                                                t$Var1[c] %in% lbnd:hbnd &
+                                                t$Var1[c] == p$x$data[[i]]$x[j], t$Freq[c], 0),
+                                       "<br /> Score:", p$x$data[[i]]$x[j])
+        c <- ifelse(t$Var1[c] != p$x$data[[i]]$x[j], c, c + 1)
+      }
+    } else {
+      break
     }
   }
 
@@ -548,6 +590,7 @@ model_DIF_logistic_print <- reactive({
   mod
 })
 
+# ** Model for report ######
 model_DIF_logistic_print_report <- reactive({
   group <- unlist(group())
   data <- data.frame(binary())
@@ -595,6 +638,7 @@ output$plot_DIF_logistic <- renderPlot({
   plot_DIF_logisticInput()
 })
 
+# ** DB for plot ######
 output$DP_plot_DIF_logistic <- downloadHandler(
   filename =  function() {
     paste("fig_DifLogisticRegression_", item_names()[input$diflogSlider], ".png", sep = "")
@@ -618,8 +662,7 @@ output$tab_coef_DIF_logistic <- renderTable({
   tab_sd <- fit$logitSe[i, ]
 
   tab <- data.frame(tab_coef, tab_sd)
-
-  rownames(tab) <- c('b0', 'b1', 'b2', 'b3')
+  rownames(tab) <- c('%%mathit{b}_0%%', '%%mathit{b}_1%%', '%%mathit{b}_2%%', '%%mathit{b}_3%%')
   colnames(tab) <- c("Estimate", "SD")
 
   tab
@@ -627,6 +670,7 @@ output$tab_coef_DIF_logistic <- renderTable({
 include.rownames = T,
 include.colnames = T)
 
+# ** Plot for report ######
 DIF_logistic_plotReport <- reactive({
   group <- unlist(group())
   data <- data.frame(binary())
@@ -667,6 +711,18 @@ DIF_logistic_plotReport <- reactive({
   graflist
 })
 
+# ** Warning for missing values ####
+output$DIF_logistic_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_logistic_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * NLR DIF ######
@@ -682,10 +738,15 @@ model_DIF_NLR_print <- reactive({
   adj.method <- input$DIF_NLR_correction_method_print
   purify <- input$DIF_NLR_purification_print
 
-  fit <- difNLR(Data = data, group = group, focal.name = 1,
-                model = model, type = type,
-                p.adjust.method = adj.method, purify = purify,
-                test = "LR")
+  fit <- tryCatch(difNLR(Data = data, group = group, focal.name = 1,
+                                model = model, type = type,
+                                p.adjust.method = adj.method, purify = purify,
+                                test = "LR"),
+                         error = function(e) e)
+
+  validate(need(class(fit) == "difNLR",
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+
   fit
 })
 
@@ -895,6 +956,7 @@ observeEvent(input$DIF_NLR_correction_method_plot,{
                       selected = input$DIF_NLR_correction_method_plot)
   }
 })
+
 observeEvent(input$DIF_NLR_purification_plot,{
   if (all(input$DIF_NLR_purification_plot != input$DIF_NLR_purification_print)){
     updateCheckboxInput(session = session,
@@ -913,9 +975,16 @@ model_DIF_NLR_plot <- reactive({
   adj.method <- input$DIF_NLR_correction_method_print
   purify <- input$DIF_NLR_purification_print
 
-  fit <- difNLR(Data = data, group = group, focal.name = 1,
-                model = model, type = type,
-                p.adjust.method = adj.method, purify = purify)
+
+  fit <- tryCatch(difNLR(Data = data, group = group, focal.name = 1,
+                         model = model, type = type,
+                         p.adjust.method = adj.method, purify = purify,
+                         test = "LR"),
+                  error = function(e) e)
+
+  validate(need(class(fit) == "difNLR",
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+
   fit
 })
 
@@ -940,7 +1009,7 @@ output$plot_DIF_NLR <- renderPlot({
   plot_DIF_NLRInput()
 })
 
-# ** Plot download ######
+# ** DB for plot ######
 output$DP_plot_DIF_NLR <- downloadHandler(
   filename =  function() {
     paste0("fig_DIFNonlinear_", item_names()[input$DIF_NLR_item_plot], ".png")
@@ -1029,12 +1098,25 @@ output$tab_coef_DIF_NLR <- renderTable({
   tab_sd <- fit$nlrSE[[item]]
 
   tab <- t(rbind(tab_coef, tab_sd))
-  # rownames(tab) <- c('a', 'b', 'aDIF', 'bDIF', 'c')
+  withMathJax()
+  rownames(tab) <- c('%%mathit{a}%%', '%%mathit{b}%%', '%%mathit{a}_{DIF}%%', '%%mathit{b}_{DIF}%%', '%%mathit{c}%%')
   colnames(tab) <- c("Estimate", "SD")
 
   tab
 },
 include.rownames = T)
+
+# ** Warning for missing values ####
+output$DIF_NLR_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_NLR_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * IRT LORD ######
@@ -1049,20 +1131,24 @@ model_DIF_IRT_Lord_plot <- reactive({
     guess <- itemPar3PL(data)[, 3]
   }
 
-  mod <- switch(input$type_plot_DIF_IRT_lord,
-                "1PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "1PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_lordItems,
-                                purify = input$puri_Lord_plot),
-                "2PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "2PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_lordItems,
-                                purify = input$puri_Lord_plot),
-                "3PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "3PL", c = guess,
-                                p.adjust.method = input$correction_method_DIF_IRT_lordItems,
-                                purify = input$puri_Lord_plot))
-  mod
+  fit <- tryCatch(switch(input$type_plot_DIF_IRT_lord,
+                         "1PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "1PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordItems,
+                                         purify = input$puri_Lord_plot),
+                         "2PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "2PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordItems,
+                                         purify = input$puri_Lord_plot),
+                         "3PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "3PL", c = guess,
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordItems,
+                                         purify = input$puri_Lord_plot)),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'Lord',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+  fit
 })
 
 # ** Model for print ######
@@ -1074,27 +1160,30 @@ model_DIF_IRT_Lord_print <- reactive({
     guess <- itemPar3PL(data)[, 3]
   }
 
-  mod <- switch(input$type_print_DIF_IRT_lord,
-                "1PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "1PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
-                                purify = input$puri_Lord),
-                "2PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "2PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
-                                purify = input$puri_Lord),
-                "3PL" = difLord(Data = data, group = group, focal.name = 1,
-                                model = "3PL", c = guess,
-                                p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
-                                purify = input$puri_Lord))
-  mod
+  fit <- tryCatch(switch(input$type_print_DIF_IRT_lord,
+                         "1PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "1PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
+                                         purify = input$puri_Lord),
+                         "2PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "2PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
+                                         purify = input$puri_Lord),
+                         "3PL" = difLord(Data = data, group = group, focal.name = 1,
+                                         model = "3PL", c = guess,
+                                         p.adjust.method = input$correction_method_DIF_IRT_lordSummary,
+                                         purify = input$puri_Lord)),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'Lord',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+  fit
 })
 
 # ** Output print ######
 output$print_DIF_IRT_Lord <- renderPrint({
   print(model_DIF_IRT_Lord_print())
 })
-
 
 # ** Plot ######
 plot_DIF_IRT_LordInput <- reactive({
@@ -1111,9 +1200,10 @@ output$plot_DIF_IRT_Lord <- renderPlot({
   plot_DIF_IRT_LordInput()
 })
 
+# ** DB for plot ######
 output$DP_plot_DIF_IRT_Lord <- downloadHandler(
   filename =  function() {
-    paste("fig_DIFIRTLord_",item_names()[input$difirt_lord_itemSlider],".png", sep = "")
+    paste("fig_DIFIRTLord_",item_names()[input$difirt_lord_itemSlider], ".png", sep = "")
   },
   content = function(file) {
     ggsave(file, plot = plot_DIF_IRT_LordInput() +
@@ -1157,11 +1247,10 @@ tab_coef_DIF_IRT_Lord <- reactive({
 
 
   tab <- data.frame(tab_coef, tab_sd)
-
   rownames(tab) <- switch(input$type_plot_DIF_IRT_lord,
-                          "1PL" = c("bR", "bF"),
-                          "2PL" = c("aR", "aF", "bR", "bF"),
-                          "3PL" = c("aR", "aF", "bR", "bF", "c"))
+                          "1PL" = c("%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%"),
+                          "2PL" = c("%%mathit{a}_{R}%%", "%%mathit{a}_{F}%%", "%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%"),
+                          "3PL" = c("%%mathit{a}_{R}%%", "%%mathit{a}_{F}%%", "%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%", "%%mathit{c}%%"))
   colnames(tab) <- c("Estimate", "SD")
 
   tab
@@ -1170,23 +1259,24 @@ tab_coef_DIF_IRT_Lord <- reactive({
 # ** Interpretation ######
 output$irtint_lord <- renderUI({
   type <- input$type_plot_DIF_IRT_lord
+  withMathJax()
   txt <- switch(type,
                 '1PL'= paste('As the parameters are estimated separately for groups, there is one
-                             equation for each group. Parameters <b> bR </b> and <b> bF </b>
+                             equation for each group. Parameters \\(b_{R}\\) and \\(b_{F}\\)
                              are difficulties for reference and focal group. '),
                 '2PL'= paste('As the parameters are estimated
                              separately for groups, there is one equation for each group.
-                             Parameters <b> aR </b> and <b> bR </b> are discrimination and
-                             difficulty for reference group. Parameters <b> aF </b> and
-                             <b> bF </b>
+                             Parameters \\(a_{R}\\) and \\(b_{R}\\) are discrimination and
+                             difficulty for reference group. Parameters \\(a_{F}\\) and
+                             \\(b_{F}\\)
                              are discrimination and difficulty for focal group. '),
                 '3PL'= paste('As the parameters are estimated
                              separately for groups, there is one equation for each group.
-                             Parameters <b> aR </b> and <b> bR </b> are discrimination and
-                             difficulty for reference group. Parameters <b> aF </b> and <b> bF </b>
+                             Parameters \\(a_{R}\\) and \\(b_{R}\\) are discrimination and
+                             difficulty for reference group. Parameters  \\(a_{F}\\) and \\(b_{F}\\)
                              are discrimination and difficulty for focal group.
-                             Parameter <b> c </b> is a common guessing parameter. '))
-  HTML(txt)
+                             Parameter \\(c\\) is a common guessing parameter. '))
+  withMathJax(HTML(txt))
 })
 
 # ** Equation ######
@@ -1225,6 +1315,18 @@ output$tab_coef_DIF_IRT_Lord <- renderTable({
 include.rownames = T,
 include.colnames = T)
 
+# ** Warning for missing values ####
+output$DIF_IRT_LORD_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_IRT_LORD_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * IRT Raju ######
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1238,20 +1340,24 @@ model_DIF_IRT_Raju_plot <- reactive({
     guess <- itemPar3PL(data)[, 3]
   }
 
-  mod <- switch(input$type_plot_DIF_IRT_raju,
-                "1PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "1PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
-                                purify = input$puri_Raju_plot),
-                "2PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "2PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
-                                purify = input$puri_Raju_plot),
-                "3PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "3PL", c = guess,
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
-                                purify = input$puri_Raju_plot))
-  mod
+  fit <- tryCatch(switch(input$type_plot_DIF_IRT_raju,
+                         "1PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "1PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
+                                         purify = input$puri_Raju_plot),
+                         "2PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "2PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
+                                         purify = input$puri_Raju_plot),
+                         "3PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "3PL", c = guess,
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuItems,
+                                         purify = input$puri_Raju_plot)),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'Raj',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+  fit
 })
 
 # ** Model for print ######
@@ -1263,28 +1369,30 @@ model_DIF_IRT_Raju_print <- reactive({
     guess <- itemPar3PL(data)[, 3]
   }
 
-  mod <- switch(input$type_print_DIF_IRT_raju,
-                "1PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "1PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
-                                purify = input$puri_Raju),
-                "2PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "2PL",
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
-                                purify = input$puri_Raju),
-                "3PL" = difRaju(Data = data, group = group, focal.name = 1,
-                                model = "3PL", c = guess,
-                                p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
-                                purify = input$puri_Raju))
-  mod
+  fit <- tryCatch(switch(input$type_print_DIF_IRT_raju,
+                         "1PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "1PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
+                                         purify = input$puri_Raju),
+                         "2PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "2PL",
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
+                                         purify = input$puri_Raju),
+                         "3PL" = difRaju(Data = data, group = group, focal.name = 1,
+                                         model = "3PL", c = guess,
+                                         p.adjust.method = input$correction_method_DIF_IRT_rajuSummary,
+                                         purify = input$puri_Raju)),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'Raj',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
+  fit
 })
 
 # ** Output print ######
 output$print_DIF_IRT_Raju <- renderPrint({
   print(model_DIF_IRT_Raju_print())
 })
-
-
 
 # ** Plot ######
 plot_DIF_IRT_RajuInput <- reactive({
@@ -1302,7 +1410,7 @@ output$plot_DIF_IRT_Raju <- renderPlot({
 
 output$DP_plot_DIF_IRT_Raju <- downloadHandler(
   filename =  function() {
-    paste("fig_DIFIRTRaju_",item_names()[input$difirt_raju_itemSlider],".png", sep = "")
+    paste0("fig_DIFIRTRaju_", item_names()[input$difirt_raju_itemSlider], ".png")
   },
   content = function(file) {
     ggsave(file, plot = plot_DIF_IRT_RajuInput() +
@@ -1316,23 +1424,24 @@ output$DP_plot_DIF_IRT_Raju <- downloadHandler(
 # ** Interpretation ######
 output$irtint_raju <- renderUI({
   type <- input$type_plot_DIF_IRT_raju
+  withMathJax()
   txt <- switch(type,
                 '1PL'= paste('As the parameters are estimated separately for groups, there is one
-                             equation for each group. Parameters <b> bR </b> and <b> bF </b>
+                             equation for each group. Parameters \\(b_{R}\\) and  \\(b_{F}\\)
                              are difficulties for reference and focal group. '),
                 '2PL'= paste('As the parameters are estimated
                              separately for groups, there is one equation for each group.
-                             Parameters <b> aR </b> and <b> bR </b> are discrimination and
-                             difficulty for reference group. Parameters <b> aF </b> and
-                             <b> bF </b>
+                             Parameters \\(a_{R}\\) and \\(b_{R}\\) are discrimination and
+                             difficulty for reference group. Parameters \\(a_{F}\\) and
+                             \\(b_{F}\\)
                              are discrimination and difficulty for focal group. '),
                 '3PL'= paste('As the parameters are estimated
                              separately for groups, there is one equation for each group.
-                             Parameters <b> aR </b> and <b> bR </b> are discrimination and
-                             difficulty for reference group. Parameters <b> aF </b> and <b> bF </b>
+                             Parameters \\(a_{R}\\) and \\(b_{R}\\) are discrimination and
+                             difficulty for reference group. Parameters \\(a_{F}\\) and \\(b_{F}\\)
                              are discrimination and difficulty for focal group.
-                             Parameter <b> c </b> is a common guessing parameter. '))
-  HTML(txt)
+                             Parameter \\(c\\) is a common guessing parameter. '))
+  withMathJax(HTML(txt))
 })
 
 
@@ -1399,11 +1508,10 @@ tab_coef_DIF_IRT_Raju <- reactive({
     tab_sd <- c(tab_sd, NA)
 
   tab <- data.frame(tab_coef, tab_sd)
-
   rownames(tab) <- switch(input$type_plot_DIF_IRT_raju,
-                          "1PL" = c("bR", "bF"),
-                          "2PL" = c("aR", "aF", "bR", "bF"),
-                          "3PL" = c("aR", "aF", "bR", "bF", "c"))
+                          "1PL" = c("%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%"),
+                          "2PL" = c("%%mathit{a}_{R}%%", "%%mathit{a}_{F}%%", "%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%"),
+                          "3PL" = c("%%mathit{a}_{R}%%", "%%mathit{a}_{F}%%", "%%mathit{b}_{R}%%", "%%mathit{b}_{F}%%", "%%mathit{c}%%"))
   colnames(tab) <- c("Estimate", "SD")
 
   tab
@@ -1416,6 +1524,17 @@ output$tab_coef_DIF_IRT_Raju <- renderTable({
 include.rownames = T,
 include.colnames = T)
 
+# ** Warning for missing values ####
+output$DIF_Raju_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_Raju_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # * SIBTEST ######
@@ -1444,6 +1563,18 @@ DIF_SIBTEST_model <- reactive({
 # ** Output print ######
 output$DIF_SIBTEST_print <- renderPrint({
   print(DIF_SIBTEST_model())
+})
+
+# ** Warning for missing values ####
+output$DIF_SIBTEST_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_SIBTEST_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
 })
 
 
@@ -1485,9 +1616,13 @@ model_DDF_print_report <- reactive({
     purify <- input$puri_DDF_report
   }
 
-  fit <- ddfMLR(Data = a, group = group, focal.name = 1,
-                key = k, p.adjust.method = adj.method,
-                type = type, purify = purify)
+  fit <- tryCatch(ddfMLR(Data = a, group = group, focal.name = 1,
+                         key = k, p.adjust.method = adj.method,
+                         type = type, purify = purify),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'ddfMLR',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
 
   fit
 })
@@ -1501,16 +1636,21 @@ output$print_DDF <- renderPrint({
 model_DDF_plot <- reactive({
   group <- unlist(group())
   a <- data.frame(nominal())
+  a <- sapply(a, as.factor)
   colnames(a) <- item_names()
-  k <- key()
+  k <- as.factor(key())
 
   adj.method <- input$correction_method_plot_DDF
   type <- input$type_plot_DDF
   purify <- input$puri_DDF_plot
 
-  fit <- ddfMLR(Data = a, group = group, focal.name = 1,
-                key = k, p.adjust.method = adj.method,
-                type = type, purify = purify)
+  fit <- tryCatch(ddfMLR(Data = a, group = group, focal.name = 1,
+                         key = k, p.adjust.method = adj.method,
+                         type = type, purify = purify),
+                  error = function(e) e)
+
+  validate(need(class(fit) == 'ddfMLR',
+                paste0('This method cannot be used on this data. Error returned: ', fit$message)))
 
   fit
 })
@@ -1532,11 +1672,13 @@ plot_DDFInput <- reactive({
   g
 })
 
+# ** Plot for reports ######
 plot_DDFReportInput <- reactive({
   group <- unlist(group())
   a <- data.frame(nominal())
+  a <- sapply(a, as.factor)
   colnames(a) <- item_names()
-  k <- key()
+  k <- as.factor(key())
 
   if (!input$customizeCheck) {
     adj.method_report <- input$correction_method_plot_DDF
@@ -1554,15 +1696,15 @@ plot_DDFReportInput <- reactive({
 
   graflist = list()
   if (mod$DDFitems[[1]] != "No DDF item detected"){
-  for (i in 1:length(mod$DDFitems)) {
-    g <- plot(mod, item = mod$DDFitems[i])[[1]] +
-      theme(text = element_text(size = 12),
-            plot.title = element_text(size = 12, face = "bold", vjust = 1.5)) +
-      ggtitle(paste("\nDDF multinomial plot for item ", item_numbers()[mod$DDFitems[i]]))
-    graflist[[i]] <- g
-  }
+    for (i in 1:length(mod$DDFitems)) {
+      g <- plot(mod, item = mod$DDFitems[i])[[1]] +
+        theme(text = element_text(size = 12),
+              plot.title = element_text(size = 12, face = "bold", vjust = 1.5)) +
+        ggtitle(paste("\nDDF multinomial plot for item ", item_numbers()[mod$DDFitems[i]]))
+      graflist[[i]] <- g
+    }
   } else {
-   graflist = NULL
+    graflist = NULL
   }
   graflist
 })
@@ -1591,8 +1733,14 @@ output$DP_plot_DDF <- downloadHandler(
 output$tab_coef_DDF <- renderTable({
   item <- input$ddfSlider
   fit <- model_DDF_plot()
+  data <- as.data.frame(nominal())
+  key <- as.factor(key())
+
+  tmp <- as.factor(data[, item])
+  nams <- levels(tmp)[!(levels(tmp) %in% key[item])]
 
   tab_coef <- fit$mlrPAR[[item]]
+  if (is.null(dim(tab_coef))) tab_coef <- matrix(tab_coef, nrow = 1)
   tab_se <- fit$mlrSE[[item]]
   tab_se <- matrix(tab_se, ncol = ncol(tab_coef), byrow = T)
 
@@ -1606,9 +1754,8 @@ output$tab_coef_DDF <- renderTable({
     }
   }
 
-
   colnames(tab_se) <- colnames(tab_coef) <- c("b0", "b1", "b2", "b3")
-  rownames(tab_se) <- rownames(tab_coef)
+  rownames(tab_se) <- rownames(tab_coef) <- nams
 
   tab_coef <- data.frame(tab_coef, answ = rownames(tab_coef))
   tab_se <- data.frame(tab_se, answ = rownames(tab_se))
@@ -1617,14 +1764,15 @@ output$tab_coef_DDF <- renderTable({
   df2 <- melt(tab_se, id = "answ")
   tab <- data.frame(df1$value,
                     df2$value)
-
-  rownames(tab) <- paste(substr(df1$variable, 1, 1),
+  rownames(tab) <- paste0('%%mathit{', substr(df1$variable, 1, 1), '}_{',
                          df1$answ,
-                         substr(df1$variable, 2, 2), sep = "")
+                         substr(df1$variable, 2, 2), '}%%')
   colnames(tab) <- c("Estimate", "SD")
   tab
+
 },
 include.rownames = T)
+
 
 # ** Equation ######
 output$DDFeq <- renderUI ({
@@ -1645,3 +1793,70 @@ output$DDFeq <- renderUI ({
     )
   )
 })
+
+output$method_comparison_table <- renderTable({
+
+	l_methods <- list()
+	l_methods[['Delta']] <- try(deltaGpurn()$DIFitems)
+	l_methods[['MH']] <- try(model_DIF_MH()$DIFitems)
+	l_methods[['LOG']] <- try(model_DIF_logistic_print()$DIFitems)
+	l_methods[['NLR']] <- try(model_DIF_NLR_print()$DIFitems)
+	l_methods[['IRT']] <- try(model_DIF_IRT_Lord_print()$DIFitems)
+	l_methods[['RAJU']] <- try(model_DIF_IRT_Raju_print()$DIFitems)
+	l_methods[['SIBTEST']] <- try(DIF_SIBTEST_model()$DIFitems)
+	l_methods[['DFF']] <- try(model_DDF_print()$DDFitems)
+
+	k <- length(item_names())
+	idx <- lapply(l_methods, class)
+	idx <- which(unlist(idx) != 'try-error')
+
+	v <- matrix(NA, ncol = length(l_methods), nrow = k)
+	v[, idx] <- 0
+
+	# there is need to handle Delta method and DDF differently
+	for (j in idx) {
+	  if (names(l_methods)[j] == "Delta"){
+	    if (all(l_methods[[j]] != 'no DIF item detected')) v[as.numeric(paste(l_methods[[j]])), j] <- 1
+	  } else {
+	    if (names(l_methods)[j] == "DDF"){
+	      if (all(l_methods[[j]] != 'No DDF item detected')) v[as.numeric(paste(l_methods[[j]])), j] <- 1
+	    } else {
+	      if (all(l_methods[[j]] != 'No DIF item detected')) v[as.numeric(paste(l_methods[[j]])), j] <- 1
+	    }
+	  }
+	}
+
+	tab <- as.data.frame(apply(v, c(1, 2), as.integer))
+	rownames(tab) <- item_names()
+	colnames(tab) <- names(l_methods)
+
+	n <- nrow(tab)
+	k <- ncol(tab)
+
+	rDIF <- rowSums(tab, na.rm = T)
+	cDIF <- colSums(tab, na.rm = T)
+	cDIF[k + 1] <- 0
+
+	tab <- cbind(tab, as.integer(rDIF))
+	tab <- rbind(tab, as.integer(cDIF))
+
+	rownames(tab)[n + 1] <- "Total"
+	colnames(tab)[k + 1] <- "Total"
+
+	tab
+},
+include.rownames = T,
+include.colnames = T)
+
+# ** Warning for missing values ####
+output$DIF_DDF_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+# ** Warning for missing values ####
+output$DIF_DDF_item_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+

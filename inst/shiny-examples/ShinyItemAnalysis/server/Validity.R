@@ -8,15 +8,15 @@
 
 # ** Polychoric correlation matrix ######
 corr_structure <- reactive({
-  data <- binary()
+  data <- ordinal()
 
   # calculate correlations depending on selected method
   if (input$type_of_corr == 'spearman') {
-    corP <- cor(data, method = 'spearman')
+    corP <- cor(data, method = 'spearman', use = "pairwise.complete.obs")
   } else if (input$type_of_corr == 'pearson') {
-    corP <- cor(data, method = 'pearson')
+    corP <- cor(data, method = 'pearson', use = "pairwise.complete.obs")
   } else if (input$type_of_corr == 'polychoric') {
-    corP <- polychoric(data)
+    corP <- polychoric(data, na.rm = T)
     corP <- corP$rho
   }
   corP
@@ -25,11 +25,13 @@ corr_structure <- reactive({
 # ** Correlation plot ######
 corr_plot_Input <- reactive({
   corP <- corr_structure()
-
   tlcex <- max(ifelse(dim(corP)[1] < 30, 1, 0.9 - (dim(corP)[1] - 30)*0.05), 0.5)
-
   numclust <- input$corr_plot_clust
   clustmethod <- input$corr_plot_clustmethod
+
+  if(!input$itemnam) {
+	  dimnames(corP)[[1]] <- dimnames(corP)[[2]] <- item_names()
+  }
 
   # option to display correlation values
   if(input$show_corr %% 2 == 1 ) {
@@ -43,7 +45,7 @@ corr_plot_Input <- reactive({
                number.cex  = 0.7, col = 'black', cl.pos = 'n')
     }
    } else {
-      updateActionButton(session,"show_corr", label = "Display correlation values")
+      updateActionButton(session, "show_corr", label = "Display correlation values")
     if (clustmethod == "none"){
 	    corrplot(corP, tl.cex = tlcex, tl.pos = 'lt')
 	  } else {
@@ -61,6 +63,10 @@ corr_plot_Input_report <- reactive({
   numclust <- ifelse(input$customizeCheck, input$corr_plot_clust_report, input$corr_plot_clust)
   clustmethod <- ifelse(input$customizeCheck, input$corr_plot_clustmethod_report, input$corr_plot_clustmethod)
 
+  if(!input$itemnam) {
+	  dimnames(corP)[[1]] <- dimnames(corP)[[2]] <- item_names()
+  }
+
   # option to display correlation values
   if(input$show_corr %% 2 == 1 ) {
     updateActionButton(session, "show_corr", label = "Hide correlation values")
@@ -73,7 +79,7 @@ corr_plot_Input_report <- reactive({
                number.cex  = 0.7, col = 'black', cl.pos = 'n')
     }
   } else {
-    updateActionButton(session,"show_corr", label = "Display correlation values")
+    updateActionButton(session, "show_corr", label = "Display correlation values")
     if (clustmethod == "none"){
       corrplot(corP, tl.cex = tlcex, tl.pos = 'lt')
     } else {
@@ -96,7 +102,6 @@ output$DB_corr_plot <- downloadHandler(
   content = function(file) {
     # in corrplot this must be plotted completely again!
     corP <- corr_structure()
-
     tlcex <- max(ifelse(dim(corP)[1] < 30, 1, 0.9 - (dim(corP)[1] - 30)*0.05), 0.5)
 
     numclust <- input$corr_plot_clust
@@ -116,7 +121,7 @@ output$DB_corr_plot <- downloadHandler(
   }
 )
 
-
+# ** DB correlation matrix ######
 output$corr_matrix <- downloadHandler(
 	filename = function() {
 		paste("Correlation_matrix", ".csv", sep = "")
@@ -130,7 +135,6 @@ output$corr_matrix <- downloadHandler(
 dendrogram_plot_Input <- reactive({
   corP <- corr_structure()
   dist <- as.dist(1 - corP)
-
   clustmethod <- input$corr_plot_clustmethod
   numclust <- input$corr_plot_clust
 
@@ -138,13 +142,13 @@ dendrogram_plot_Input <- reactive({
 
   if (numclust == 1){
     order <- hc$order
-    label <- hc$labels[hc$order]
+    label <- if (!input$itemnam) item_names()[hc$order] else hc$label[hc$order]
     times <- length(label)
   } else {
     plot(hc)
     rhc <- rect.hclust(hc, k = numclust)
     order <- unlist(rhc)
-    label <- names(order)
+    label <- if (!input$itemnam) item_names()[order] else names(order)
     times <- sapply(rhc, length)
   }
 
@@ -152,6 +156,12 @@ dendrogram_plot_Input <- reactive({
                    num = order,
                    cluster = rep(paste("Cluster", 1:numclust), times))
   dendr <- dendro_data(hc, type = "rectangle")
+  if(!input$itemnam){
+
+	dendr$labels$label <- label
+
+  }
+
   dfd <- merge(dendr$labels, df, by = "label")
 
   ggplot() +
@@ -168,12 +178,12 @@ dendrogram_plot_Input <- reactive({
           axis.title.y = element_blank())
 })
 
-# ** Output scree plot ######
+# ** Output dendrogram ######
 output$dendrogram_plot <- renderPlot({
   dendrogram_plot_Input()
 })
 
-# ** DB scree plot ######
+# ** DB dendrogram ######
 output$DB_dendrogram <- downloadHandler(
   filename =  function() {
     paste("fig_Dendrogram.png", sep = "")
@@ -237,6 +247,8 @@ validity_plot_boxplot_Input <- reactive({
 
   df <- data.table(ts, cv)
   df <- df[complete.cases(df), ]
+
+  set.seed(1)
 
   g <- ggplot(df, aes(y = ts, x = as.factor(cv), fill = as.factor(cv))) +
     geom_boxplot() +
@@ -359,12 +371,12 @@ output$validity_distractor_text <- renderUI({
   ## this is fixed value to recognize discrete variable
   k <- 6
   if (length(unique(cv)) <= length(cv)/k){
-    num.group <- length(levels(as.factor(cv)))
+   num.group <- length(levels(as.factor(cv)))
   } else {
-    num.group <- input$validity_group
+   num.group <- input$validity_group
   }
 
-  txt1 <- paste ('Respondents are divided into ')
+  txt1 <- paste('Respondents are divided into ')
   txt2 <- ifelse((length(unique(cv)) <= length(cv)/k),
                  paste("<b>", num.group, "</b> groups as it seems that criterion variable is discrete. "),
                  paste("<b>", num.group, "</b> groups by their criterion variable. "))
@@ -378,20 +390,70 @@ output$validity_distractor_text <- renderUI({
   HTML(paste(txt1, txt2, txt3, txt4, txt5, txt6))
 })
 
+# ** Admisible groups for cut ####
+validity_admisible_groups <- reactive({
+  cv <- criterion()
+  k <- 6
+
+  if (length(unique(cv)) <= length(cv)/k){
+    groups <- length(levels(as.factor(cv)))
+    validity_change_cut_indicator$discrete <- TRUE
+  } else {
+    cv_quant <- lapply(1:5, function(i) quantile(cv, seq(0, 1, by = 1/i), na.rm = TRUE))
+    cv_quant_unique <- sapply(cv_quant, function(i) !any(duplicated(i)))
+    validity_change_cut_indicator$discrete <- FALSE
+    groups <- c(1:5)[cv_quant_unique]
+  }
+
+  groups
+})
+
+# ** Status of changing cut ####
+validity_change_cut_indicator <- reactiveValues(change = FALSE,
+                                                discrete = FALSE)
+
+# ** Updating cut slider ####
+observeEvent(!(input$validity_group %in% validity_admisible_groups()), {
+  if (!(input$validity_group %in% validity_admisible_groups())){
+    validity_change_cut_indicator$change <- TRUE
+    c <- max(validity_admisible_groups())
+    updateSliderInput(session, "validity_group", value = c)
+  }
+})
+
+# ** Warning for non-unique cut ####
+output$validity_groups_alert <- renderUI({
+  if (validity_change_cut_indicator$change) {
+    if (validity_change_cut_indicator$discrete){
+      txt <- paste0('<font color = "orange">The criterion seems to be discrete. The number of groups was set to ',
+                    validity_admisible_groups(), ".</font>")
+    } else {
+      txt <- paste0('<font color = "orange">The cut of criterion variable was not unique. The maximum number of
+                    groups, for which criterion variable is unique is ', max(validity_admisible_groups()), ".</font>")
+    }
+  } else {
+    txt <- " "
+  }
+  HTML(txt)
+})
+
 # ** Validity distractors plot ######
 validity_distractor_plot_Input <- reactive({
+
+  num.group <- input$validity_group
+
   a <- nominal()
   k <- key()
   i <- input$validitydistractorSlider
   cv <- criterion()
-  num.group <- input$validity_group
-
   multiple.answers <- c(input$type_validity_combinations_distractor == "Combinations")
+
   plotDistractorAnalysis(data = a, key = k, num.group = num.group,
                          item = i,
                          item.name = item_names()[i],
                          multiple.answers = multiple.answers,
-                         matching = cv)
+                         matching = cv,
+                         match.discrete = validity_change_cut_indicator$discrete)
 })
 
 # ** Output validity distractors plot ######
@@ -454,3 +516,11 @@ output$validity_table_item_interpretation <- renderUI({
                        "and criterion variable exists."))
   HTML(paste(txt1, txt3))
 })
+
+# ** Warning for missing values ####
+output$corr_na_alert <- renderUI({
+  txt <- na_score()
+  HTML(txt)
+})
+
+
