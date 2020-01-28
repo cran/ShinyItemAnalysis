@@ -64,8 +64,10 @@ function(input, output, session) {
 
   dataset$group <- NULL
   dataset$criterion <- NULL
+  dataset$DIFmatching <- NULL
 
   dataset$data_status <- NULL
+  dataset$key_upload_status <- "toy"
 
   # * Setting ####
   setting_figures <- reactiveValues()
@@ -95,20 +97,54 @@ function(input, output, session) {
   observeEvent(c(input$dataSelect, removeCounter$Click == 1), {
 
     inputData <- input$dataSelect
-    pos <- regexpr("_", inputData)[1]
-    datasetName <- str_sub(inputData, 1, pos - 1)
-    packageName <- str_sub(inputData, pos + 1)
+    datasetName <- strsplit(inputData, split = "_")[[1]][1] # simplified dataset string division
+    packageName <- strsplit(inputData, split = "_")[[1]][2]
+    datasetSubset <- strsplit(inputData, split = "_")[[1]][3] # store anything after second underscore
 
     dataset$data_status <- "OK"
 
-    if (datasetName == "dataMedicalgraded") {
+    if (datasetName == "LearningToLearn" & datasetSubset == "6") {
+      do.call(data, args = list(paste0(datasetName), package = packageName))
+      dataBinary <- get(paste0(datasetName))
+      dataBinary <- dataBinary[19:59] # for 6th grade, items only
+
+      group <- get(paste0(datasetName))[, "track_01"]
+      criterion <- "missing"
+      # DIFmatching <- get(paste0(datasetName))[, "score_9"]
+      DIFmatching <- "missing"
+
+      dataOrdinal <- dataBinary
+      dataNominal <- dataBinary
+
+      dataType <- "binary"
+
+      key <- rep(1, ncol(dataBinary)) # key with 1 as "correct" for *n* items
+
+    } else if (datasetName == "LearningToLearn" & datasetSubset == "9") {
+      do.call(data, args = list(paste0(datasetName), package = packageName))
+      dataBinary <- get(paste0(datasetName))
+      dataBinary <- dataBinary[60:100] # for 9th grade, items only
+
+      group <- get(paste0(datasetName))[, "track_01"]
+      criterion <- "missing"
+      DIFmatching <- get(paste0(datasetName))[, "score_6"]
+
+      dataOrdinal <- dataBinary
+      dataNominal <- dataBinary
+
+      dataType <- "binary"
+
+      key <- rep(1, ncol(dataBinary)) # key with 1 as "correct" for *n* items
+
+    } else if (datasetName == "dataMedicalgraded") {
       do.call(data, args = list(paste0(datasetName), package = packageName))
       dataOrdinal <- get(paste0(datasetName))
 
-	  group <- dataOrdinal[, "gender"]
-	  criterion <- dataOrdinal[, "StudySuccess"]
+	    group <- dataOrdinal[, "gender"]
+	    criterion <- dataOrdinal[, "StudySuccess"]
+	    DIFmatching <- "missing"
 
-	  dataOrdinal <- dataOrdinal[, 1:(dim(dataOrdinal)[2] - 2)]
+	    dataOrdinal <- dataOrdinal[, 1:(dim(dataOrdinal)[2] - 2)] # can be simplified with *ncol()*
       dataNominal <- dataOrdinal
 
       dataType <- "ordinal"
@@ -119,24 +155,21 @@ function(input, output, session) {
                            ncol = ncol(dataOrdinal), nrow = nrow(dataOrdinal))
 
     } else if (datasetName == "Science") {
-	  do.call(data, args = list(paste0(datasetName), package = packageName))
+      do.call(data, args = list(paste0(datasetName), package = packageName))
       dataOrdinal <- get(paste0(datasetName))
 
-	  dataNominal <- dataOrdinal
+	    dataNominal <- dataOrdinal
 
-	  group <- "missing"
-	  criterion <- "missing"
-
-	  colnames(dataOrdinal) <- paste0("Item",1:4)
-	  colnames(dataNominal) <- paste0("Item",1:4)
+	    group <- "missing"
+	    criterion <- "missing"
+	    DIFmatching <- "missing"
 
       dataType <- "ordinal"
 
-	  key <- sapply(dataOrdinal, max)
+	    key <- sapply(dataOrdinal, max)
       df.key <- sapply(key, rep, each = nrow(dataOrdinal))
       dataBinary <- matrix(as.numeric(dataOrdinal >= df.key),
                            ncol = ncol(dataOrdinal), nrow = nrow(dataOrdinal))
-
 	} else {
       do.call(data, args = list(paste0(datasetName, "test"), package = packageName))
       dataNominal <- get(paste0(datasetName, "test"))
@@ -146,14 +179,13 @@ function(input, output, session) {
       do.call(data, args = list(paste0(datasetName, "key"), package = packageName))
       key <- as.character(unlist(get(paste0(datasetName, "key"))))
       group <- dataNominal[, length(key) + 1]
+      DIFmatching <- "missing"
 
       if (datasetName %in% c("GMAT2", "MSATB")){
         criterion <- "missing"
       } else {
         criterion <- dataNominal[, length(key) + 2]
       }
-
-      # dataNominal <- as.data.frame(apply(dataNominal[, 1:length(key)], c(1, 2), function(x) ifelse(is.na(x), 0, x)))
       dataNominal <- dataNominal[, 1:length(key)]
       dataOrdinal <- mirt::key2binary(dataNominal, key)
       dataBinary <- mirt::key2binary(dataNominal, key)
@@ -176,6 +208,7 @@ function(input, output, session) {
     dataset$key <- key
     dataset$group <- group
     dataset$criterion <- criterion
+    dataset$DIFmatching <- DIFmatching
   })
 
   # * Load data from csv files ####
@@ -185,6 +218,7 @@ function(input, output, session) {
     inputKey <- NULL
     inputGroup <- NULL
     inputCriterion <- NULL
+    inputDIFmatching <- NULL # DIF matching
     inputOrdinalMin <- NULL
     inputOrdinalMax <- NULL
 
@@ -203,13 +237,15 @@ function(input, output, session) {
                             quote = input$quote)
       dataset$data_status <- "OK"
 
-
       # loading max/min values for ordinal data
       if (input$data_type == "ordinal"){
+        ### changing factors to numeric
+        inputData <- data.frame(sapply(inputData, function(x) as.numeric(paste(x))))
+
         ### minimal values
         if (is.null(input$minOrdinal)) {
           if (input$globalMin == "") {
-            inputOrdinalMin <- sapply(inputData, min)
+            inputOrdinalMin <- sapply(inputData, min, na.rm = T)
           } else {
             inputOrdinalMin <- rep(input$globalMin, ncol(inputData))
           }
@@ -223,7 +259,7 @@ function(input, output, session) {
         ### maximal values
         if (is.null(input$maxOrdinal)) {
           if (input$globalMax == "") {
-            inputOrdinalMax <- sapply(inputData, max)
+            inputOrdinalMax <- sapply(inputData, max, na.rm = T)
           } else {
             inputOrdinalMax <- rep(input$globalMax, ncol(inputData))
           }
@@ -236,7 +272,11 @@ function(input, output, session) {
       }
 
       # loading key
-      if (is.null(input$key)){
+      inpKey <- ifelse(input$data_type == "nominal",
+                       ifelse(is.null(input$key_nominal), 0, input$key_nominal),
+                       ifelse(is.null(input$key_ordinal), 0, input$key_ordinal))
+
+      if (inpKey[[1]] == 0 | dataset$key_upload_status == "reset"){
         if (input$globalCut == "") {
           if (input$data_type == "binary"){
             inputKey <- rep(1, ncol(inputData))
@@ -248,16 +288,24 @@ function(input, output, session) {
             }
           }
         } else {
-          inputKey <- rep(as.numeric(input$globalCut), ncol(inputData))
+          inputKey <- rep(as.numeric(paste(input$globalCut)), ncol(inputData))
         }
       } else {
-        inputKey <- read.csv(input$key$datapath,
-                             header = input$header,
-                             sep = input$sep,
-                             quote = input$quote)
-        inputKey <- as.character(unlist(inputKey))
-      }
 
+        if (input$data_type == "nominal"){
+          inputKey <- read.csv(input$key_nominal$datapath,
+                               header = input$header,
+                               sep = input$sep,
+                               quote = input$quote)
+          inputKey <- as.character(unlist(inputKey))
+        } else {
+          inputKey <- read.csv(input$key_ordinal$datapath,
+                               header = input$header,
+                               sep = input$sep,
+                               quote = input$quote)
+          inputKey <- as.character(unlist(inputKey))
+        }
+      }
       dataset$key <- inputKey
 
       # loading group
@@ -282,6 +330,18 @@ function(input, output, session) {
         inputCriterion <- unlist(inputCriterion)
       }
 
+      # loading DIF matching variable
+      if (is.null(input$dif_matching)){
+        inputDIFmatching <- "missing"
+      } else {
+        inputDIFmatching <- read.csv(input$dif_matching$datapath,
+                                   header = input$header,
+                                   sep = input$sep,
+                                   quote = input$quote)
+        inputDIFmatching <- unlist(inputDIFmatching)
+      }
+
+
       # changing reactiveValues
       ### main data
       dataset$nominal <- inputData
@@ -303,6 +363,7 @@ function(input, output, session) {
 
       dataset$nominal <- as.data.table(dataset$nominal)
       dataset$data_type <- inputData_type
+
       ### min/max values
       if (input$data_type == "ordinal"){
         dataset$minimal <- inputOrdinalMin
@@ -315,6 +376,8 @@ function(input, output, session) {
       dataset$group <- inputGroup
       ### criterion
       dataset$criterion <- inputCriterion
+      ### DIF matching
+      dataset$DIFmatching <- inputDIFmatching
     }
   }
   )
@@ -385,20 +448,35 @@ function(input, output, session) {
 
   criterion <- reactive({
     ### bad criterion dimension and warning for missing criterion
-    if (length(dataset$criterion) == 1 & any(dataset$criterion == "missing")){
+    if (length(dataset$criterion) == 1 & any(dataset$criterion == "missing")) {
       validate(need(dataset$criterion != "missing",
                     "Criterion variable is missing! Predictive validity analysis is not available!"),
                errorClass = "warning_criterion_variable_missing")
     } else {
       validate(need(nrow(nominal()) == length(dataset$criterion),
-                    "The length of criterion variable needs to be the same as the number of observations in the main dataset!"),
+                    "The length of criterion variable needs to be the same as the number
+                    of observations in the main dataset!"),
                errorClass = "error_dimension")
     }
     dataset$criterion
   })
 
+  DIFmatching <- reactive({
+    ### bad DIF matching dimension and warning for missing DIF matching variable
+    if (length(dataset$DIFmatching) == 1 & any(dataset$DIFmatching == "missing")) {
+      validate(need(dataset$DIFmatching != "missing",
+                    "The DIF matching variable is not provided! DIF analyses will use total scores!"),
+               errorClass = "warning_DIFmatching_variable_missing")
+    } else {
+      validate(need(nrow(nominal()) == length(dataset$DIFmatching), # changed to binary from nominal
+                    "The length of DIF matching variable need to be the same as number of observations in the main dataset!"),
+               errorClass = "error_dimension")
+    }
+    dataset$DIFmatching
+  })
+
   total_score <- reactive({
-    apply(ordinal(), 1, sum)
+    rowSums(ordinal())
   })
 
   z_score <- reactive({
@@ -468,17 +546,11 @@ function(input, output, session) {
       "zlogreg_irtSlider",
       "slider_nlr_3P_item",
       "slider_nlr_4P_item",
-      "cumreg_slider_item",
-      "multi_slider_item",
-      "difMHSlider_item",
-      "diflogSlider",
-      "diflog_irtSlider",
       "DIF_NLR_item_plot",
       "difirt_lord_itemSlider",
       "difirt_raju_itemSlider",
       "ddfSlider",
-      "reportSlider",
-      "difMHSlider_score"
+      "reportSlider"
     )
 
     itemCount = ncol(ordinal())
@@ -494,19 +566,10 @@ function(input, output, session) {
     updateSliderInput(session = session, inputId = "zlogreg_irtSlider", max = itemCount)
     updateSliderInput(session = session, inputId = "slider_nlr_3P_item", max = itemCount)
     updateSliderInput(session = session, inputId = "slider_nlr_4P_item", max = itemCount)
-    updateSliderInput(session = session, inputId = "cumreg_slider_item", max = itemCount)
-    updateSliderInput(session = session, inputId = "adjreg_slider_item", max = itemCount)
-    updateSliderInput(session = session, inputId = "multi_slider_item", max = itemCount)
-    updateSliderInput(session = session, inputId = "difMHSlider_item", max = itemCount)
-    updateSliderInput(session = session, inputId = "diflogSlider", max = itemCount)
-    updateSliderInput(session = session, inputId = "diflog_irtSlider", max = itemCount)
     updateSliderInput(session = session, inputId = "DIF_NLR_item_plot", max = itemCount)
     updateSliderInput(session = session, inputId = "difirt_lord_itemSlider", max = itemCount)
     updateSliderInput(session = session, inputId = "difirt_raju_itemSlider", max = itemCount)
     updateSliderInput(session = session, inputId = "ddfSlider", max = itemCount)
-    updateSliderInput(session = session, inputId = "difMHSlider_score", max = itemCount,
-                      value = round(median(total_score(), na.rm = T)))
-
   })
 
   #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -584,11 +647,13 @@ function(input, output, session) {
                     inputId = "reportDataName",
                     value = paste(dataName(), "dataset"))
   })
+
   # * Report format ####
   formatInput <- reactive({
     format <- input$report_format
     format
   })
+
   # * Setting for report ####
   # ** IRT models ####
   irt_typeInput <- reactive({
@@ -658,46 +723,52 @@ function(input, output, session) {
 
   irtabilityTableInput <- reactive({
     type = input$irt_type_report
-    if (type == "rasch"){out = raschAbilities()}
-    if (type == "1pl")  {out = onePlAbilities()}
-    if (type == "2pl")  {out = twoPlAbilities()}
-    if (type == "3pl")  {out = threePlAbilities()}
-    if (type == "4pl")  {out = fourPlAbilities()}
+    if (type == "rasch"){out = raschAbilities()[, 1:3]}
+    if (type == "1pl")  {out = onePlAbilities()[, 1:3]}
+    if (type == "2pl")  {out = twoPlAbilities()[, 1:3]}
+    if (type == "3pl")  {out = threePlAbilities()[, 1:3]}
+    if (type == "4pl")  {out = fourPlAbilities()[, 1:3]}
     if (type == "none") {out = ""}
 
     if (type != "none") {
-      out<-data.table(Min = apply(X=out[,1:3], FUN=min, 2),
-                      Max = apply(X=out[,1:3], FUN=max, 2),
-                      Mean = apply(X=out[,1:3], FUN=mean, 2),
-                      Median = apply(X=out[,1:3], FUN=median, 2),
-                      SD = apply(X=out[,1:3], FUN=sd, 2),
-                      Skewness = apply(X=out[,1:3], FUN=skewness, 2),
-                      Kurtosis = apply(X=out[,1:3], FUN=kurtosis, 2))
+      out <- data.table(Min = sapply(out, min),
+                        Max = sapply(out, max),
+                        Mean = sapply(out, mean),
+                        Median = sapply(out, median),
+                        SD = sapply(out, sd),
+                        Skewness = sapply(out, skewness),
+                        Kurtosis = sapply(out, kurtosis))
       rownames(out) = c("Total Scores", "Z-Scores", "F-scores")
     }
-
     out
   })
 
-  # ** Double slider inicialization for DD plot report ######
+  # * Double slider inicialization for DD plot report ######
   observe({
     val <- input$DDplotNumGroupsSlider_report
     updateSliderInput(session, "DDplotRangeSlider_report",
                       min = 1,
                       max = val,
                       step = 1,
-                      value = c(1, min(3, val)))
+                      value = c(1, val))
   })
-  # ** Group present ####
+
+  # * Group present ####
   groupPresent <- reactive({
     (any(dataset$group != "missing") | is.null(dataset$group))
   })
-  # ** Critetion present ####
+
+  # * Critetion present ####
   criterionPresent <- reactive({
     (any(dataset$criterion != "missing") | is.null(dataset$criterion))
   })
 
+  # * DIF matching present ####
+  DIFmatchingPresent <- reactive({
+    (any(dataset$DIFmatching != "missing") | is.null(dataset$DIFmatching))
+  })
 
+  # * Progress bar ####
   observeEvent(input$generate, {
     withProgress(message = "Creating content", value = 0, style = "notification", {
       list(# header
@@ -727,12 +798,13 @@ function(input, output, session) {
         validity_table = {if (input$predict_report) {if (criterionPresent()) {validity_table_Input()} else {""}}},
         incProgress(0.05),
         # item analysis
-        difPlot = DDplot_Input_report(),
+        DDplot = DDplot_Input_report(),
         DDplotRange1 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[1]], input$DDplotRangeSlider[[1]]),
         DDplotRange2 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[2]], input$DDplotRangeSlider[[2]]),
         DDplotNumGroups = ifelse(input$customizeCheck, input$DDplotNumGroupsSlider_report, input$DDplotNumGroupsSlider),
         DDplotDiscType = ifelse(input$customizeCheck, input$DDplotDiscriminationSelect_report, input$DDplotDiscriminationSelect),
         itemexam = itemanalysis_table_report_Input(),
+        cronbachs_alpha_table = reliability_cronbachalpha_table_Input(),
         incProgress(0.05),
         # distractors
         distractor_plot = report_distractor_plot(),
@@ -743,7 +815,7 @@ function(input, output, session) {
         multiplot = multiplotReportInput(),
         incProgress(0.05),
         # irt
-        wrightMap = oneparamirtWrightMapReportInput_mirt(),
+        wrightMap = oneparamirtWrightMapInput_mirt(),
         irt_type = irt_typeInput(),
         irt = irtInput(),
         irtiic = irtiicInput(),
@@ -766,14 +838,17 @@ function(input, output, session) {
         deltaplotCheck = input$deltaplotCheck,
         deltaplot = {if (groupPresent()) {if (input$deltaplotCheck) {deltaplotInput_report()}}},
         DP_text_normal = {if (groupPresent()) {if (input$deltaplotCheck) {deltaGpurn_report()}}},
+        ### Mantel-Haenszel
+        MHCheck = input$MHCheck,
+        DIF_MH_print = {if (groupPresent()) {if (input$MHCheck) {report_DIF_MH_model()}}},
         ### logistic regression
         logregCheck = input$logregCheck,
-        DIF_logistic_plot = {if (groupPresent()) {if (input$logregCheck) {DIF_logistic_plotReport()}}},
-        DIF_logistic_print = {if (groupPresent()) {if (input$logregCheck) {model_DIF_logistic_print_report()}}},
+        DIF_logistic_plot = {if (groupPresent()) {if (input$logregCheck) {report_DIF_logistic_plot()}}},
+        DIF_logistic_print = {if (groupPresent()) {if (input$logregCheck) {report_DIF_logistic_model()}}},
         ### DDF multinomial
         multiCheck = input$multiCheck,
-        DDF_multinomial_print = {if (groupPresent()) {if (input$multiCheck) {model_DDF_print_report()}}},
-        DDF_multinomial_plot = {if (groupPresent()) {if (input$multiCheck) {plot_DDFReportInput()}}},
+        DDF_multinomial_print = {if (groupPresent()) {if (input$multiCheck) {DDF_multi_model_report()}}},
+        DDF_multinomial_plot = {if (groupPresent()) {if (input$multiCheck) {DDF_multi_plot_report()}}},
         incProgress(0.25),
         ### sessionInfo
         sessionInfo = input$include_session
@@ -781,20 +856,17 @@ function(input, output, session) {
     })
 
     output$download_report_button <- renderUI({
-
-      if(is.null(input$generate)){return(NULL)}
+      if (is.null(input$generate)){return(NULL)}
       downloadButton(outputId = "report",
                      label = "Download report",
                      class = "btn btn-primary")
-
     })
-
   })
 
+  # * Download report ####
   output$report <- downloadHandler(
     filename = reactive({paste0("report.", input$report_format)}),
     content = function(file) {
-
       reportPath <- file.path(getwd(), paste0("report", formatInput(), ".Rmd"))
       parameters <- list(# header
         author = input$reportAuthor,
@@ -820,12 +892,13 @@ function(input, output, session) {
         validity_plot = {if (input$predict_report) {if (criterionPresent()) {validity_plot_Input()} else {""}}},
         validity_table = {if (input$predict_report) {if (criterionPresent()) {validity_table_Input()} else {""}}},
         # item analysis
-        difPlot = DDplot_Input_report(),
+        DDplot = DDplot_Input_report(),
         DDplotRange1 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[1]], input$DDplotRangeSlider[[1]]),
         DDplotRange2 = ifelse(input$customizeCheck, input$DDplotRangeSlider_report[[2]], input$DDplotRangeSlider[[2]]),
         DDplotNumGroups = ifelse(input$customizeCheck, input$DDplotNumGroupsSlider_report, input$DDplotNumGroupsSlider),
         DDplotDiscType = ifelse(input$customizeCheck, input$DDplotDiscriminationSelect_report, input$DDplotDiscriminationSelect),
         itemexam = itemanalysis_table_report_Input(),
+        cronbachs_alpha_table = reliability_cronbachalpha_table_Input(),
         # distractors
         distractor_plot = report_distractor_plot(),
         type_distractor_plot = input$type_combinations_distractor_report,
@@ -833,7 +906,7 @@ function(input, output, session) {
         # regression
         multiplot = multiplotReportInput(),
         # irt
-        wrightMap = oneparamirtWrightMapReportInput_mirt(),
+        wrightMap = oneparamirtWrightMapInput_mirt(),
         irt_type = irt_typeInput(),
         irt = irtInput(),
         irtiic = irtiicInput(),
@@ -855,14 +928,17 @@ function(input, output, session) {
         deltaplotCheck = input$deltaplotCheck,
         DIF_deltaplot = {if (groupPresent()) {if (input$deltaplotCheck) {deltaplotInput_report()}}},
         DIF_deltaplot_text = {if (groupPresent()) {if (input$deltaplotCheck) {deltaGpurn_report()}}},
+        ### Mantel-Haenszel
+        MHCheck = input$MHCheck,
+        DIF_MH_print = {if (groupPresent()) {if (input$MHCheck) {report_DIF_MH_model()}}},
         ### logistic regression
         logregCheck = input$logregCheck,
-        DIF_logistic_plot = {if (groupPresent()) {if (input$logregCheck) {DIF_logistic_plotReport()}}},
-        DIF_logistic_print = {if (groupPresent()) {if (input$logregCheck) {model_DIF_logistic_print_report()}}},
+        DIF_logistic_plot = {if (groupPresent()) {if (input$logregCheck) {report_DIF_logistic_plot()}}},
+        DIF_logistic_print = {if (groupPresent()) {if (input$logregCheck) {report_DIF_logistic_model()}}},
         ### multinomial regression
         multiCheck = input$multiCheck,
-        DDF_multinomial_print = {if (groupPresent()) {if (input$multiCheck) {model_DDF_print_report()}}},
-        DDF_multinomial_plot = {if (groupPresent()) {if (input$multiCheck) {plot_DDFReportInput()}}},
+        DDF_multinomial_print = {if (groupPresent()) {if (input$multiCheck) {DDF_multi_model_report()}}},
+        DDF_multinomial_plot = {if (groupPresent()) {if (input$multiCheck) {DDF_multi_plot_report()}}},
         ### sessionInfo
         sessionInfo = input$include_session
       )
@@ -871,6 +947,9 @@ function(input, output, session) {
     }
   )
 
+  #source('tests/helper_functions/markdown_render.R', local = TRUE)
+  #
+  #exportTestValues(report = report_react())
 
   #%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   # SETTING ######

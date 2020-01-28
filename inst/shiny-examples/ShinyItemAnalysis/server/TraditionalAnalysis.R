@@ -12,7 +12,7 @@ observe({
                     min = 1,
                     max = val,
                     step = 1,
-                    value = c(1, min(3, val)))
+                    value = c(1, val))
 })
 
 # ** DD plot text ######
@@ -20,7 +20,7 @@ output$DDplot_text <- renderUI({
   range1 <- input$DDplotRangeSlider[[1]]
   range2 <- input$DDplotRangeSlider[[2]]
 
-  if (any(range1!=1, range2!=3, input$DDplotNumGroupsSlider!=3)) {
+  if (any(range1 != 1, range2 != 3, input$DDplotNumGroupsSlider != 3)) {
     HTML(paste(
       "Discrimination is here a difference between the difficulty recorded in the ",
       "<b>", range1, "</b>",
@@ -42,6 +42,9 @@ DDplot_Input <- reactive({
 
   difc_type <- input$DDplotDiscriminationDifficulty
   average.score <- (difc_type == "AVGS")
+
+  validate(need(input$DDplotRangeSlider[[2]] <= input$DDplotNumGroupsSlider,
+                ""))
 
   DDplot(correct, item.names = item_numbers(),
          k = input$DDplotNumGroupsSlider,
@@ -221,7 +224,7 @@ distractor_change_cut_indicator <- reactiveValues(change = FALSE)
 observeEvent(!(input$distractor_group %in% distractor_admisible_groups()), {
   if (!(input$distractor_group %in% distractor_admisible_groups())){
     distractor_change_cut_indicator$change <- TRUE
-    c <- max(distractor_admisible_groups())
+    c <- max(distractor_admisible_groups(), na.rm = T)
     updateSliderInput(session, "distractor_group", value = c)
   }
 })
@@ -230,7 +233,8 @@ observeEvent(!(input$distractor_group %in% distractor_admisible_groups()), {
 output$distractor_groups_alert <- renderUI({
   if (distractor_change_cut_indicator$change) {
     txt <- paste0('<font color = "orange">The cut of criterion variable was not unique. The maximum number of
-                  groups, for which criterion variable is unique is ', max(distractor_admisible_groups()), ".</font>")
+                  groups, for which criterion variable is unique is ',
+                  max(distractor_admisible_groups(), na.rm = T), ".</font>")
     HTML(txt)
   } else {
     txt <- " "
@@ -266,7 +270,8 @@ distractor_plot_Input <- reactive({
                          item = i,
                          item.name = item_names()[i],
                          multiple.answers = multiple.answers,
-                         matching = sc)
+                         matching = sc) +
+    xlab("Group by total score")
 })
 
 # ** Output distractors plot ######
@@ -287,18 +292,6 @@ output$DB_distractor_plot <- downloadHandler(
            dpi = setting_figures$dpi)
   }
 )
-
-
-# ** Admisible groups for cut ####
-distractor_admisible_groups <- reactive({
-  sc <- total_score()
-
-  sc_quant <- lapply(1:5, function(i) quantile(sc, seq(0, 1, by = 1/i), na.rm = TRUE))
-  sc_quant_unique <- sapply(sc_quant, function(i) !any(duplicated(i)))
-
-  groups <- c(1:5)[sc_quant_unique]
-  groups
-})
 
 # ** Distractor table with counts ######
 distractor_table_counts_Input <- reactive({
@@ -460,7 +453,7 @@ distractor_change_cut_indicator_report <- reactiveValues(change = FALSE)
 observeEvent(list(input$customizeCheck, !(input$distractor_group_report %in% distractor_admisible_groups())), {
   if (!(input$distractor_group_report %in% distractor_admisible_groups())){
     distractor_change_cut_indicator_report$change <- TRUE
-    c <- max(distractor_admisible_groups())
+    c <- max(distractor_admisible_groups(), na.rm = T)
     updateSliderInput(session, "distractor_group_report", value = c)
   }
 })
@@ -469,7 +462,7 @@ observeEvent(list(input$customizeCheck, !(input$distractor_group_report %in% dis
 output$distractor_groups_alert_report <- renderUI({
   if (distractor_change_cut_indicator_report$change) {
     txt <- paste0('<font color = "orange">The cut of criterion variable was not unique. The maximum number of
-                  groups, for which criterion variable is unique is ', max(distractor_admisible_groups()), ".</font>")
+                  groups, for which criterion variable is unique is ', max(distractor_admisible_groups(), na.rm = T), ".</font>")
     HTML(txt)
   } else {
     txt <- " "
@@ -482,6 +475,7 @@ report_distractor_plot <- reactive({
   a <- nominal()
   colnames(a) <- item_names()
   k <- key()
+  sc <- total_score()
 
   if (!input$customizeCheck) {
     multiple.answers_report <- c(input$type_combinations_distractor == "Combinations")
@@ -497,7 +491,9 @@ report_distractor_plot <- reactive({
     g <- plotDistractorAnalysis(data = a, key = k, num.group = num.group,
                                 item = i,
                                 item.name = item_names()[i],
-                                multiple.answers = multiple.answers_report)
+                                multiple.answers = multiple.answers_report,
+                                matching = sc) +
+      xlab("Group by total score")
     g <- g +
       ggtitle(paste("Distractor plot for item", item_numbers()[i])) +
       theme_app()

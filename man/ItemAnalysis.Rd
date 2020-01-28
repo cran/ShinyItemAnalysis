@@ -97,8 +97,10 @@ head(ItemAnalysis(dataOrd))
 # item analysis for binary data using also study success
 head(ItemAnalysis(dataOrd, y = StudySuccess))
 # including also item analysis for binarized data
-head(ItemAnalysis(dataOrd, y = StudySuccess, k = 5, l = 4, u = 5,
-maxscore = 4, minscore = 0, cutscore = 4, add.bin = TRUE) )
+head(ItemAnalysis(dataOrd,
+  y = StudySuccess, k = 5, l = 4, u = 5,
+  maxscore = 4, minscore = 0, cutscore = 4, add.bin = TRUE
+))
 }
 }
 \references{
@@ -114,15 +116,14 @@ Allen, M. J. & Yen, W. M. (1979). Introduction to measurement theory. Monterey, 
 }
 \author{
 Patricia Martinkova \cr
-Institute of Computer Science, The Czech Academy of Sciences \cr
-martinkova@cs.cas.cz \cr
+Institute of Computer Science of the Czech Academy of Sciences \cr
+\email{martinkova@cs.cas.cz} \cr
 
 Jana Vorlickova \cr
-Institute of Computer Science, The Czech Academy of Sciences \cr
-Faculty of Mathematics and Physics, Charles University \cr
+Institute of Computer Science of the Czech Academy of Sciences \cr
 
 Adela Hladka \cr
-Institute of Computer Science, The Czech Academy of Sciences \cr
+Institute of Computer Science of the Czech Academy of Sciences \cr
 Faculty of Mathematics and Physics, Charles University \cr
-hladka@cs.cas.cz \cr
+\email{hladka@cs.cas.cz} \cr
 }

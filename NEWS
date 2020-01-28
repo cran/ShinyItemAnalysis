@@ -3,6 +3,165 @@
         *  Changes and Developments in the ShinyItemAnalysis Package  *
         *                                                             *
         ***************************************************************
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.2. (2020-01-27) -
+-------------------------------------------------------
+
+** This is CRAN version, it includes version 1.3.1.-1.-8. **
+
+Besides, following updates are included:
+
+BUG FIXING
+  o Mismatch in specification of H0 and H1 was corrected in DIF/Fairness section
+    and in Report section.
+  o plotDIFLogistic() now correctly plots matching criterion.
+  o Logistic method in DIF/Fairness section now correctly plots best fitting
+    model when p.adjust.method is applied.
+  o Logistic method in DIF/Fairness section now excludes missing values.
+
+MAJOR CHANGES
+  o New dataset LearningToLearn was added to the package.
+  o New toy datasets LearningToLearn6 and LearningToLearn9 were added to the app.
+  o Upload of the DIF matching criterion is now available in Data section of the app.
+  o D-DIF index calculation was added into DIF/MH/Item to evaluate DIF effect size
+  o OR calculation in DIF/MH was edited.
+  o plotDIFLogistic() function was updated to accept class of 'Logistik'
+    as input.
+  o plotDIFLogistic() now accepts character input for 'item' argument.
+  o Summary and Item inputs in DIF/Logistic are connected now. Model is now
+    fitted only once.
+
+MINOR CHANGES
+  o Citation and list of References were updated.
+  o Authors' details were updated.
+  o Due to changes in difNLR, function ddfORD was renamed to difORD.
+  o About page was updated.
+  o Error messages for DistractorAnalysis() and plotDistractorAnalysis() were unified.
+  o Copyright year in footer is now responsive.
+  o Description of toy datasets was updated.
+  o styler package was used for all functions. Documentation was updated.
+  o For plotDIFLogistc() it is now possible to turn off plotting empirical probabilities.
+    This can be done using draw.empirical = FALSE.
+  o Selected R code was updated in DIF/MH
+  o Threshold for discrimination can be now specified in DDplot()
+    function via argument 'thr'. Default value is 0.2.
+  o Warning and error messages were updated for plotDistractorAnalysis()
+    function when 'key' is missing.
+  o Width of inputs was unified in DIF/Fairness section.
+  o Wording was updated.
+  o Some typos were fixed.
+  o Text in reports was updated.
+  o Some examples were set to run to allow for automatic checks of the package.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-8. (2019-11-02) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Typos in plotAdjacent(), plotCumulative() and plotMultinomial() were fixed.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-7. (2019-09-30) -
+-------------------------------------------------------
+
+MAJOR CHANGES
+  o Functions DistractorAnalysis() and plotDistractorAnalysis()
+    were updated to not requiring key input.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-6. (2019-09-25) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Bug in key uploading was fixed. When nominal data was uploaded and
+    then ordinal (without cut-score specified in file), key was kept
+    from nominal data.
+  o Bug in ordinal data was fixed. Recalculation of factors to numeric
+    is done.
+  o Some calculations with NA values were fixed.
+  o Double file input "key" was unified.
+
+MINOR CHANGES
+  o Item names for toy dataset Science were updated.
+  o Basic summary table for ordinal data was updated.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-5. (2019-08-26) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Table for MH in PDF reports was fixed.
+  o Header of sections were fixed in PDF reports.
+  o IRT parameter estimates table was fixed in PDF reports.
+  o Bug in plotMultinomial() for data without NAs was fixed.
+
+MAJOR UPDATES
+  o DIF/DDF detection methods for ordinal data were added. DIF/Fairness
+    section was updated.
+
+MINOR CHANGES
+  o Tabs in Regression were renamed.
+  o Warning when group vector is missing was added into Method comparison tab
+    in DIF/Fairness section.
+  o Method comparison tab for DIF/Fairness section was updated.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-4. (2019-08-07) -
+-------------------------------------------------------
+
+BUG FIXING
+  o In DIF section, Summary table for total scores now displays correct number
+    of respondents in groups (N).
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-3. (2019-07-02) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Bug in Adjacent model in Regression tab was fixed. Matching criterion
+    and parametrization inputs now have effect on model.
+  o Bug in plotMultinomial() was fixed. Function now displays more than 12
+    response patterns as linetype.
+
+MINOR UPDATES
+  o Range for x-axes in plotAdjacent() and plotCumulative() were updated to
+    avoid removing data.
+  o Some typos were fixed.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-2. (2019-07-01) -
+-------------------------------------------------------
+
+MAJOR UPDATES
+  o Cronbach's alpha with CI was added into reports.
+  o Bonferroni correction for multiple comparison was added as an option
+    for correction methods in Regression, DIF and Reports tabs.
+
+MINOR UPDATES
+  o Warning for table for parameters in Bock's IRT model was modified.
+  o Wright map now considers item names when option Keep item names.
+  o Some wording was updated.
+  o Some typos were fixed.
+
+-------------------------------------------------------
+- Changes in ShinyItemAnalysis 1.3.1-1. (2019-06-28) -
+-------------------------------------------------------
+
+BUG FIXING
+  o Minimal number of groups for gULI in DDplot was set to 2 in both Item
+    analysis and Report tabs.
+
+MAJOR UPDATES
+  o Mantel-Haenszel test was added into reports.
+
+MINOR UPDATES
+  o Error for DIF/Logistic was customized.
+  o Text in reports in DIF section was updated.
+  o Tables in DIF section now includes both p-values and adjusted p-values
+    when correction method is applied.
+  o Warning for fancyhdr latex package was solved.
+
 -------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.3.1. (2019-06-26) -
 -------------------------------------------------------
@@ -14,7 +173,6 @@ Besides, following updates are included:
 MINOR UPDATES
   o In ItemAnalysis() function, documentation for item reliability and
     item validity indices has been added (Reported by Lot Fonteyne).
-
 
 -------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.3.0-18. (2019-06-25) -
@@ -240,7 +398,6 @@ MAJOR UPDATES
 MINOR UPDATES
   o Each tab is now open at the top of the page.
 
-
 -------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.3.0-6. (2019-04-18) -
 -------------------------------------------------------
@@ -305,7 +462,6 @@ MAJOR UPDATES
   o Analysis for ordinal items has been added. This includes use of ordinal
     data in sections Summary (histogram of Total scores, success rate),
     Reliability, Validity (correlations, predictive validity),
-
 
 -------------------------------------------------------
 - Changes in ShinyItemAnalysis 1.3.0-1. (2019-03-08) -
