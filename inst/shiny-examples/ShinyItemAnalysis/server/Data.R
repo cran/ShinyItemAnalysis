@@ -423,7 +423,7 @@ data_ordinal_summary_Input <- reactive({
     colnames(data_table_summary) <- c("Name", "Min", "Median", "Mean", "Max", "SD", "Cut")
     data_table_summary
   } else {
-    data_table <- sapply(data_table, as.factor)
+    # data_table <- sapply(data_table, as.factor)
     colnames(data_table) <- item_names()
     summary(data_table)
   }
@@ -445,13 +445,13 @@ output$data_rawdata_summary <- renderPrint({
 # *** Nominal data ####
 data_nominal_summary_Input <- reactive({
   data_table <- nominal()
-  data_table <- sapply(data_table, as.factor)
+  # data_table <- sapply(data_table, as.factor)
   colnames(data_table) <- item_names()
   summary(data_table)
 })
 
 output$data_nominal_summary <- renderPrint({
-  if (input$data_type == "nominal"){
+  if (input$data_type == "nominal") {
     data_nominal_summary_Input()
   } else {
     ""
@@ -461,7 +461,7 @@ output$data_nominal_summary <- renderPrint({
 # *** Binary data ####
 data_binary_summary_Input <- reactive({
   data_table <- binary()
-  data_table <- sapply(data_table, as.factor)
+  # data_table <- sapply(data_table, as.factor)
   colnames(data_table) <- item_names()
   summary(data_table)
 })
@@ -527,6 +527,7 @@ output$headdata <- DT::renderDataTable({
   data_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                pageLength = 6,
                server = TRUE,
@@ -540,6 +541,7 @@ output$key <- DT::renderDataTable({
   key_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                server = TRUE,
                scrollCollapse = TRUE,
@@ -553,6 +555,7 @@ output$sc01 <- DT::renderDataTable({
   scored_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                pageLength = 6,
                server = TRUE,
@@ -566,6 +569,7 @@ output$group <- DT::renderDataTable({
   group_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                server = TRUE,
                scrollCollapse = TRUE,
@@ -578,6 +582,7 @@ output$critvar <- DT::renderDataTable({
   critvar_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                server = TRUE,
                scrollCollapse = TRUE,
@@ -590,6 +595,7 @@ output$difvar <- DT::renderDataTable({
   difvar_table
 },
 rownames = F,
+style = "bootstrap",
 options = list(scrollX = TRUE,
                server = TRUE,
                scrollCollapse = TRUE,

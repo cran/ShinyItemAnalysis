@@ -28,7 +28,7 @@
 #' ggplot_build position_dodge geom_histogram geom_hline geom_line geom_point geom_ribbon geom_text ggplot
 #' ggsave ggtitle labs scale_color_manual scale_colour_manual scale_fill_manual scale_linetype_manual
 #' scale_shape_manual scale_size_continuous scale_x_continuous scale_x_discrete scale_y_continuous
-#' scale_y_reverse
+#' scale_y_reverse geom_col
 #' stat_function stat_summary theme theme_bw unit xlab xlim ylab ylim
 #' @importFrom graphics lines plot plot.new
 #' @importFrom grDevices dev.off hcl png rainbow recordPlot
@@ -70,8 +70,8 @@
 #' @details
 #' Package: ShinyItemAnalysis\cr
 #' Type: Package\cr
-#' Version: 1.3.3\cr
-#' Date: 2020-05-04\cr
+#' Version: 1.3.4\cr
+#' Date: 2020-08-24\cr
 #' Depends: R (>= 3.5.0)\cr
 #' Imports: corrplot, cowplot, CTT, data.table, deltaPlotR, DT, difNLR (>= 1.3.2), difR (>= 5.0),
 #' ggdendro, ggplot2 (>= 2.2.1), gridExtra, knitr, latticeExtra, ltm, mirt (>= 1.24), moments,

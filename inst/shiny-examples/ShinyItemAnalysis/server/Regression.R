@@ -637,24 +637,24 @@ output$regr_comp_table <- DT::renderDataTable({
   bestBIC <- apply(dfBIC, 1, function(x) which(x == min(x, na.rm = T))[1])
   bestBIC <- ifelse(is.na(bestBIC), bestBIC, paste0(bestBIC + 1, "PL"))
 
-  LRstat23 <- LRpval23 <- rep(NA, m)
-  whok23PL <- c(whok2PL & whok3PL)
-  LRstat23[whok23PL] <- -2 * (sapply(fit2PL[whok23PL], logLik) - sapply(fit3PL[whok23PL], logLik))
-  LRdf <- 1
-  LRpval23[whok23PL] <- 1 - pchisq(LRstat23[whok23PL], LRdf)
-  LRpval23[whok23PL] <- p.adjust(LRpval23[whok23PL], method = input$correction_method_regrmodels)
-
-  LRstat34 <- LRpval34 <- rep(NA, m)
-  whok34PL <- c(whok3PL & whok4PL)
-  LRstat34[whok34PL] <- -2 * (sapply(fit3PL[whok34PL], logLik) - sapply(fit4PL[whok34PL], logLik))
-  LRdf <- 1
-  LRpval34[whok34PL] <- 1 - pchisq(LRstat34[whok34PL], LRdf)
-  LRpval34[whok34PL] <- p.adjust(LRpval34[whok34PL], method = input$correction_method_regrmodels)
-
-  bestLR <- rep(NA, m)
-
-  bestLR[whok34PL] <- ifelse(LRpval23[whok34PL] < 0.05, "4PL", "3PL")
-  bestLR[whok23PL] <- ifelse(LRpval23[whok23PL] != "4PL" & LRpval23[whok23PL] < 0.05, "3PL", "2PL")
+  # LRstat23 <- LRpval23 <- rep(NA, m)
+  # whok23PL <- c(whok2PL & whok3PL)
+  # LRstat23[whok23PL] <- -2 * (sapply(fit2PL[whok23PL], logLik) - sapply(fit3PL[whok23PL], logLik))
+  # LRdf <- 1
+  # LRpval23[whok23PL] <- 1 - pchisq(LRstat23[whok23PL], LRdf)
+  # LRpval23[whok23PL] <- p.adjust(LRpval23[whok23PL], method = input$correction_method_regrmodels)
+  #
+  # LRstat34 <- LRpval34 <- rep(NA, m)
+  # whok34PL <- c(whok3PL & whok4PL)
+  # LRstat34[whok34PL] <- -2 * (sapply(fit3PL[whok34PL], logLik) - sapply(fit4PL[whok34PL], logLik))
+  # LRdf <- 1
+  # LRpval34[whok34PL] <- 1 - pchisq(LRstat34[whok34PL], LRdf)
+  # LRpval34[whok34PL] <- p.adjust(LRpval34[whok34PL], method = input$correction_method_regrmodels)
+  #
+  # bestLR <- rep(NA, m)
+  #
+  # bestLR[whok34PL] <- ifelse(LRpval23[whok34PL] < 0.05, "4PL", "3PL")
+  # bestLR[whok23PL] <- ifelse(LRpval23[whok23PL] != "4PL" & LRpval23[whok23PL] < 0.05, "3PL", "2PL")
 
   tab <- rbind(sprintf("%.2f", round(AIC2PL, 2)),
                sprintf("%.2f", round(AIC3PL, 2)),
@@ -663,34 +663,48 @@ output$regr_comp_table <- DT::renderDataTable({
                sprintf("%.2f", round(BIC2PL, 2)),
                sprintf("%.2f", round(BIC3PL, 2)),
                sprintf("%.2f", round(BIC4PL, 2)),
-               bestBIC,
-               sprintf("%.2f", round(LRstat23, 3)),
-               ifelse(round(LRpval23, 3) < 0.001, "<0.001",
-                      sprintf("%.3f", round(LRpval23, 3))),
-               sprintf("%.2f", round(LRstat34, 3)),
-               ifelse(round(LRpval34, 3) < 0.001, "<0.001",
-                      sprintf("%.3f", round(LRpval34, 3))),
-               bestLR)
+               bestBIC
+               # sprintf("%.2f", round(LRstat23, 3)),
+               # ifelse(round(LRpval23, 3) < 0.001, "<0.001",
+               #        sprintf("%.3f", round(LRpval23, 3))),
+               # sprintf("%.2f", round(LRstat34, 3)),
+               # ifelse(round(LRpval34, 3) < 0.001, "<0.001",
+               #        sprintf("%.3f", round(LRpval34, 3))),
+               # bestLR
+               )
 
   tab <- as.data.table(tab)
   colnames(tab) <- item_names()
   rownames(tab) <- c("AIC 2PL", "AIC 3PL", "AIC 4PL", "BEST AIC",
-                     "BIC 2PL", "BIC 3PL", "BIC 4PL", "BEST BIC",
-                     "Chisq-value 2PL vs 3PL", "p-value 2PL vs 3PL",
-                     "Chisq-value 3PL vs 4PL", "p-value 3PL vs 4PL",
-                     "BEST LR")
+                     "BIC 2PL", "BIC 3PL", "BIC 4PL", "BEST BIC"
+                     # "Chisq-value 2PL vs 3PL", "p-value 2PL vs 3PL",
+                     # "Chisq-value 3PL vs 4PL", "p-value 3PL vs 4PL",
+                     # "BEST LR"
+                     )
 
-  tab <- datatable(tab, rownames = T,
-                   options = list(autoWidth = T,
-                                  columnDefs = list(list(width = '140px', targets = list(0)),
-                                                    list(width = '100px', targets = list(1:ncol(tab))),
-                                                    list(targets = "_all")),
-                                  scrollX = T,
-                                  pageLength = 13,
-                                  dom = 'tipr')) %>%
-    formatStyle(0, target = 'row', fontWeight = styleEqual(c('BEST AIC', 'BEST BIC', 'BEST LR'),
-                                                           c('bold', 'bold', 'bold')))
-  tab
+ tab <- datatable(tab,
+  rownames = T,
+  style = "bootstrap",
+  extensions = "FixedColumns",
+  options = list(
+    autoWidth = T,
+    columnDefs = list(
+      list(width = "100px", targets = list(0)),
+      list(width = "65", targets = "_all")
+    ),
+    scrollX = T,
+    ordering = FALSE,
+    fixedColumns = list(leftColumns = 1),
+    pageLength = 13,
+    dom = "tr"
+  )
+) %>%
+  formatStyle(0, target = "row", fontWeight = styleEqual(
+    c("BEST AIC", "BEST BIC"), # "BEST LR"),
+    c("bold", "bold") #, "bold")
+  ))
+
+tab
 
 })
 
@@ -739,7 +753,8 @@ cumreg_plot_cum_Input <- reactive({
   fit.cum <- cumreg_model()
   matching.name <- ifelse(input$cumreg_matching == "total", "Total score", "Standardized total score")
 
-  g <- plotCumulative(fit.cum[[item]], type = "cumulative", matching.name = matching.name)
+  g <- plotCumulative(fit.cum[[item]], type = "cumulative", matching.name = matching.name) +
+    ggtitle(item_names()[item])
 
   g
 })
@@ -769,7 +784,8 @@ cumreg_plot_cat_Input <- reactive({
   fit.cum <- cumreg_model()
   matching.name <- ifelse(input$cumreg_matching == "total", "Total score", "Standardized total score")
 
-  g <- plotCumulative(fit.cum[[item]], type = "category", matching.name = matching.name)
+  g <- plotCumulative(fit.cum[[item]], type = "category", matching.name = matching.name) +
+    ggtitle(item_names()[item])
   g
 })
 
@@ -914,7 +930,8 @@ adjreg_plot_cat_Input <- reactive({
   fit.adj <- adjreg_model()
   matching.name <- ifelse(input$adjreg_matching == "total", "Total score", "Standardized total score")
 
-  g <- plotAdjacent(fit.adj[[item]], matching.name = matching.name)
+  g <- plotAdjacent(fit.adj[[item]], matching.name = matching.name) +
+    ggtitle(item_names()[item])
 
   g
 })
