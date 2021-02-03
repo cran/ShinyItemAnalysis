@@ -1,6 +1,6 @@
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 # GLOBAL LIBRARY #####
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 
 require(DT)
 require(plotly)
@@ -8,9 +8,9 @@ require(shinyBS)
 require(shinydashboard)
 require(shinyjs)
 
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 # SOURCING ###########
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 
 source("ui/uiAbout.R", local = T)
 source("ui/uiData.R", local = T)
@@ -25,56 +25,103 @@ source("ui/uiReports.R", local = T)
 source("ui/uiReferences.R", local = T)
 source("ui/uiSetting.R", local = T)
 
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 # UI #################
-#%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%
 
-ui = tagList(
-  tags$head(tags$link(rel = "shortcut icon",
-                      href = "hexbin.png"),
-            # CSS
-            tags$link(rel = "stylesheet",
-                      type = "text/css",
-                      href = "style.css"),
-            tags$link(rel = "stylesheet",
-                      type = "text/css",
-                      href = "margins_and_paddings.css"),
-            tags$link(rel = "stylesheet",
-                      href = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css",
-                      integrity = "sha384-9tPv11A+glH/on/wEu99NVwDPwkMQESOocs/ZGXPoIiLE8MU/qkqUcZ3zzL+6DuH",
-                      crossorigin = "anonymous"),
-            tags$link(rel = "stylesheet",
-                      type = "text/css",
-                      href = "box.css"),
-            # JS
-            tags$script(type = "text/javascript",
-                        src = "busy.js"),
-            tags$script(type = "text/javascript",
-                        src = "report_generating_message.js"),
-            tags$script(type = "text/javascript",
-                        src = "report_downloading_message.js"),
-            tags$script(type = "text/javascript",
-                        src = "collapsible_menu_click.js"),
-            tags$script(type = "text/javascript",
-                        src = "tabs_icons_right.js"),
-            tags$script(src = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.js",
-                        integrity = "sha384-U8Vrjwb8fuHMt6ewaCy8uqeUXv4oitYACKdB0VziCerzt011iQ/0TqlSlv8MReCm",
-                        crossorigin = "anonymous"),
-            tags$script(type = "text/javascript",
-                        src = "math_in_tables.js"),
-			      tags$script(type = "text/javascript",
-                        src = "toppage.js")
-            ),
-  div(class = "busy",
-      p("Loading"),
-      img(src = "busy_indicator.gif", height = 100, width = 100)
+ui <- tagList(
+  tags$head(
+    tags$link(
+      rel = "shortcut icon",
+      href = "hexbin.png"
+    ),
+    # CSS
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "style.css"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "margins_and_paddings.css"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      href = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css",
+      integrity = "sha384-9tPv11A+glH/on/wEu99NVwDPwkMQESOocs/ZGXPoIiLE8MU/qkqUcZ3zzL+6DuH",
+      crossorigin = "anonymous"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "box.css"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "navbar_right.css"
+    ),
+    tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "tooltip.css"
+    ),
+    # JS
+    tags$script(
+      type = "text/javascript",
+      src = "busy.js"
+    ),
+    tags$script(
+      type = "text/javascript",
+      src = "report_generating_message.js"
+    ),
+    tags$script(
+      type = "text/javascript",
+      src = "report_downloading_message.js"
+    ),
+    tags$script(
+      type = "text/javascript",
+      src = "collapsible_menu_click.js"
+    ),
+    tags$script(
+      src = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.js",
+      integrity = "sha384-U8Vrjwb8fuHMt6ewaCy8uqeUXv4oitYACKdB0VziCerzt011iQ/0TqlSlv8MReCm",
+      crossorigin = "anonymous"
+    ),
+    tags$script(
+      type = "text/javascript",
+      src = "math_in_tables.js"
+    ),
+    tags$script(
+      type = "text/javascript",
+      src = "toppage.js"
+    ),
+    tags$script(
+      HTML('
+      Shiny.addCustomMessageHandler("sessinf",
+        function(x) {
+          console.log(x);
+        }
+      );
+    ')
+    )
   ),
+  div(
+    class = "busy",
+    p("Loading"),
+    img(src = "busy_indicator.gif", height = 100, width = 100)
+  ),
+
+
+  withMathJax(),
 
   shinyjs::useShinyjs(),
 
   tags$head(includeScript("google-analytics.js")),
 
-  navbarPage(title = HTML('<div style = "margin-top: -10px;">
+  navbarPage(
+    title = HTML('<div style = "margin-top: -10px;">
                           <div class = "header-title">
                           <img src = "header_hexbin.png">
                           ShinyItemAnalysis
@@ -83,22 +130,22 @@ ui = tagList(
                           Test and item analysis
                           </div>
                           </div>'),
-             windowTitle = 'ShinyItemAnalysis',
-             position = 'fixed-top',
-             selected = 'About',
-             collapsible = TRUE,
-             footer = list(
-               HTML('<div class = "panel-footer", style = "opacity: 1.00; z-index: 1000;">
+    windowTitle = "ShinyItemAnalysis",
+    position = "fixed-top",
+    selected = "About",
+    collapsible = TRUE,
+    footer = list(
+      HTML('<div class = "panel-footer", style = "opacity: 1.00; z-index: 1000;">
                     <p style = "margin:8px 0 0 0;">
                     <div class = "footer-title">
                     <img src = "hexbin.png">
                     ShinyItemAnalysis
                     </div>
                     <div class = "footer-subtitle">
-                    Test and item analysis | Version 1.3.4
+                    Test and item analysis | Version 1.3.5
                     </div>
                     <span style = "float:right">
-                    <a href = "https://shiny.cs.cas.cz/ShinyItemAnalysis/" id = "tooltipweb" target="_blank">
+                    <a href = "http://shinyitemanalysis.org/" id = "tooltipweb" target="_blank">
                     <img src = "footer_web_icon.png", class = "footer-icons">
                     </a>
                     <a href = "https://github.com/patriciamar/ShinyItemAnalysis/" id = "tooltipgithub" target="_blank">
@@ -118,76 +165,76 @@ ui = tagList(
                     <div class = "footer-copyright">
                     &copy; <script>document.write(new Date().getFullYear())</script> ShinyItemAnalysis
                     </div>'),
-               HTML('<div class = "footer-counter">'),
-               textOutput('counter', inline = T),
-               HTML('</div></div>')),
+      HTML('<div class = "footer-counter">'),
+      textOutput("counter", inline = T),
+      HTML("</div></div>")
+    ),
 
 
-             theme = "bootstrap.css",
+    theme = "bootstrap.css",
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # MAIN PANEL #########
-             #%%%%%%%%%%%%%%%%%%%%%
+    # %%%%%%%%%%%%%%%%%%%%%
+    # MAIN PANEL #########
+    # %%%%%%%%%%%%%%%%%%%%%
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # DATA ###############
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiData,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # ABOUT ##############
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiAbout,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # SUMMARY ############
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiSummary,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # DATA ###############
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiData,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # RELIABILITY ########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiReliability,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # SUMMARY ############
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiSummary,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # VALIDITY ###########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiValidity,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # RELIABILITY ########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiReliability,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # ITEM ANALYSIS ######
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiTraditionalAnalysis,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # VALIDITY ###########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiValidity,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # REGRESSION #########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiRegression,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # ITEM ANALYSIS ######
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiTraditionalAnalysis,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # IRT MODELS #########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiIRT,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # REGRESSION #########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiRegression,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # DIF/FAIRNESS #######
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiDIF,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # IRT MODELS #########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiIRT,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # REPORTS ############
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiReports,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # DIF/FAIRNESS #######
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiDIF,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # ABOUT ##############
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiAbout,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # REPORTS ############
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiReports,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # REFERENCES #########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiReferences,
+    # %%%%%%%%%%%%%%%%%%%%%
+    # SETTING #########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiSetting,
 
-             #%%%%%%%%%%%%%%%%%%%%%
-             # SETTING #########
-             #%%%%%%%%%%%%%%%%%%%%%
-             uiSetting
-             ))
-
-
+    # %%%%%%%%%%%%%%%%%%%%%
+    # REFERENCES #########
+    # %%%%%%%%%%%%%%%%%%%%%
+    uiReferences
+  )
+)

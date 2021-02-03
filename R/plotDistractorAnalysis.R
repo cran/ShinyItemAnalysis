@@ -1,42 +1,46 @@
-#' Function for graphical representation of item distractor analysis
+#' Plot item distractor analysis
 #'
 #' @aliases plotDistractorAnalysis
 #'
-#' @description Plots graphical representation of item distractor analysis with proportions and
-#' optional number of groups.
+#' @description Plots graphical representation of item distractor analysis with
+#'   proportions and optional number of groups.
 #'
-#' @param data character: data matrix or data frame. See \strong{Details}.
-#' @param key character: answer key for the items.
-#' @param num.groups numeric: number of groups to that should be respondents splitted.
-#' @param item numeric: the number of item to be plotted.
-#' @param item.name character: the name of item.
-#' @param multiple.answers logical: should be all combinations plotted (default) or should be
-#' answers splitted into distractors. See \strong{Details}.
-#' @param matching numeric: numeric vector. If not provided, total score is calculated and
-#' distractor analysis is performed based on it.
-#' @param match.discrete logical: is \code{matching} discrete? Default value is \code{FALSE}. See details.
-#' @param cut.points numeric: numeric vector specifying cut points of \code{matching}. See details.
+#' @param Data character: data matrix or data.frame with rows representing
+#'   unscored item response from a multiple-choice test and columns
+#'   corresponding to the items.
+#' @param key character: answer key for the items. The \code{key} must be a
+#'   vector of the same length as \code{ncol(Data)}. In case it is not provided,
+#'   \code{criterion} needs to be specified.
+#' @param num.groups numeric: number of groups to which are the respondents
+#'   splitted.
+#' @param item numeric: the number of the item to be plotted.
+#' @param item.name character: the name of the item.
+#' @param multiple.answers logical: should be all combinations plotted (default)
+#'   or should be answers splitted into distractors. See \strong{Details}.
+#' @param criterion numeric: numeric vector. If not provided, total score is
+#'   calculated and distractor analysis is performed based on it.
+#' @param crit.discrete logical: is \code{criterion} discrete? Default value is
+#'   \code{FALSE}.
+#' @param cut.points numeric: numeric vector specifying cut points of
+#'   \code{criterion}.
+#' @param data deprecated. Use argument \code{Data} instead.
+#' @param matching deprecated. Use argument \code{criterion} instead.
+#' @param match.discrete deprecated. Use argument \code{crit.discrete} instead.
 #'
-#' @usage plotDistractorAnalysis(data, key, num.groups = 3, item = 1, item.name,
-#' multiple.answers = TRUE, matching = NULL, match.discrete = FALSE, cut.points)
+#' @details This function is a graphical representation of the
+#'   \code{\link{DistractorAnalysis}} function. In case that no \code{criterion} is
+#'   provided, the scores are calculated using the item \code{Data} and
+#'   \code{key}. The respondents are by default split into the
+#'   \code{num.groups}-quantiles and the proportions of respondents in each
+#'   quantile are displayed with respect to their answers. In case that
+#'   \code{criterion} is discrete (\code{crit.discrete = TRUE}),
+#'   \code{criterion} is split based on its unique levels. Other cut points
+#'   can be specified via \code{cut.points} argument.
 #'
-#' @details
-#' This function is graphical representation of \code{\link{DistractorAnalysis}} function.
-#' In case, no \code{matching} is provided, the scores are calculated using the item data and key.
-#' The respondents are by default splitted into the \code{num.groups}-quantiles and the proportions
-#' of respondents in each quantile are displayed with respect to their answers. In case that \code{matching}
-#' is discrete (\code{match.discrete = TRUE}), \code{matching} is splitted based on its unique levels. Other
-#' cut points can be specified via \code{cut.points} argument.
-#'
-#' The \code{data} is a matrix or data frame whose rows represents unscored item response from a
-#' multiple-choice test and columns correspond to the items.
-#'
-#' The \code{key} must be a vector of the same length as \code{ncol(data)}. In case it is not provided,
-#' \code{matching} need to be specified.
-#'
-#' If \code{multiple.answers = TRUE} (default) all reported combinations of answers are plotted.
-#' If \code{multiple.answers = FALSE} all combinations are splitted into distractors and only these
-#' are then plotted with correct combination.
+#'   If \code{multiple.answers = TRUE} (default) all reported combinations of
+#'   answers are plotted. If \code{multiple.answers = FALSE} all combinations
+#'   are split into distractors and only these are then plotted with correct
+#'   combination.
 #'
 #' @author
 #' Adela Hladka \cr
@@ -52,7 +56,7 @@
 #'
 #' @examples
 #'
-#' # loading 100-item medical admission test data
+#' # loading 100-item medical admission test datasets
 #' data(dataMedical, dataMedicaltest, dataMedicalkey)
 #' data <- dataMedicaltest[, 1:100]
 #' dataBin <- dataMedical[, 1:100]
@@ -74,35 +78,49 @@
 #' # distractor plot for item 57 with all combinations and 6 groups
 #' plotDistractorAnalysis(data, key, item = 57, num.group = 6)
 #'
-#' # distractor plot for item 57 using specified matching and key option
-#' matching <- round(rowSums(dataBin), -1)
-#' plotDistractorAnalysis(data, key, item = 57, matching = matching)
-#' # distractor plot for item 57 using specified matching without key option
-#' plotDistractorAnalysis(data, item = 57, matching = matching)
+#' # distractor plot for item 57 using specified criterion and key option
+#' criterion <- round(rowSums(dataBin), -1)
+#' plotDistractorAnalysis(data, key, item = 57, criterion = criterion)
+#' # distractor plot for item 57 using specified criterion without key option
+#' plotDistractorAnalysis(data, item = 57, criterion = criterion)
 #'
-#' # distractor plot for item 57 using discrete matching
-#' plotDistractorAnalysis(data, key, item = 57, matching = matching, match.discrete = T)
+#' # distractor plot for item 57 using discrete criterion
+#' plotDistractorAnalysis(data, key,
+#'   item = 57, criterion = criterion,
+#'   crit.discrete = TRUE
+#' )
 #'
 #' # distractor plot for item 57 using groups specified by cut.points
 #' plotDistractorAnalysis(data, key, item = 57, cut.points = seq(10, 100, 10))
 #' }
 #' @export
 
-plotDistractorAnalysis <- function(data, key, num.groups = 3, item = 1, item.name, multiple.answers = TRUE,
-                                   matching = NULL, match.discrete = FALSE, cut.points) {
+plotDistractorAnalysis <- function(Data, key, num.groups = 3, item = 1, item.name, multiple.answers = TRUE,
+                                   criterion = NULL, crit.discrete = FALSE, cut.points, data, matching, match.discrete) {
+  if (!missing(matching)) {
+    stop("Argument 'matching' deprecated. Please use argument 'criterion' instead. ", call. = FALSE)
+  }
+  if (!missing(match.discrete)) {
+    stop("Argument 'x' deprecated. Please use argument 'crit.discrete' instead. ", call. = FALSE)
+  }
+
+  if (!missing(data)) {
+    stop("Argument 'data' deprecated. Please use argument 'Data' instead. ", call. = FALSE)
+  }
+
   if (missing(key)) {
-    if (all(sapply(data, is.numeric))) {
+    if (all(sapply(Data, is.numeric))) {
       warning("Answer key is not provided. Maximum value is used as key.", call. = FALSE)
-      key <- sapply(data, max, na.rm = T)
-    } else if (missing(matching)) {
-      stop("Answer key is not provided. Please, specify key to be able to calculate total score or provide matching. ",
+      key <- sapply(Data, max, na.rm = TRUE)
+    } else if (missing(criterion)) {
+      stop("Answer key is not provided. Please, specify key to be able to calculate total score or provide criterion. ",
         call. = FALSE
       )
     } else {
       key <- NULL
     }
   } else {
-    if (!length(key) == ncol(data)) {
+    if (!length(key) == ncol(Data)) {
       stop("Answer key is not provided or some item keys are missing.", call. = FALSE)
     }
     key <- unlist(key)
@@ -110,8 +128,8 @@ plotDistractorAnalysis <- function(data, key, num.groups = 3, item = 1, item.nam
 
   # distractor analysis
   tabDA <- DistractorAnalysis(
-    data = data, key = key, p.table = TRUE, num.groups = num.groups, matching = matching,
-    match.discrete = match.discrete, cut.points = cut.points
+    Data = Data, key = key, p.table = TRUE, num.groups = num.groups, criterion = criterion,
+    crit.discrete = crit.discrete, cut.points = cut.points
   )
 
   x <- tabDA[[item]]
@@ -121,7 +139,9 @@ plotDistractorAnalysis <- function(data, key, num.groups = 3, item = 1, item.nam
     x <- x[!(apply(x, 1, function(y) all(y == 0))), ]
   }
 
-  x <- melt(x, id = "response")
+  x <- as.data.frame(x) # table coerces nicely into data.frame, no need for reshape
+  colnames(x)[colnames(x) == "Freq"] <- "value"
+
   x <- x[complete.cases(x), ]
   x$response <- as.factor(x$response)
   levels(x$response)[which(levels(x$response) == "")] <- "NaN"
@@ -177,26 +197,26 @@ plotDistractorAnalysis <- function(data, key, num.groups = 3, item = 1, item.nam
     shape[CAall] <- 19
   }
 
-  xlab <- ifelse(is.null(matching), "Group by total score", "Group by criterion variable")
+  xlab <- ifelse(is.null(criterion), "Group by total score", "Group by criterion variable")
 
   df$score.level <- as.factor(df$score.level)
   num.groups <- length(unique(df$score.level))
+  colnames(df) <- c("Response", "Group", "Proportion")
+  levels(df$Group) <- 1:length(levels(df$Group))
 
   # plot
   g <- ggplot(df, aes_string(
-    x = "score.level",
-    y = "value",
-    group = "response",
-    colour = "response",
-    linetype = "response",
-    shape = "response"
-  ),
-  size = 1
-  ) +
-    geom_line() +
+    x = "Group",
+    y = "Proportion",
+    group = "Response",
+    colour = "Response",
+    linetype = "Response",
+    shape = "Response"
+  )) +
+    geom_line(size = 0.8) +
     geom_point(size = 3) +
     xlab(xlab) +
-    ylab("Option selection percentage") +
+    ylab("Option selection proportion") +
     scale_y_continuous(limits = c(0, 1)) +
     scale_x_discrete(labels = 1:num.groups, expand = c(0, 0.15)) +
     scale_linetype_manual(values = linetype) +

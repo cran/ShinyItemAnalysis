@@ -63,6 +63,10 @@ b,
 strong {
   font-weight: bold;
 }
+.MathJax_SVG_Display,
+.MathJax_Display {
+  text-align: center !important;
+}
 dfn {
   font-style: italic;
 }

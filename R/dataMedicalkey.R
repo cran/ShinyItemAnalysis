@@ -1,7 +1,7 @@
-#' Key of Correct Answers for \code{dataMedicaltest} Dataset
+#' Key of correct answers for dataset of admission test to medical school
 #'
-#' @description The \code{dataMedicalkey} is a vector of factors representing correct answers of
-#' \code{dataMedicaltest} dataset.
+#' @description The \code{dataMedicalkey} is a vector of factors representing
+#'   correct answers of \code{dataMedicaltest} dataset.
 #'
 #' @usage data(dataMedicalkey)
 #'
@@ -17,13 +17,16 @@
 #' \email{martinkova@@cs.cas.cz} \cr
 #'
 #' @references
-#' Stuka, C. Vejrazka, M., Martinkova, P. Komenda, M. & Stepanek, L. (2016). The Use of  Test and Item Analisis for
-#' Improvement of Tests. Workshop held at conference MEFANET, 2016, Brno, Czech Republic.
+#' Stuka, C., Vejrazka, M., Martinkova, P., Komenda, M., & Stepanek, L. (2016).
+#' The use of test and item analysis for improvement of tests. Workshop held at
+#' conference MEFANET, 2016, Brno, Czech Republic.
 #'
 #' @keywords datasets
 #'
-#' @seealso \code{\link{dataMedical}}, \code{\link{dataMedicaltest}}, \code{\link{dataMedicalgraded}}
+#' @seealso \code{\link{dataMedical}}, \code{\link{dataMedicaltest}},
+#'   \code{\link{dataMedicalgraded}}
 #'
-#' @format A vector with 100 values representing correct answers to items of \code{dataMedicaltest}
-#' dataset. For more details see \code{\link{dataMedicaltest}}.
+#' @format A vector with 100 values representing correct answers to items of
+#'   \code{dataMedicaltest} dataset. For more details see
+#'   \code{\link{dataMedicaltest}}.
 "dataMedicalkey"

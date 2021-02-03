@@ -2,16 +2,14 @@
 #'
 #' @aliases startShinyItemAnalysis
 #'
-#' @description
-#' An interactive shiny application to run test and item analysis.
-#' By default, the function runs the application as a background process
-#' (Jobs tab in the 'RStudio'). User is then free to use the Console for other
-#' work and to try the sample R code examples. You can still run the app
-#' the usual way in the console by specifying \code{background = FALSE}.
+#' @description An interactive shiny application to run test and item analysis.
+#' By default, the function runs the application as a background process (Jobs
+#' tab in the 'RStudio'). User is then free to use the Console for other work
+#' and to try the sample R code examples. You can still run the app the usual
+#' way in the console by specifying \code{background = FALSE}.
 #'
-#' @usage startShinyItemAnalysis(background = TRUE)
-#'
-#' @param background logical: should the application be run as a background process (in the 'RStudio')?
+#' @param background logical: should the application be run as a background
+#'   process (in the 'RStudio')?
 #'
 #' @return No return value. Called for side effects.
 #'
@@ -36,7 +34,6 @@
 #'
 #' @export
 startShinyItemAnalysis <- function(background = TRUE) {
-
   start_sia <- '
     appDir <-
       system.file("shiny-examples", "ShinyItemAnalysis", package = "ShinyItemAnalysis")
@@ -44,18 +41,41 @@ startShinyItemAnalysis <- function(background = TRUE) {
       stop("Could not find example directory. Try re-installing `ShinyItemAnalysis`.",
            call. = FALSE)
     }
-    shiny::runApp(appDir, display.mode = "normal", launch.browser = T)
+    shiny::runApp(appDir, display.mode = "normal", launch.browser = TRUE)
   '
 
-  if (background) {
-    if (rstudioapi::isAvailable()) {
+  if (!rstudioapi::isAvailable()) {
+    message(
+      "\n---------------------------------------------------------------\n",
+      "ShinyItemAnalysis will run in the console as usual.\n",
+      "To run the app in a background process, please use RStudio IDE.\n",
+      "---------------------------------------------------------------"
+    )
+    Sys.sleep(5)
+    eval(parse(text = start_sia))
+  } else if (background) {
+    temp_script <- tempfile(fileext = ".R")
+    cat(start_sia, file = temp_script)
 
-      temp_script <- tempfile(fileext = ".R")
-      cat(start_sia, file = temp_script)
-      job_id <- rstudioapi::jobRunScript(temp_script, name = "ShinyItemAnalysis")
+    job_id <- tryCatch(
+      {
+        rstudioapi::jobRunScript(temp_script, name = "ShinyItemAnalysis")
+      },
+      error = function(e) {
+        message(
+          "Your system username '",
+          Sys.getenv("USERNAME"),
+          "' contains special characters.\nPlease use 'startShinyItemAnalysis(background = FALSE)'."
+        )
+        return("fail")
+      }
+    )
 
-      rstudioapi::jobSetStatus(job_id,
-                               "The app is running in background. You can close it with the STOP button.")
+    if (job_id != "fail") {
+      rstudioapi::jobSetStatus(
+        job_id,
+        "The app is running in background. You can close it with the STOP button."
+      )
 
       rstudioapi::executeCommand("activateConsole")
 
@@ -65,15 +85,6 @@ startShinyItemAnalysis <- function(background = TRUE) {
         "The process automatically stops as you close the browser window.\n",
         "----------------------------------------------------------------"
       )
-    } else {
-      message(
-        "\n---------------------------------------------------------------\n",
-        "ShinyItemAnalysis will run in the console as usual.\n",
-        "To run the app in a background process, please use RStudio IDE.\n",
-        "---------------------------------------------------------------"
-      )
-      Sys.sleep(5)
-      eval(parse(text = start_sia))
     }
   } else {
     eval(parse(text = start_sia))

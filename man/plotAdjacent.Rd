@@ -2,33 +2,39 @@
 % Please edit documentation in R/plotAdjacent.R
 \name{plotAdjacent}
 \alias{plotAdjacent}
-\title{Function for plotting category probabilities of adjacent logistic regression model}
+\title{Plot category probabilities of adjacent category logit model}
 \usage{
 plotAdjacent(x, matching.name = "matching")
 }
 \arguments{
 \item{x}{object of class \code{vglm}}
 
-\item{matching.name}{character: name of matching criterion used for estimation in \code{x}.}
+\item{matching.name}{character: name of matching criterion used for
+estimation in \code{x}.}
+}
+\value{
+An object of class \code{ggplot} and/or \code{gg}.
 }
 \description{
-Function for plotting category probabilities function estimated by \code{vglm()} from \code{VGAM} package
+Function for plotting category probabilities function estimated
+  by \code{vglm()} function from the \code{VGAM} package using the
+  \pkg{ggplot2} package.
 }
 \examples{
 # loading packages
 library(VGAM)
 
 # loading data
-data <- dataMedicalgraded[, 1:100]
+data(Science, package = "mirt")
 
 # total score calculation
-score <- apply(data, 1, sum)
-data[, 1] <- ordered(factor(data[, 1], levels = 0:max(data[, 1])))
+score <- rowSums(Science)
+Science[, 1] <- factor(Science[, 1], levels = sort(unique(Science[, 1])), ordered = TRUE)
 
-# cummulative logistic model for item 1
-fit <- vglm(data[, 1] ~ score, family = acat(reverse = FALSE, parallel = TRUE))
+# adjacent category logit model for item 1
+fit <- vglm(Science[, 1] ~ score, family = acat(reverse = FALSE, parallel = TRUE))
 # coefficients for item 1
-coefs <- coef(fit)
+coef(fit)
 
 plotAdjacent(fit, matching.name = "Total score")
 }
@@ -37,6 +43,7 @@ plotAdjacent(fit, matching.name = "Total score")
 }
 \author{
 Tomas Jurica \cr
+Institute of Computer Science of the Czech Academy of Sciences \cr
 
 Adela Hladka \cr
 Institute of Computer Science of the Czech Academy of Sciences \cr
