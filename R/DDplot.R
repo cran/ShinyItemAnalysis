@@ -76,7 +76,6 @@
 #' @author
 #' Adela Hladka \cr
 #' Institute of Computer Science of the Czech Academy of Sciences \cr
-#' Faculty of Mathematics and Physics, Charles University \cr
 #' \email{hladka@@cs.cas.cz} \cr
 #'
 #' Lubomir Stepanek \cr
@@ -153,8 +152,13 @@
 DDplot <- function(Data, item.names, discrim = "ULI", k = 3, l = 1, u = 3,
                    maxscore, minscore, bin = FALSE, cutscore, average.score = FALSE,
                    thr = 0.2, criterion = "none", val_type = "simple", data) {
+
+  # deprecated args handling
   if (!missing(data)) {
-    stop("Argument 'data' deprecated. Please use argument 'Data' instead. ", call. = FALSE)
+    warning("Argument 'data' is deprecated; please use 'Data' instead.",
+      call. = FALSE
+    )
+    Data <- data
   }
 
   if (!is.matrix(Data) & !is.data.frame(Data)) {

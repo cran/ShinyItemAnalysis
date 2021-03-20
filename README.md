@@ -2,21 +2,24 @@
 Test and item analysis via shiny
 
 ![GHversion](https://img.shields.io/github/release/patriciamar/ShinyItemAnalysis.svg)
-[![online](https://img.shields.io/badge/online-1.3.5-yellow.svg)](https://shiny.cs.cas.cz/ShinyItemAnalysis/)
+[![online](https://img.shields.io/badge/online-1.3.6-yellow.svg)](https://shiny.cs.cas.cz/ShinyItemAnalysis/)
 [![version](https://www.r-pkg.org/badges/version/ShinyItemAnalysis)](https://CRAN.R-project.org/package=ShinyItemAnalysis)
 ![cranlogs](https://cranlogs.r-pkg.org/badges/ShinyItemAnalysis)
 
 ## Overview
-`ShinyItemAnalysis` is an interactive shiny application for analysis of educational tests and their items including 
+`ShinyItemAnalysis` is an R package including functions and interactive shiny application for the psychometric analysis of educational tests,
+    psychological assessments, health-related and other types of multi-item measurements, or ratings from multiple raters. 
+    Offered methods include:
 
- * exploration of total and standard scores,
- * item and distractor analysis,
- * item analysis via logistic regression models and their extensions,
- * item analysis via IRT models,
- * training plots for dichotomous and polytomous IRT models,
- * DIF and DDF detection methods.
+ * Exploration of total and standard scores
+ * Analysis of measurement error and reliability
+ * Analysis of correlation structure and validity
+ * Traditional item analysis
+ * Item analysis with regression models
+ * Item analysis with IRT models
+ * Detection of differential item functioning
  
-It also allows the users to upload and analyze their own data and to automatically generate analysis reports in PDF or HTML.
+Number of toy datasets is available, the interactive application also allows the users to upload and analyze their own data and to automatically generate PDF or HTML reports.
 
 `ShinyItemAnalysis` is available online at [Czech Academy of Sciences](https://shiny.cs.cas.cz/ShinyItemAnalysis/) and [shinyapps.io](https://cemp.shinyapps.io/ShinyItemAnalysis/). It can be also downloaded from [**CRAN**](https://CRAN.R-project.org/package=ShinyItemAnalysis). Visit our [**web page**](http://www.shinyitemanalysis.org/) about ShinyItemAnalysis to learn more!
 
@@ -30,10 +33,10 @@ install.packages("ShinyItemAnalysis")
 devtools::install_github("patriciamar/ShinyItemAnalysis")
 ```
 ## Version
-Current version available on [**CRAN**](https://CRAN.R-project.org/package=ShinyItemAnalysis) is 1.3.5. 
-The newest development version available on [**GitHub**](https://github.com/patriciamar/ShinyItemAnalysis) is 1.3.5.<br> 
-Version available online at [Czech Academy of Sciences](https://shiny.cs.cas.cz/ShinyItemAnalysis/) is 1.3.5. 
-Version available online at [shinyapps.io](https://cemp.shinyapps.io/ShinyItemAnalysis/) is 1.3.5. <br> 
+Current version available on [**CRAN**](https://CRAN.R-project.org/package=ShinyItemAnalysis) is 1.3.6. 
+The newest development version available on [**GitHub**](https://github.com/patriciamar/ShinyItemAnalysis) is 1.3.6.<br> 
+Version available online at [Czech Academy of Sciences](https://shiny.cs.cas.cz/ShinyItemAnalysis/) is 1.3.6. 
+Version available online at [shinyapps.io](https://cemp.shinyapps.io/ShinyItemAnalysis/) is 1.3.6. <br> 
 
 ## Usage
 It is very easy to run `ShinyItemAnalysis` in `R`:

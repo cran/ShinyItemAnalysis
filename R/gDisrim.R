@@ -36,7 +36,6 @@
 #' @author
 #' Adela Hladka \cr
 #' Institute of Computer Science of the Czech Academy of Sciences \cr
-#' Faculty of Mathematics and Physics, Charles University \cr
 #' \email{hladka@@cs.cas.cz} \cr
 #'
 #' Lubomir Stepanek \cr
@@ -84,8 +83,13 @@
 #' @export
 
 gDiscrim <- function(Data, k = 3, l = 1, u = 3, maxscore, minscore, x) {
+
+  # deprecated args handling
   if (!missing(x)) {
-    stop("Argument 'x' deprecated. Please use argument 'Data' instead. ", call. = FALSE)
+    warning("Argument 'x' is deprecated; please use 'Data' instead.",
+      call. = FALSE
+    )
+    Data <- x
   }
 
   if (u > k) {
