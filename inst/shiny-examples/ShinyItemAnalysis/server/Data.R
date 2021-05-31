@@ -462,7 +462,7 @@ observeEvent(input$data_upload, {
     dataset$binary <- as.data.table(dataset$binary)
     dataset$nominal <- as.data.table(dataset$nominal)
     dataset$ordinal <- as.data.table(dataset$ordinal)
-    dataset$continuous <- as.data.table(dataset$binary)
+    dataset$continuous <- as.data.table(dataset$continuous)
 
     dataset$name <- csvdata_data_name
     dataset$data_type <- csvdata_data_type
@@ -1288,7 +1288,7 @@ output$data_DIFmatching_summary <- renderPrint({
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # * Main dataset ####
-output$headdata <- DT::renderDataTable(
+output$data_exploration_main <- DT::renderDataTable(
   {
     data_table <- nominal()
     colnames(data_table) <- item_names()
@@ -1306,7 +1306,7 @@ output$headdata <- DT::renderDataTable(
 )
 
 # * Key ####
-output$key <- DT::renderDataTable(
+output$data_exploration_key <- DT::renderDataTable(
   {
     key_table <- key()
     key_table <- as.data.table(t(key_table))
@@ -1324,12 +1324,11 @@ output$key <- DT::renderDataTable(
 )
 
 # * Binary data with total score ####
-output$sc01 <- DT::renderDataTable(
+output$data_exploration_binary <- DT::renderDataTable(
   {
     data_table <- binary()
-    scored_table <- data.table(data_table, total_score())
-    colnames(scored_table) <- c(item_names(), "Score")
-    scored_table
+    colnames(data_table) <- item_names()
+    data_table
   },
   rownames = FALSE,
   style = "bootstrap",
@@ -1343,11 +1342,12 @@ output$sc01 <- DT::renderDataTable(
 )
 
 # all vector variables into one DT
-output$vector_vars <- DT::renderDataTable(
+output$data_exploration_variables <- DT::renderDataTable(
   {
     tibble(
       Group = ifelse(dataset$group != "missing", group(), "NA"),
       Criterion = ifelse(dataset$criterion != "missing", criterion(), "NA"),
+      "Total score" = total_score(),
       "Observed score vector" = ifelse(dataset$DIFmatching != "missing", DIFmatching(), "NA")
     )
   },
