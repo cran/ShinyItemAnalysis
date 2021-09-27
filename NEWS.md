@@ -2,12 +2,71 @@
 
 ----------
 
+### Changes in version 1.4.0 (2021-09-24)
+
+**_THIS IS A CRAN VERSION_**
+
+*It includes version 1.3.8 and following further changes:*
+
+#### BUG FIXING
+  * Math in downloadable tables is now completely correctly transformed to human-readable
+    (non-LaTeX) format everywhere (thanks to Larry Nelson for reporting this issue).
+  
+#### MAJOR UPDATES
+  * The package dependencies that are used only in the interactive app *per se*
+    were moved into `Suggests`, meaning you are now not obliged to install any
+    of these dependencies if you plan to only use the package's "core" functions, 
+    such as `DDplot()` or `ItemAnalysis()`.
+  * The `startShinyItemAnalysis()` function now checks for dependencies required 
+    for its proper run and offers to install these dependencies if any of them 
+    is not available.
+  * New dataset `HeightInventory` was added.
+
+#### MINOR UPDATES
+  * Manuals of R functions and data were updated
+
+----------    
+
+### Changes in version 1.3.8 (2021-09-08)
+#### BUG FIXING
+  * Better treatment of missing values in fa_parallel and in the 
+    `Validity/Factor analysis` section of the app, preventing crashes of the app
+    (Thanks to @koenderks for reporting this as issue #460)
+  * Math in downloadable tables is now partly correctly transformed to human-readable
+    (non-LaTeX) format, including the IRT tab.
+  
+#### MAJOR UPDATES
+  * `startShinyItemAnalysis()` gained an alias `run_app()`.
+  * New dataset `AttitudesExpulsion` was added.
+  * `DIF-C` SIAmodule newly available from the `DIF/Fairness` section of the 
+    interactive app
+  * `IRR-restricted` SIAmodule replaced the `Reliability/IRR-restricted` section 
+    of the interactive app
+  * Math typesetting is now completely carried out by KaTeX, a lightweight and
+    reliable library. By eliminating MathJax, the app now loads faster and no
+    math is left unrendered.
+
+#### MINOR UPDATES
+  * Sample R code was added for the `Validity/Correlation structure` section.
+  * Manuals of R functions and data were updated
+  * The app now uses trivial Cronbach alpha internal function, lowering the 
+    number of dependencies
+  * `www` folder was cleaned up, .png replaced by .svg files improving the 
+    resolution of plots
+  * README.md assets moved to .readme_assets folder
+  * `inst` folder structure was simplified
+  
+----------
+
 ### Changes in version 1.3.7 (2021-05-28)
+
+**_THIS IS A CRAN VERSION_**
+
 #### BUG FIXING
   * Bug with reading ordinal data in the app was fixed. (Thanks to pukelevicius
     for reporting on GitHub)
   * Bug with uploading data with all correct/wrong answers in some items was 
-    fixed (Thanks to Koen Derks for reporthing the issue on GitHub)
+    fixed (Thanks to Koen Derks for reporting the issue on GitHub)
     
 #### MAJOR UPDATES
   * New datasets `MSclinical`, `BFI2`, and `TestAnxietyCor` were added, some 
@@ -20,9 +79,13 @@
   
 #### MINOR UPDATES
   * Sample R code was updated for the `IRT` section.
+
 ----------
 
 ### Changes in version 1.3.6 (2021-03-20)
+
+**_THIS IS A CRAN VERSION_**
+
 #### BUG FIXING
   * Function ItemAnalysis() updated to avoid error messages in case of datasets
     including 2 items only. (Thanks to Frederic Hilkenmeier for reporting this 
@@ -73,9 +136,13 @@
   * In the `Item Analysis` section of the app, the tab `Distractors plot` was
     renamed to `Item response curves` to better reflect that empirical response
     curves are also available for binary and ordinal items.
+
 ----------
 
 ### Changes in version 1.3.5 (2021-02-02)
+
+**_THIS IS A CRAN VERSION_**
+
 #### BUG FIXING
   * Plots in the `DIF/About` section of the app were fixed (uniform vs. 
     nonuniform DDF is now correctly displayed).
@@ -134,9 +201,13 @@
   * styler package was applied on .R files, documentation was updated.
   * `ggWright()` plot was updated to more general description.
   * References were updated wintin the app.
+
 ----------
 
 ### Changes in version 1.3.4 (2020-08-24)
+
+**_THIS IS A CRAN VERSION_**
+
 #### BUG FIXING
   * Display of Cronbach's alpha in PDF/HTML reports was corrected.
   * Item slider bug in ordinal regression models in the app was fixed.
@@ -170,9 +241,12 @@
 #### MINOR UPDATES
   * Documentation of `DDplot()` was updated.
   * All datatable outputs now have proper bootstrap style/theme.
+
 ----------
 
 ### Changes in version 1.3.3 (2020-05-04)
+
+**_THIS IS A CRAN VERSION_**
 
 #### BUG FIXING
   * `plotDIFLogistic()` now correctly plots matching criterion when item 
@@ -195,6 +269,7 @@
   * Wording, Figures and page structure were updated in shiny app in the 
     `DIF/Fairness` sections, histogram of total scores now better compares the 
     groups.   
+
 ----------
 
 ### Changes in version 1.3.2. (2020-01-27)
