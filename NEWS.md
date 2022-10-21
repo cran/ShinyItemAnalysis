@@ -2,7 +2,29 @@
 
 ----------
 
+### Changes in version 1.4.2 (2022-10-21)
+
+**_THIS IS A CRAN VERSION_**
+
+#### BUG FIXING
+  * Item criterion validity - Distractor plot was fixed in Item Analysis tab.
+
+#### MAJOR UPDATES
+  * New datasets `HCIlong`, `MSATB`, `GMAT`, `EPIA` added, 
+  *  `anxiety` dataset was renamed to `Anxiety`, variables `score` and
+     `zscore` were added 
+  *  Variable `total` was added to datasets `HCI`, `HCItest`  
+
+#### MINOR UPDATES
+  * Parallel analysis plot has an improved legend in the `Validity / Factor analysis` 
+    tab 
+
+----------
+
 ### Changes in version 1.4.1 (2022-04-14)
+
+**_THIS IS A CRAN VERSION_**
+
 #### BUG FIXING
   * `gDiscrim()` function was fixed to assure indices are inside the defined 
     bounds, also for small samples
