@@ -1,5 +1,12 @@
+#' Performs DIF detection using SIBTEST method. (internal function)
+#'
+#' @description Internal function substituting the `difSIBTEST()` function of
+#' the `difR` package.
+#'
+#' @keywords internal
+#' @noRd
+#'
 #' @importFrom difR sibTest
-#' @export
 .difSIBTEST_edited <- function(Data, group, focal.name, type = "udif", anchor = NULL,
                                alpha = 0.05, purify = FALSE, nrIter = 10, p.adjust.method = NULL,
                                puriadjType = "simple",
@@ -10,14 +17,12 @@
         gr <- Data[, group]
         DATA <- Data[, (1:ncol(Data)) != group]
         colnames(DATA) <- colnames(Data)[(1:ncol(Data)) != group]
-      }
-      else {
+      } else {
         gr <- Data[, colnames(Data) == group]
         DATA <- Data[, colnames(Data) != group]
         colnames(DATA) <- colnames(Data)[colnames(Data) != group]
       }
-    }
-    else {
+    } else {
       gr <- group
       DATA <- Data
     }
@@ -42,13 +47,11 @@
     if (is.null(anchor)) {
       ANCHOR <- 1:ncol(DATA)
       anchor.names <- NULL
-    }
-    else {
+    } else {
       if (is.numeric(anchor)) {
         ANCHOR <- anchor
         anchor.names <- anchor
-      }
-      else {
+      } else {
         ANCHOR <- which(colnames(DATA) %in% anchor)
         anchor.names <- anchor
       }
@@ -151,8 +154,7 @@
               if (sum(dif == dif2) == length(dif)) {
                 noLoop <- TRUE
                 break
-              }
-              else {
+              } else {
                 dif <- dif2
               }
             }

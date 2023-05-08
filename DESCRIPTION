@@ -1,34 +1,18 @@
 Type: Package
 Package: ShinyItemAnalysis
 Title: Test and Item Analysis via Shiny
-Version: 1.4.2
-Date: 2022-10-21
-Authors@R: 
-    c(person(given = "Patricia",
-             family = "Martinkova",
-             role = c("aut", "cre"),
-             email = "martinkova@cs.cas.cz"),
-      person(given = "Adela",
-             family = "Hladka",
-             role = "aut"),
-      person(given = "Jan",
-             family = "Netik",
-             role = "aut"),
-      person(given = "Ondrej",
-             family = "Leder",
-             role = "ctb"),
-      person(given = "Jakub",
-             family = "Houdek",
-             role = "ctb"),
-      person(given = "Lubomir",
-             family = "Stepanek",
-             role = "ctb"),
-      person(given = "Tomas",
-             family = "Jurica",
-             role = "ctb"),
-      person(given = "Jana",
-             family = "Vorlickova",
-             role = "ctb"))
+Version: 1.5.0
+Date: 2023-05-08
+Authors@R: c(
+    person("Patricia", "Martinkova", , "martinkova@cs.cas.cz", role = c("aut", "cre")),
+    person("Adela", "Hladka", role = "aut"),
+    person("Jan", "Netik", role = "aut"),
+    person("Ondrej", "Leder", role = "ctb"),
+    person("Jakub", "Houdek", role = "ctb"),
+    person("Lubomir", "Stepanek", role = "ctb"),
+    person("Tomas", "Jurica", role = "ctb"),
+    person("Jana", "Vorlickova", role = "ctb")
+  )
 Description: Package including functions and interactive shiny application
     for the psychometric analysis of educational tests, psychological
     assessments, health-related and other types of multi-item
@@ -38,18 +22,19 @@ URL: http://www.ShinyItemAnalysis.org,
         https://CRAN.R-project.org/package=ShinyItemAnalysis
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 Depends: R (>= 3.5.0)
-Imports: difR (>= 5.0), dplyr, ggplot2, lme4, magrittr, mirt (>= 1.24),
-        nnet, purrr, psych, rlang, rstudioapi, tibble, tidyr, methods
-Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), testthat (>=
-        3.0.0), DT, ggdendro, gridExtra, knitr, latticeExtra, ltm,
-        plotly, rmarkdown, shiny (>= 1.0.3), shinyBS, shinydashboard,
-        shinyjs, stringr, VGAM, xtable
+Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.4.0), lme4, magrittr,
+        methods, mirt (>= 1.28), nnet, psych (>= 2.1.9), purrr, rlang,
+        rstudioapi, tibble, tidyr
+Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), DT, ggdendro,
+        gridExtra, knitr, latticeExtra, ltm, plotly, rmarkdown, shiny
+        (>= 1.5.0), shinyBS, shinydashboard, shinyjs, SIAmodules,
+        stringr, testthat (>= 3.0.0), VGAM, xtable, yaml
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2022-10-21 12:38:36 UTC; Martinkova
+Packaged: 2023-05-08 08:19:44 UTC; Martinkova
 Author: Patricia Martinkova [aut, cre],
   Adela Hladka [aut],
   Jan Netik [aut],
@@ -60,4 +45,4 @@ Author: Patricia Martinkova [aut, cre],
   Jana Vorlickova [ctb]
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Repository: CRAN
-Date/Publication: 2022-10-21 13:05:07 UTC
+Date/Publication: 2023-05-08 10:00:06 UTC

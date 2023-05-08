@@ -1,5 +1,12 @@
+#' Performs DIF detection using Mantel-Haenszel method. (internal function)
+#'
+#' @description Internal function substituting the `difMH()` function of
+#' the `difR` package.
+#'
+#' @keywords internal
+#' @noRd
+#'
 #' @importFrom difR mantelHaenszel
-#' @export
 .difMH_edited <- function(Data, group, focal.name, anchor = NULL, match = "score",
                           MHstat = "MHChisq", correct = TRUE, exact = FALSE,
                           alpha = 0.05, purify = FALSE, nrIter = 10, p.adjust.method = NULL,
@@ -180,8 +187,7 @@
                 if (sum(dif == dif2) == length(dif)) {
                   noLoop <- TRUE
                   break
-                }
-                else {
+                } else {
                   dif <- dif2
                 }
               }
@@ -330,8 +336,7 @@
                 if (sum(dif == dif2) == length(dif)) {
                   noLoop <- TRUE
                   break
-                }
-                else {
+                } else {
                   dif <- dif2
                 }
               }
