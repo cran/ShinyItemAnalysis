@@ -1,8 +1,8 @@
 Type: Package
 Package: ShinyItemAnalysis
 Title: Test and Item Analysis via Shiny
-Version: 1.5.0
-Date: 2023-05-08
+Version: 1.5.1
+Date: 2024-04-23
 Authors@R: c(
     person("Patricia", "Martinkova", , "martinkova@cs.cas.cz", role = c("aut", "cre")),
     person("Adela", "Hladka", role = "aut"),
@@ -18,8 +18,7 @@ Description: Package including functions and interactive shiny application
     assessments, health-related and other types of multi-item
     measurements, or ratings from multiple raters.
 License: GPL-3
-URL: http://www.ShinyItemAnalysis.org,
-        https://CRAN.R-project.org/package=ShinyItemAnalysis
+URL: https://www.ShinyItemAnalysis.org
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 Depends: R (>= 3.5.0)
 Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.4.0), lme4, magrittr,
@@ -27,14 +26,14 @@ Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.4.0), lme4, magrittr,
         rstudioapi, tibble, tidyr
 Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), DT, ggdendro,
         gridExtra, knitr, latticeExtra, ltm, plotly, rmarkdown, shiny
-        (>= 1.5.0), shinyBS, shinydashboard, shinyjs, SIAmodules,
-        stringr, testthat (>= 3.0.0), VGAM, xtable, yaml
+        (>= 1.6.0), shinyBS, shinydashboard, shinyjs, stringr, testthat
+        (>= 3.0.0), VGAM, xtable, yaml
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2023-05-08 08:19:44 UTC; Martinkova
+Packaged: 2024-04-23 14:55:52 UTC; martinkova
 Author: Patricia Martinkova [aut, cre],
   Adela Hladka [aut],
   Jan Netik [aut],
@@ -45,4 +44,4 @@ Author: Patricia Martinkova [aut, cre],
   Jana Vorlickova [ctb]
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Repository: CRAN
-Date/Publication: 2023-05-08 10:00:06 UTC
+Date/Publication: 2024-04-24 14:10:11 UTC
