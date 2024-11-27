@@ -1,8 +1,8 @@
 Type: Package
 Package: ShinyItemAnalysis
 Title: Test and Item Analysis via Shiny
-Version: 1.5.1
-Date: 2024-04-23
+Version: 1.5.2
+Date: 2024-11-27
 Authors@R: c(
     person("Patricia", "Martinkova", , "martinkova@cs.cas.cz", role = c("aut", "cre")),
     person("Adela", "Hladka", role = "aut"),
@@ -22,7 +22,7 @@ URL: https://www.ShinyItemAnalysis.org
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
 Depends: R (>= 3.5.0)
 Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.4.0), lme4, magrittr,
-        methods, mirt (>= 1.28), nnet, psych (>= 2.1.9), purrr, rlang,
+        methods, mirt (>= 1.43), nnet, psych (>= 2.1.9), purrr, rlang,
         rstudioapi, tibble, tidyr
 Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), DT, ggdendro,
         gridExtra, knitr, latticeExtra, ltm, plotly, rmarkdown, shiny
@@ -30,10 +30,10 @@ Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), DT, ggdendro,
         (>= 3.0.0), VGAM, xtable, yaml
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-04-23 14:55:52 UTC; martinkova
+Packaged: 2024-11-27 13:40:04 UTC; martinkova
 Author: Patricia Martinkova [aut, cre],
   Adela Hladka [aut],
   Jan Netik [aut],
@@ -44,4 +44,4 @@ Author: Patricia Martinkova [aut, cre],
   Jana Vorlickova [ctb]
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Repository: CRAN
-Date/Publication: 2024-04-24 14:10:11 UTC
+Date/Publication: 2024-11-27 14:20:02 UTC
