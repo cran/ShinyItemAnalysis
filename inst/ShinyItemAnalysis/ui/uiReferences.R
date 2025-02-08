@@ -96,13 +96,6 @@ uiReferences <-
                 <a href = "http://www.jstatsoft.org/v17/i05/", target = "_blank">See online.</a>
                 </li>
 
-                <li><code>magrittr</code>
-                Bache, S. M., & Wickham, H. (2020).
-                magrittr: A forward-pipe operator for R.
-                R package version 2.0.1.
-                <a href = " https://CRAN.R-project.org/package=magrittr", target = "_blank">See online.</a>
-                </li>
-
                 <li><code>mirt</code>
                 Chalmers, R., & Chalmers, P. (2012).
                 mirt: A multidimensional item response theory package for the R environment.
@@ -183,13 +176,6 @@ uiReferences <-
                 shinyBS: Twitter bootstrap components for shiny.
                 R package version 0.61.
                 <a href = "https://CRAN.R-project.org/package=shinyBS", target = "_blank">See online.</a>
-                </li>
-
-                <li><code>shinydashboard</code>
-                Chang, W., & Borges Ribeiro, B. (2018).
-                shinydashboard: Create dashboards with "shiny".
-                R package version 0.7.1
-                <a href = "https://CRAN.R-project.org/package=shinydashboard", target = "_blank">See online.</a>
                 </li>
 
                 <li><code>ShinyItemAnalysis</code>
@@ -286,6 +272,13 @@ uiReferences <-
                 CRC Press.
                 </li>
 
+                <li>Bartos, F., & Martinkova, P. (2024).
+                 Assessing quality of selection procedures: Lower bound of false positive rate as a function of inter-rater reliability.
+                <i>British Journal of Mathematical and Statistical Psychology, 77</i>(3), 651–671.
+                <a href = "https://doi.org/10.1111/bmsp.12343",
+                target = "_blank">See online.</a>
+                </li>
+
                 <li>Bock, R. D. (1972).
                 Estimating item parameters and latent ability when responses are
                 scored in two or more nominal categories.
@@ -340,6 +333,13 @@ uiReferences <-
                 Statistical inference for coefficient alpha.
                 <i>Applied Psychological Measurement 11</i>(1), 93-103.
                 <a href = "http://journals.sagepub.com/doi/abs/10.1177/014662168701100107",
+                target = "_blank">See online.</a>
+                </li>
+
+                <li>Hladka, A., Martinkova, P., & Brabec, M. (2025).
+                New iterative algorithms for estimation of item functioning.
+                <i>Journal of Educational and Behavioral Statistics,</i> In print.
+                <a href = "https://doi.org/10.48550/arXiv.2302.12648",
                 target = "_blank">See online.</a>
                 </li>
 
@@ -428,8 +428,15 @@ uiReferences <-
 
                 <li>Martinkova, P., & Hladka, A. (2023).
                 <i>Computational Aspects of Psychometric Methods: With R.</i> (1st ed.). Chapman and Hall/CRC.
-                <a href = "https://www.taylorfrancis.com/books/mono/10.1201/9781003054313",
+                <a href = "https://doi.org/10.1201/9781003054313",
                 target = "_blank">See online</a>
+                </li>
+
+                <li>Martinkova, P., Bartos, F., & Brabec, M. (2023).
+                Assessing inter-rater reliability with heterogeneous variance components models: Flexible approach accounting for contextual variables.
+                <i>Journal of Educational and Behavioral Statistics, 48</i>(3), 349–383.
+                <a href = "https://doi.org/10.3102/10769986221150517",
+                target = "_blank">See online.</a>
                 </li>
 
                 <li>Masters, G. N. (1982).

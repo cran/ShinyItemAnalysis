@@ -1,8 +1,8 @@
 Type: Package
 Package: ShinyItemAnalysis
 Title: Test and Item Analysis via Shiny
-Version: 1.5.2
-Date: 2024-11-27
+Version: 1.5.4
+Date: 2025-02-07
 Authors@R: c(
     person("Patricia", "Martinkova", , "martinkova@cs.cas.cz", role = c("aut", "cre")),
     person("Adela", "Hladka", role = "aut"),
@@ -20,20 +20,20 @@ Description: Package including functions and interactive shiny application
 License: GPL-3
 URL: https://www.ShinyItemAnalysis.org
 BugReports: https://github.com/patriciamar/ShinyItemAnalysis/issues
-Depends: R (>= 3.5.0)
-Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.4.0), lme4, magrittr,
-        methods, mirt (>= 1.43), nnet, psych (>= 2.1.9), purrr, rlang,
-        rstudioapi, tibble, tidyr
-Suggests: data.table, deltaPlotR, difNLR (>= 1.4.1), DT, ggdendro,
+Depends: R (>= 4.1.0)
+Imports: difR (>= 5.0), dplyr, ggplot2 (>= 3.5.0), lme4, methods, mirt
+        (>= 1.43), nnet, psych (>= 2.1.9), purrr, rlang, rstudioapi,
+        tibble, tidyr
+Suggests: data.table, deltaPlotR, difNLR (>= 1.5.0), DT, ggdendro,
         gridExtra, knitr, latticeExtra, ltm, plotly, rmarkdown, shiny
-        (>= 1.6.0), shinyBS, shinydashboard, shinyjs, stringr, testthat
-        (>= 3.0.0), VGAM, xtable, yaml
+        (>= 1.6.0), shinyBS, shinyjs, stringr, testthat (>= 3.0.0),
+        VGAM, xtable, yaml
+Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
-Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-11-27 13:40:04 UTC; martinkova
+Packaged: 2025-02-08 09:30:50 UTC; martinkova
 Author: Patricia Martinkova [aut, cre],
   Adela Hladka [aut],
   Jan Netik [aut],
@@ -44,4 +44,4 @@ Author: Patricia Martinkova [aut, cre],
   Jana Vorlickova [ctb]
 Maintainer: Patricia Martinkova <martinkova@cs.cas.cz>
 Repository: CRAN
-Date/Publication: 2024-11-27 14:20:02 UTC
+Date/Publication: 2025-02-08 10:30:02 UTC
